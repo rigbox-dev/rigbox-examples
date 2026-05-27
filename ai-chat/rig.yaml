@@ -1,0 +1,22 @@
+name: ai-chat
+port: 8080
+start: uvicorn chat:app --host 0.0.0.0 --port 8080
+install: |
+  pip install --quiet --break-system-packages fastapi uvicorn pydantic
+
+# Opt this app into the workspace's managed AI proxy. The CLI injects
+# OPENAI_BASE_URL + OPENAI_API_KEY=managed-by-rigbox into the systemd
+# unit's env, so the openai SDK / raw HTTP calls in chat.py route
+# through 172.16.0.1:9090 automatically. No code change needed to
+# switch between BYO-key and managed.
+ai:
+  managed: true
+
+health:
+  path: /healthz
+  timeoutSeconds: 30
+
+env:
+  # OpenRouter model identifier (proxy translates to its upstream provider).
+  # Override at deploy time with: rig app deploy --env MODEL=openai/gpt-4o
+  MODEL: "openai/gpt-4o-mini"

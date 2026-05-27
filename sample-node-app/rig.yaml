@@ -1,0 +1,12 @@
+name: node-app
+port: 5000
+start: node app.js
+install: command -v node >/dev/null || sudo apt-get install -y nodejs
+env:
+  PORT: "5000"
+  NODE_ENV: production
+  APP_NAME: "NODE APP"
+health:
+  path: /healthz
+  timeoutSeconds: 60
+# bumped at Sun May 24 21:56:15 EDT 2026
