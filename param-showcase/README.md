@@ -62,7 +62,11 @@ The example exposed two CLI bugs (fixed in v0.12.2 and v0.12.3 — see
    each `app deploy` (possibly behind a `--reset-params` flag, since
    blowing away tuned values silently could surprise operators).
 
-Both gaps will be fixed in follow-up PRs.
+Both gaps were addressed in follow-up CLI patches (`rig app deploy`
+now re-asserts manifest params on every redeploy) and a server
+patch (`finalize_post_install` materializes defaults into the env
+file). Install the latest CLI to pick up the fixes:
 
-[p84]: https://github.com/rigbox-dev/cli/pull/84
-[p85]: https://github.com/rigbox-dev/cli/pull/85
+```bash
+curl -fsSL https://rigbox.dev/install.sh | bash
+```
