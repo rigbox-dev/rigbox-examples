@@ -1,0 +1,40 @@
+# Backend of the frontend-plus-api composition. Tiny in-memory todo
+# API on port 5100. The sibling frontend talks to this app's
+# subdomain — see the composition.yaml at the parent directory for
+# how they get wired together.
+
+name: fpa-api
+port: 5100
+start: node app.js
+install: command -v node >/dev/null || sudo apt-get install -y nodejs
+
+env:
+  PORT: "5100"
+
+params:
+  - key: enable_metrics
+    type: boolean
+    label: Expose Prometheus metrics
+    description: When true, /metrics returns a single todos_total gauge.
+    group: Observability
+    default: "false"
+    envVar: ENABLE_METRICS
+
+health:
+  path: /healthz
+  timeoutSeconds: 30
+
+recipe:
+  vendor: jonathan
+  slug: fpa-api
+  version: 0.1.0
+  summary: Backend API for the frontend-plus-api composition.
+  description: |
+    Tiny in-memory todo API. Designed to ship inside the
+    @jonathan/frontend-plus-api workspace composition alongside its
+    static frontend sibling, but stands alone if you want to deploy
+    just the API.
+  category: starter
+  tags:
+    - composition
+    - api
