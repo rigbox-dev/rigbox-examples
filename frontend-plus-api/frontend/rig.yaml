@@ -5,10 +5,23 @@
 name: fpa-web
 port: 5101
 start: node server.js
-install: command -v node >/dev/null || sudo apt-get install -y nodejs
+install: |
+  set -e
+  # Composition installs trigger a fresh `git clone` per child app via
+  # source.kind=git below. Promote frontend/ to the working dir so
+  # server.js + public/ sit where the systemd unit expects.
+  if [ -d frontend-plus-api/frontend ]; then
+    cp -r frontend-plus-api/frontend/. .
+    rm -rf frontend-plus-api
+  fi
+  command -v node >/dev/null || sudo apt-get install -y nodejs
 
 env:
   PORT: "5101"
+
+source:
+  kind: git
+  repo: https://github.com/rigbox-dev/rigbox-examples.git
 
 params:
   - key: api_url
@@ -29,7 +42,7 @@ health:
 recipe:
   vendor: jonathan
   slug: fpa-web
-  version: 0.1.0
+  version: 0.2.0
   summary: Static frontend for the frontend-plus-api composition.
   description: |
     Tiny todo UI in vanilla HTML/JS. The composition wires

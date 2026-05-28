@@ -6,10 +6,27 @@
 name: fpa-api
 port: 5100
 start: node app.js
-install: command -v node >/dev/null || sudo apt-get install -y nodejs
+install: |
+  set -e
+  # Composition installs trigger a fresh `git clone` per child app
+  # via source.kind=git below. After clone, promote our backend dir
+  # up to the working-dir root so app.js sits where the systemd unit
+  # expects.
+  if [ -d frontend-plus-api/backend ]; then
+    cp -r frontend-plus-api/backend/. .
+    rm -rf frontend-plus-api
+  fi
+  command -v node >/dev/null || sudo apt-get install -y nodejs
 
 env:
   PORT: "5100"
+
+# Cloning the public examples repo at install time keeps this recipe
+# self-contained — composition deploys can install it onto any
+# workspace without rsync from the operator.
+source:
+  kind: git
+  repo: https://github.com/rigbox-dev/rigbox-examples.git
 
 params:
   - key: enable_metrics
@@ -27,7 +44,7 @@ health:
 recipe:
   vendor: jonathan
   slug: fpa-api
-  version: 0.1.0
+  version: 0.2.0
   summary: Backend API for the frontend-plus-api composition.
   description: |
     Tiny in-memory todo API. Designed to ship inside the
