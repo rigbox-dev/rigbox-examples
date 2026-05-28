@@ -9,6 +9,8 @@ Small, deployable apps that map each Rigbox manifest surface to a working comman
 
 You can also type `rig deploy` from a project directory — it auto-detects which manifest is present and routes to the right verb.
 
+Every example here deploys in **one command** from a fresh clone. The publish/install machinery runs implicitly under your community vendor — no "publish first" dance.
+
 ## Single-app examples (`rig.yaml`)
 
 ### [`sample-node-app/`](./sample-node-app/)
