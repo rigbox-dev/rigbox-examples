@@ -52,7 +52,7 @@ curl https://portable-deploy-<ws>.rigbox.dev/              # the demo page
 
 ## Requirements
 
-CLI v0.12.4 or later.
+Latest CLI:
 
 ```bash
 curl -fsSL https://rigbox.dev/install.sh | bash

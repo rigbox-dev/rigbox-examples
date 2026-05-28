@@ -1,40 +1,104 @@
 # rigbox-examples
 
-Tiny apps that demonstrate Rigbox's `rig.yaml` surface end to end. Each one is deployable with a single command from inside the example directory:
+Small, deployable apps that map each Rigbox manifest surface to a working command. Two manifest formats, three deploy verbs:
 
-```bash
-cd <example>
-rig app deploy --workspace <your-workspace>
-```
+| Manifest | Local-deploy verb | Registry-deploy verb |
+|---|---|---|
+| `rig.yaml` (one app) | `rig app deploy` | `rig recipe app install --ref ...` |
+| `composition.yaml` (multi-app workspace) | `rig workspace deploy` | `rig recipe composition deploy --ref ...` |
 
-## Examples
+You can also type `rig deploy` from a project directory — it auto-detects which manifest is present and routes to the right verb.
 
-### [`ai-chat/`](./ai-chat/)
-
-FastAPI passthrough chat against an OpenAI-compatible endpoint, demonstrating the `ai: managed: true` block. The CLI injects `OPENAI_BASE_URL` + `OPENAI_API_KEY=managed-by-rigbox` into the systemd unit's env, so the same source code routes through the managed proxy without any proxy-specific code.
-
-```yaml
-ai:
-  managed: true
-```
+## Single-app examples (`rig.yaml`)
 
 ### [`sample-node-app/`](./sample-node-app/)
 
-Minimal Node.js HTTP server that exercises the basic `rig app deploy` flow (no managed AI, no blue-green, no custom domain). Reference for the smallest valid `rig.yaml`.
+Smallest valid `rig.yaml` — Node HTTP server on port 5000, `apt install nodejs` at install time. Reference for the minimum shape.
+
+```bash
+cd sample-node-app && rig app deploy --workspace <ws>
+```
+
+### [`ai-chat/`](./ai-chat/)
+
+FastAPI passthrough chat showing `ai: managed: true`. The CLI injects `OPENAI_BASE_URL` + `OPENAI_API_KEY=managed-by-rigbox`, so the same code routes through the platform-managed OpenAI-compatible proxy without proxy-specific logic.
+
+```bash
+cd ai-chat && rig app deploy --workspace <ws>
+```
+
+### [`param-showcase/`](./param-showcase/)
+
+Exercises every `ParamSpec` type (`string` / `number` / `boolean` / `secret` / `select` / `email` / `url` / `textarea`) and every notable attribute. Open the `rig.yaml` for the canonical reference page.
+
+```bash
+cd param-showcase && rig app deploy --workspace <ws>
+```
+
+### [`webhook-receiver/`](./webhook-receiver/)
+
+Production-shape secret hygiene in one app: `secrets:` forwards a value from your shell, `credentials: { generate: true }` has the platform mint a random session secret, `params:` lets you flip the HMAC signing algorithm without redeploying.
+
+```bash
+export WEBHOOK_HMAC_KEY=$(openssl rand -hex 32)
+cd webhook-receiver && rig app deploy --workspace <ws>
+```
+
+### [`portable-deploy/`](./portable-deploy/)
+
+Recipe-only: `source: { kind: git, repo: ... }` makes the VM clone the source at install time, so no local checkout is needed. Install with one line from any machine that has the CLI.
+
+```bash
+rig recipe app install --ref @jonathan/portable-deploy@0.1.0 --workspace <ws>
+```
+
+## Multi-app composition examples (`composition.yaml`)
+
+Both ship the same two apps (todo API + static frontend); they differ in **how** the composition is deployed.
+
+### [`local-deploy-stack/`](./local-deploy-stack/) — local, no publishing
+
+`composition.yaml` declares `apps[].path: ./backend` / `./frontend`. One command spawns a workspace from `base.image` + `base.resources`, then rsyncs each child directory in and runs `rig app deploy` for it. Iteration-friendly.
+
+```bash
+cd local-deploy-stack && rig workspace deploy --name my-stack
+```
+
+### [`frontend-plus-api/`](./frontend-plus-api/) — published, registry-deployed
+
+Same two apps, but the children are published recipes and the composition references them by `@vendor/slug@version`. Deploy the whole stack with one command from any machine.
+
+```bash
+rig recipe composition deploy --ref @jonathan/frontend-plus-api@0.2.1 --name my-stack
+```
 
 ## Layout convention
 
-Each example directory is self-contained:
+Each directory is self-contained. The shape depends on the manifest:
 
 ```
-<example>/
-  rig.yaml      # what gets deployed
-  <source>      # one or more source files
-  README.md     # what it does and why it's here
+single-app-example/
+├── rig.yaml          # what gets deployed
+├── <source files>
+└── README.md         # what it does and the curl that proves it
+
+composition-example/
+├── composition.yaml  # workspace blueprint
+├── <child>/
+│   ├── rig.yaml
+│   └── <source>
+└── README.md
 ```
 
-`rig.yaml`'s `install:` block installs whatever runtime the example needs (FastAPI, Node, etc.). No extra `package.json` / `requirements.txt` needed — keeping examples deliberately single-purpose so the file you read top-to-bottom is the whole picture.
+`rig.yaml`'s `install:` block installs whatever runtime the example needs at first boot — no extra `package.json` / `requirements.txt`. Single-purpose by design: the file you read top-to-bottom is the whole picture.
 
-## Live verification
+## Requirements
 
-These samples are also smoke-tested against `api.rigbox.dev` during PR review (see commit messages). If you're adding a new example, include the deploy + curl invocation that proved it works.
+Latest CLI:
+
+```bash
+curl -fsSL https://rigbox.dev/install.sh | bash
+rig --version
+```
+
+`rig workspace deploy` and `rig deploy` require v0.12.7 or later; the other verbs work on v0.12.4+.
