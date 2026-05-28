@@ -1,7 +1,14 @@
 # local-deploy-stack
 
-Two-app composition deployed via `rig workspace deploy` from this
-directory — no publishing required.
+Two-app composition where you deploy *your own code* via `rig workspace
+deploy`. Sibling of [`../frontend-plus-api/`](../frontend-plus-api/) —
+same two apps, but `apps[].path` instead of `apps[].ref`, so each
+deploy rsyncs the local directories into the workspace VM instead of
+pulling published recipes from the registry.
+
+**Reach for this** when you want to iterate on the backend or frontend
+source. **Reach for `frontend-plus-api/`** when you just want the stack
+to run.
 
 ## What's here
 

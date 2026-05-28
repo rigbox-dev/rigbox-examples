@@ -28,6 +28,16 @@ rig recipe app install \
 rig app share --app portable-deploy --public
 ```
 
+If you cloned this repo, you can also use the v0.12.7 top-level
+dispatcher to deploy from this directory:
+
+```bash
+rig deploy --workspace portable-demo
+```
+
+That auto-detects `rig.yaml` and runs `rig app deploy`. Same workspace,
+same outcome.
+
 If you want to publish your own version first (e.g. you forked the
 repo and want to point at your fork), clone this directory and:
 
