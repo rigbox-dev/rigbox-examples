@@ -1,0 +1,69 @@
+# webhook-receiver — production-shape secret hygiene demo.
+#
+# Three "secret-shaped" surfaces, each with a different lifecycle:
+#
+#   secrets:               forwarded from the operator's local shell at
+#                          deploy time. Value never lives in rig.yaml, in
+#                          git, or in the workspace's persistent env. If
+#                          the local var is unset, the deploy errors out
+#                          before publishing — fail-fast.
+#
+#   config.credentials:    server-generates a random value on first
+#                          install and injects it as CRED_<UPPER_KEY>.
+#                          Survives restarts; rotates only on re-install.
+#
+#   config.params:         typed user-tunable knobs. Validated against
+#                          the spec at write time. Editable live via
+#                          `rig app param set`; reset to defaults on
+#                          every `rig app deploy`.
+
+name: webhook-receiver
+port: 5500
+start: node app.js
+install: command -v node >/dev/null || sudo apt-get install -y nodejs
+
+env:
+  PORT: "5500"
+
+# `WEBHOOK_HMAC_KEY` must be set in the operator's local shell at the
+# time of `rig app deploy`. The CLI reads it then; it never persists
+# in this manifest or in git.
+secrets:
+  - WEBHOOK_HMAC_KEY
+
+# `session_secret` becomes `CRED_SESSION_SECRET` inside the running
+# app. The platform mints the value once at first install.
+credentials:
+  session_secret:
+    generate: true
+
+params:
+  - key: signing_algorithm
+    type: select
+    label: HMAC algorithm
+    description: Used to verify the X-Signature header on incoming POSTs.
+    group: Webhook
+    default: hmac-sha256
+    options:
+      - { value: hmac-sha256, label: HMAC-SHA256 }
+      - { value: hmac-sha512, label: HMAC-SHA512 }
+    envVar: SIGNING_ALGORITHM
+
+health:
+  path: /healthz
+  timeoutSeconds: 30
+
+recipe:
+  vendor: jonathan
+  slug: webhook-receiver
+  version: 0.1.0
+  summary: HMAC-verifying webhook receiver demo.
+  description: |
+    Receives POST /webhook with an X-Signature header (hex HMAC of the
+    body) and verifies against a locally-supplied HMAC key. Designed to
+    show the three secret-shaped surfaces of rig.yaml side by side:
+    forwarded secrets, server-generated credentials, and typed params.
+  category: utility
+  tags:
+    - webhook
+    - secrets

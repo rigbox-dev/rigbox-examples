@@ -1,0 +1,53 @@
+# portable-deploy — recipe with `source.kind: git`.
+#
+# The VM clones this repo at install time, so the operator can deploy
+# from anywhere (their phone, a CI runner, a one-line README) without
+# keeping a local checkout. The published recipe IS the deploy — pair
+# with `rig recipe app publish` and anyone with the deploy_ref can
+# install it onto their workspace.
+#
+# This rig.yaml lives inside `rigbox-dev/rigbox-examples` but reuses
+# `sample-node-app`'s code. The install script does a small reshuffle
+# after clone so `app.js` lives at the working-directory root.
+
+name: portable-deploy
+port: 5005
+start: node app.js
+install: |
+  set -e
+  # The git clone in `source` below landed the whole rigbox-examples
+  # repo here. Promote sample-node-app's contents to the working dir
+  # so the systemd unit (which runs at $WORKDIR) finds app.js + public/.
+  if [ -d sample-node-app ]; then
+    cp -r sample-node-app/. .
+    rm -rf sample-node-app
+  fi
+  command -v node >/dev/null || sudo apt-get install -y nodejs
+
+env:
+  PORT: "5005"
+  NODE_ENV: production
+  APP_NAME: "Portable Deploy"
+
+health:
+  path: /healthz
+  timeoutSeconds: 60
+
+source:
+  kind: git
+  repo: https://github.com/rigbox-dev/rigbox-examples.git
+
+recipe:
+  vendor: jonathan
+  slug: portable-deploy
+  version: 0.1.0
+  summary: Deploy from a public git repo — no local checkout needed.
+  description: |
+    Shows the source.kind=git pattern: the VM clones a public repo at
+    install time, so the recipe itself IS the deployable. Once
+    published, anyone can install it onto their workspace without
+    fetching a local copy of the source.
+  category: utility
+  tags:
+    - portable
+    - git-source
