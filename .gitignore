@@ -1,5 +1,10 @@
-# Per-example deploy state (one lock per example, created by `rig app deploy`).
+# Per-app deploy state (one lock per `rig.yaml`, created by `rig app deploy`).
 .rig-app-deploy.lock
+
+# Composition-level deploy state (one per `composition.yaml`, created by
+# `rig workspace deploy` / `rig deploy`). Records which workspaces the
+# composition has been deployed to so redeploys target the right one.
+.rig-workspace-deploy.lock
 
 # Node
 node_modules/
