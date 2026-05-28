@@ -4,7 +4,7 @@ kind: workspace-definition
 identity:
   vendor: jonathan
   slug: frontend-plus-api
-  version: 0.2.0
+  version: 0.2.1
 
 metadata:
   name: Frontend + API
@@ -31,7 +31,7 @@ base:
 apps:
   - ref: "@jonathan/fpa-api@0.2.0"
     alias: api
-  - ref: "@jonathan/fpa-web@0.2.0"
+  - ref: "@jonathan/fpa-web@0.2.1"
     alias: web
     dependsOn:
       - api

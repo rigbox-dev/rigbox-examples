@@ -7,7 +7,13 @@ const fs = require('fs');
 const path = require('path');
 
 const port = Number(process.env.PORT || 5101);
-const apiUrl = process.env.RIGBOX_API_URL || '/api';
+// When RIGBOX_API_URL is set (e.g. the composition's `params.api_url`
+// override), inject it into index.html as window.RIGBOX_API_URL.
+// Otherwise leave the page to derive the URL from window.location —
+// see public/index.html's deriveApiUrl() — so the default case
+// "talk to my sibling fpa-api on the same workspace" works without
+// any per-deploy templating.
+const apiUrl = process.env.RIGBOX_API_URL || '';
 const publicDir = path.join(__dirname, 'public');
 
 const mime = {
@@ -30,9 +36,13 @@ const server = http.createServer((req, res) => {
 
   if (urlPath === '/' || urlPath === '/index.html') {
     const html = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf-8');
-    const inject = `<script>window.RIGBOX_API_URL = ${JSON.stringify(apiUrl)};</script>`;
+    // Only inject when there's a real override — otherwise the page's
+    // deriveApiUrl() picks up the sibling backend automatically.
+    const out = apiUrl
+      ? html.replace('</head>', `<script>window.RIGBOX_API_URL = ${JSON.stringify(apiUrl)};</script>\n</head>`)
+      : html;
     res.writeHead(200, { 'content-type': 'text/html' });
-    return res.end(html.replace('</head>', `${inject}\n</head>`));
+    return res.end(out);
   }
 
   const filePath = path.join(publicDir, urlPath);

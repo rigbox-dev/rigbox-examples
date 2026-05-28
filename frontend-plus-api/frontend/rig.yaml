@@ -42,7 +42,7 @@ health:
 recipe:
   vendor: jonathan
   slug: fpa-web
-  version: 0.2.0
+  version: 0.2.1
   summary: Static frontend for the frontend-plus-api composition.
   description: |
     Tiny todo UI in vanilla HTML/JS. The composition wires
