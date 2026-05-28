@@ -42,7 +42,7 @@ curl …/params | jq .log_level   # → "info"  (rig.yaml's declared default)
 
 ## Requirements
 
-CLI v0.12.4 or later.
+Latest CLI:
 
 ```bash
 curl -fsSL https://rigbox.dev/install.sh | bash

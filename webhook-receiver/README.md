@@ -61,7 +61,7 @@ curl …/ | jq .signing_algorithm    # → "hmac-sha256"  (manifest default)
 
 ## Requirements
 
-CLI v0.12.4 or later.
+Latest CLI:
 
 ```bash
 curl -fsSL https://rigbox.dev/install.sh | bash

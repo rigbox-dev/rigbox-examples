@@ -78,9 +78,13 @@ needing to run `rig app param set`.
 - Wiring two of your own recipes together (e.g., a CMS + its admin
   panel; an API + its docs site).
 
+## Local-deploy variant
+
+If you want the same two apps without publishing, see [`../local-deploy-stack/`](../local-deploy-stack/) — same source, but the composition uses `apps[].path` and deploys via `rig workspace deploy`.
+
 ## Requirements
 
-CLI v0.12.4 or later.
+Latest CLI:
 
 ```bash
 curl -fsSL https://rigbox.dev/install.sh | bash
