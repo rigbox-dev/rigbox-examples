@@ -1,0 +1,50 @@
+name: daily-digest
+port: 5101
+start: node digest.js
+
+install: |
+  set -e
+  command -v node >/dev/null || sudo apt-get install -y nodejs
+
+env:
+  PORT: "5101"
+  DATA_DIR: /home/developer/data
+
+# tick_seconds controls how often the digest worker writes an entry.
+# Set it small (e.g. 5) when you're following along live; set it to
+# 86400 for a real daily digest. The platform's health check is
+# orthogonal — it hits /healthz every probe regardless of tick rate.
+params:
+  - key: tick_seconds
+    type: number
+    label: Tick interval (seconds)
+    description: How often the worker appends a digest entry. Use 5 for demos, 3600 for hourly, 86400 for daily.
+    group: Schedule
+    default: "60"
+    envVar: TICK_SECONDS
+
+  - key: log_label
+    type: string
+    label: Log label
+    description: Tag prepended to each digest line. Makes log entries identifiable when you have multiple workers writing to the same VM.
+    group: Schedule
+    default: digest
+    envVar: LOG_LABEL
+
+health:
+  path: /healthz
+  timeoutSeconds: 30
+
+recipe:
+  vendor: rigbox
+  slug: daily-digest
+  version: 0.1.0
+  summary: Scheduled worker that ticks on an interval and surfaces its log over HTTP.
+  description: |
+    A non-HTTP-shaped workload (background loop on an interval) wrapped
+    in the smallest HTTP surface required by the platform's health
+    check. Shows the canonical "worker + /healthz" pattern.
+  category: starter
+  tags:
+    - worker
+    - scheduled

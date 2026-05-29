@@ -40,9 +40,9 @@ health:
   timeoutSeconds: 30
 
 recipe:
-  vendor: jonathan
+  vendor: rigbox
   slug: fpa-web
-  version: 0.2.2
+  version: 0.1.0
   summary: Static frontend for the frontend-plus-api composition.
   description: |
     Tiny todo UI in vanilla HTML/JS. The composition wires

@@ -42,13 +42,13 @@ health:
   timeoutSeconds: 30
 
 recipe:
-  vendor: jonathan
+  vendor: rigbox
   slug: fpa-api
-  version: 0.2.1
+  version: 0.1.0
   summary: Backend API for the frontend-plus-api composition.
   description: |
     Tiny in-memory todo API. Designed to ship inside the
-    @jonathan/frontend-plus-api workspace composition alongside its
+    @rigbox/frontend-plus-api workspace composition alongside its
     static frontend sibling, but stands alone if you want to deploy
     just the API.
   category: starter

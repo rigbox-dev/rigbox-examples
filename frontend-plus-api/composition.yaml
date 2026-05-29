@@ -2,9 +2,9 @@ schemaVersion: 1
 kind: workspace-definition
 
 identity:
-  vendor: jonathan
+  vendor: rigbox
   slug: frontend-plus-api
-  version: 0.2.2
+  version: 0.1.0
 
 metadata:
   name: Frontend + API
@@ -29,9 +29,9 @@ base:
     diskSizeMb: 3072
 
 apps:
-  - ref: "@jonathan/fpa-api@0.2.1"
+  - ref: "@rigbox/fpa-api@0.1.0"
     alias: api
-  - ref: "@jonathan/fpa-web@0.2.2"
+  - ref: "@rigbox/fpa-web@0.1.0"
     alias: web
     dependsOn:
       - api

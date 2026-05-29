@@ -38,7 +38,7 @@ source:
   repo: https://github.com/rigbox-dev/rigbox-examples.git
 
 recipe:
-  vendor: jonathan
+  vendor: rigbox
   slug: portable-deploy
   version: 0.1.0
   summary: Deploy from a public git repo — no local checkout needed.

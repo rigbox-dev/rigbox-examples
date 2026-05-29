@@ -51,10 +51,29 @@ cd webhook-receiver && rig app deploy --workspace <ws>
 Recipe-only: `source: { kind: git, repo: ... }` makes the VM clone the source at install time, so no local checkout is needed. Install with one line from any machine that has the CLI.
 
 ```bash
-rig recipe app install --ref @jonathan/portable-deploy@0.1.0 --workspace <ws>
+rig recipe app install --ref @rigbox/portable-deploy@0.1.0 --workspace <ws>
+```
+
+### [`daily-digest/`](./daily-digest/)
+
+Background worker on an interval — the canonical "I want this to run every N seconds" shape. Real work happens in a `setInterval` loop; a 30-line HTTP surface serves `/healthz` because the platform health-checks every app. `tick_seconds` param tunes the schedule.
+
+```bash
+cd daily-digest && rig app deploy --workspace <ws>
 ```
 
 ## Multi-app composition examples (`composition.yaml`)
+
+### [`bluegreen-blog/`](./bluegreen-blog/)
+
+Bluegreen + promote on a real-shape stateful app, with `dependsOn` as a true readiness gate. A markdown blog keeps posts on disk *outside* the rsync zone; a migrator sidecar ensures the data dir exists before the blog starts. Redesign as a bluegreen sibling, verify on live data, then atomically swap.
+
+```bash
+cd bluegreen-blog && rig workspace deploy --name blog-stack
+# … write a post, then redesign:
+rig app deploy --workspace blog-stack --app bg-blog --bluegreen v2
+rig app deploy --workspace blog-stack --app bg-blog --bluegreen v2 --promote
+```
 
 ### [`frontend-plus-api/`](./frontend-plus-api/)
 
@@ -62,7 +81,7 @@ A two-app composition: a tiny todo API plus a vanilla-JS frontend that talks to 
 
 | Variant | File | Deploy command | What it does |
 |---|---|---|---|
-| Published, registry-deployed | `composition.yaml` (root) | `cd frontend-plus-api && rig workspace deploy` | Children declared as `apps[].ref: @jonathan/fpa-*@x.y.z`. Catalog-launch pulls the published recipes; the composition itself auto-publishes a `-local-<ts>` row under your vendor. |
+| Published, registry-deployed | `composition.yaml` (root) | `cd frontend-plus-api && rig workspace deploy` | Children declared as `apps[].ref: @rigbox/fpa-*@x.y.z`. Catalog-launch pulls the published recipes; the composition itself auto-publishes a `-local-<ts>` row under your vendor. |
 | Local, no publishing | `dev/composition.yaml` | `cd frontend-plus-api/dev && rig workspace deploy` | Children declared as `apps[].path: ../backend` / `../frontend`. Each deploy rsyncs your working copy and re-installs in place. Iteration-friendly; not publishable. |
 
 ## Layout convention

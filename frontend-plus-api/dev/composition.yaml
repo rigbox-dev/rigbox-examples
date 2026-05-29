@@ -16,7 +16,7 @@ schemaVersion: 1
 kind: workspace-definition
 
 identity:
-  vendor: jonathan
+  vendor: rigbox
   slug: frontend-plus-api-dev
   version: 0.1.0
 

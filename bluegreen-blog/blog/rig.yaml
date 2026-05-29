@@ -1,0 +1,28 @@
+name: bg-blog
+port: 5100
+start: node server.js
+
+install: |
+  set -e
+  command -v node >/dev/null || sudo apt-get install -y nodejs
+
+env:
+  PORT: "5100"
+  DATA_DIR: /home/developer/data
+  # BUILD_FLAVOR controls which UI template renders. The migrator
+  # doesn't care; only views.js looks at it. Bumped between v1 and v2
+  # to make the bluegreen cut-over visually obvious.
+  BUILD_FLAVOR: classic
+
+params:
+  - key: site_title
+    type: string
+    label: Site title
+    description: Shown in the header and the browser tab.
+    group: Display
+    default: My Blog
+    envVar: SITE_TITLE
+
+health:
+  path: /healthz
+  timeoutSeconds: 30
