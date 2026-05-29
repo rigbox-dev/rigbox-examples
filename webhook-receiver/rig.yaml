@@ -22,9 +22,6 @@ port: 5500
 start: node app.js
 install: command -v node >/dev/null || sudo apt-get install -y nodejs
 
-env:
-  PORT: "5500"
-
 # `WEBHOOK_HMAC_KEY` must be set in the operator's local shell at the
 # time of `rig app deploy`. The CLI reads it then; it never persists
 # in this manifest or in git.

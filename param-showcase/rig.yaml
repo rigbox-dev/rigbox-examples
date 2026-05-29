@@ -11,9 +11,6 @@ port: 5500
 start: node app.js
 install: command -v node >/dev/null || sudo apt-get install -y nodejs
 
-env:
-  PORT: "5500"
-
 health:
   path: /healthz
   timeoutSeconds: 30

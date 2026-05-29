@@ -7,7 +7,6 @@ install: |
   command -v node >/dev/null || sudo apt-get install -y nodejs
 
 env:
-  PORT: "5101"
   DATA_DIR: /home/developer/data
 
 # tick_seconds controls how often the digest worker writes an entry.
