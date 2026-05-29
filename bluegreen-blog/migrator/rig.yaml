@@ -1,0 +1,21 @@
+name: bg-blog-migrator
+port: 5099
+start: node migrate.js
+
+install: |
+  set -e
+  command -v node >/dev/null || sudo apt-get install -y nodejs
+
+env:
+  PORT: "5099"
+  DATA_DIR: /home/developer/data
+
+# Even sidecars must declare a port — the platform health-checks every
+# app on the workspace. After migrate.js applies the schema (create
+# directory + index file), it stays alive serving a 200 on /healthz so
+# the platform considers this app "ready" and lets blog (which
+# dependsOn'd it) start. In a real deployment you might prefer
+# restartPolicy: no, but then the health check has nothing to talk to.
+health:
+  path: /healthz
+  timeoutSeconds: 30

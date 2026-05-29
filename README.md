@@ -54,7 +54,26 @@ Recipe-only: `source: { kind: git, repo: ... }` makes the VM clone the source at
 rig recipe app install --ref @jonathan/portable-deploy@0.1.0 --workspace <ws>
 ```
 
+### [`daily-digest/`](./daily-digest/)
+
+Background worker on an interval — the canonical "I want this to run every N seconds" shape. Real work happens in a `setInterval` loop; a 30-line HTTP surface serves `/healthz` because the platform health-checks every app. `tick_seconds` param tunes the schedule.
+
+```bash
+cd daily-digest && rig app deploy --workspace <ws>
+```
+
 ## Multi-app composition examples (`composition.yaml`)
+
+### [`bluegreen-blog/`](./bluegreen-blog/)
+
+Bluegreen + promote on a real-shape stateful app, with `dependsOn` as a true readiness gate. A markdown blog keeps posts on disk *outside* the rsync zone; a migrator sidecar ensures the data dir exists before the blog starts. Redesign as a bluegreen sibling, verify on live data, then atomically swap.
+
+```bash
+cd bluegreen-blog && rig workspace deploy --name blog-stack
+# … write a post, then redesign:
+rig app deploy --workspace blog-stack --app bg-blog --bluegreen v2
+rig app deploy --workspace blog-stack --app bg-blog --bluegreen v2 --promote
+```
 
 ### [`frontend-plus-api/`](./frontend-plus-api/)
 
