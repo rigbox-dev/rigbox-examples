@@ -49,18 +49,3 @@ params:
 health:
   path: /healthz
   timeoutSeconds: 30
-
-recipe:
-  vendor: rigbox
-  slug: webhook-receiver
-  version: 0.1.0
-  summary: HMAC-verifying webhook receiver demo.
-  description: |
-    Receives POST /webhook with an X-Signature header (hex HMAC of the
-    body) and verifies against a locally-supplied HMAC key. Designed to
-    show the three secret-shaped surfaces of rig.yaml side by side:
-    forwarded secrets, server-generated credentials, and typed params.
-  category: utility
-  tags:
-    - webhook
-    - secrets

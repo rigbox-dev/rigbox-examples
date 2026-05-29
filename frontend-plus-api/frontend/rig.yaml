@@ -35,17 +35,3 @@ params:
 health:
   path: /healthz
   timeoutSeconds: 30
-
-recipe:
-  vendor: rigbox
-  slug: fpa-web
-  version: 0.1.0
-  summary: Static frontend for the frontend-plus-api composition.
-  description: |
-    Tiny todo UI in vanilla HTML/JS. The composition wires
-    `api_url` to the sibling fpa-api app's subdomain so the page
-    knows where the backend lives.
-  category: starter
-  tags:
-    - composition
-    - frontend

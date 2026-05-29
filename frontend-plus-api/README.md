@@ -17,19 +17,18 @@ rig workspace deploy --name my-stack
 That:
 
 1. Spawns a workspace from `@rigbox/base@1` + the declared resources.
-2. Installs both child apps from the publisher's recipes (`@rigbox/fpa-api@0.1.0`, `@rigbox/fpa-web@0.1.0`).
-3. Mints `@<your-vendor>/frontend-plus-api@0.1.0-local-<ts>` in the registry under your community profile — provenance for the deploy, queryable via `rig recipe composition info`.
-4. Boots the workspace; both apps reach their public subdomains.
+2. Installs both child apps from the recipes referenced in `apps[].ref` (`@rigbox/fpa-api@0.1.0`, `@rigbox/fpa-web@0.1.0`).
+3. Boots the workspace; both apps reach their public subdomains.
 
-No publishing-first dance. The composition's `identity.vendor` is overridden with yours, exactly like `rig app deploy` overrides `recipe.vendor`.
+No publishing-first dance — the composition is a pure deploy spec with no vendor identity. Adding your stack to the catalog is a separate, deliberate step (`rig recipe composition publish --vendor/--slug/--version`); see [Publishing your own version](#publishing-your-own-version) below.
 
 ## What's in the box
 
 | File | What it does |
 |---|---|
 | `composition.yaml` | Workspace blueprint — base image, resources, child app refs |
-| `backend/rig.yaml` | `fpa-api` recipe — in-memory todo API on port 5100 |
-| `frontend/rig.yaml` | `fpa-web` recipe — static UI on port 5101 |
+| `backend/rig.yaml` | `fpa-api` — in-memory todo API on port 5100 |
+| `frontend/rig.yaml` | `fpa-web` — static UI on port 5101 |
 
 Both children target the base image — no backing services, just `apt install nodejs` at install time.
 
@@ -63,22 +62,23 @@ rig workspace deploy --name my-stack
 rig workspace deploy
 ```
 
-The composition lock (`.rig-workspace-deploy.lock`) remembers which workspace you targeted last time. Each redeploy bumps the minor of the auto-published composition row (`0.1.0-local-…` → `0.2.0-local-…`) so registry history shows the trail.
+The composition lock (`.rig-workspace-deploy.lock`) remembers which workspace you targeted last time, so a bare redeploy lands on the same workspace.
 
 ## Publishing your own version
 
 If you want to *share* this stack as a registry composition rather than just deploy it:
 
 ```bash
-# 1. Publish the two child recipes under your vendor.
-cd backend  && rig recipe app publish && cd ..
-cd frontend && rig recipe app publish && cd ..
+# 1. Publish the two child recipes — identity comes from the flags,
+#    not the manifest.
+cd backend  && rig recipe app publish --vendor <you> --slug fpa-api --version 0.1.0 && cd ..
+cd frontend && rig recipe app publish --vendor <you> --slug fpa-web --version 0.1.0 && cd ..
 
-# 2. Update composition.yaml's apps[].ref to point at your versions, then publish.
-rig recipe composition publish
+# 2. Point composition.yaml's apps[].ref at your versions, then publish.
+rig recipe composition publish --vendor <you> --slug frontend-plus-api --version 0.1.0
 
 # 3. Now anyone can deploy your stack with one command.
-rig recipe composition deploy --ref @<your-vendor>/frontend-plus-api@<your-version> --name their-stack
+rig recipe composition deploy --ref @<you>/frontend-plus-api@0.1.0 --name their-stack
 ```
 
 This is the "I want to maintain a public version of this stack" path. For ad-hoc use, you don't need any of it — `rig workspace deploy` does the right thing.

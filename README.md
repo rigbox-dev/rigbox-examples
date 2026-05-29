@@ -9,7 +9,7 @@ Small, deployable apps that map each Rigbox manifest surface to a working comman
 
 You can also type `rig deploy` from a project directory — it auto-detects which manifest is present and routes to the right verb.
 
-Every example here deploys in **one command** from a fresh clone. The publish/install machinery runs implicitly under your community vendor — no "publish first" dance.
+Every example here deploys in **one command** from a fresh clone. The manifests are pure deploy specs — no vendor identity baked in — so `rig app deploy` / `rig workspace deploy` work straight from the checkout. Publishing to the catalog is a separate, deliberate step (`rig recipe app|composition publish` with `--vendor/--slug/--version`).
 
 ## Single-app examples (`rig.yaml`)
 
@@ -48,10 +48,10 @@ cd webhook-receiver && rig app deploy --workspace <ws>
 
 ### [`portable-deploy/`](./portable-deploy/)
 
-Recipe-only: `source: { kind: git, repo: ... }` makes the VM clone the source at install time, so no local checkout is needed. Install with one line from any machine that has the CLI.
+Git-source deploy: `source: { kind: git, repo: ... }` makes the VM clone the source at install time, so the deploy carries no local source.
 
 ```bash
-rig recipe app install --ref @rigbox/portable-deploy@0.1.0 --workspace <ws>
+cd portable-deploy && rig app deploy --workspace <ws>
 ```
 
 ### [`daily-digest/`](./daily-digest/)
@@ -81,8 +81,8 @@ A two-app composition: a tiny todo API plus a vanilla-JS frontend that talks to 
 
 | Variant | File | Deploy command | What it does |
 |---|---|---|---|
-| Published, registry-deployed | `composition.yaml` (root) | `cd frontend-plus-api && rig workspace deploy` | Children declared as `apps[].ref: @rigbox/fpa-*@x.y.z`. Catalog-launch pulls the published recipes; the composition itself auto-publishes a `-local-<ts>` row under your vendor. |
-| Local, no publishing | `dev/composition.yaml` | `cd frontend-plus-api/dev && rig workspace deploy` | Children declared as `apps[].path: ../backend` / `../frontend`. Each deploy rsyncs your working copy and re-installs in place. Iteration-friendly; not publishable. |
+| Registry-ref children | `composition.yaml` (root) | `cd frontend-plus-api && rig workspace deploy` | Children declared as `apps[].ref: @rigbox/fpa-*@x.y.z` — the deploy pulls those already-published recipes. The composition manifest itself carries no vendor; publish it deliberately with `rig recipe composition publish`. |
+| Local path children | `dev/composition.yaml` | `cd frontend-plus-api/dev && rig workspace deploy` | Children declared as `apps[].path: ../backend` / `../frontend`. Each deploy rsyncs your working copy and re-installs in place. Iteration-friendly. |
 
 ## Layout convention
 

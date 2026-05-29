@@ -110,17 +110,3 @@ params:
 # credentials:
 #   session_secret:
 #     generate: true
-
-recipe:
-  vendor: rigbox
-  slug: param-showcase
-  version: 0.1.0
-  summary: Exercises every v1 ParamSpec type.
-  description: |
-    A tiny HTTP server that surfaces every configurable param at
-    /params. Useful for testing `rig app param set/get/ls/unset`
-    and for verifying that re-deploying from rig.yaml reverts
-    in-flight CLI mutations.
-  category: utility
-  tags:
-    - utility
