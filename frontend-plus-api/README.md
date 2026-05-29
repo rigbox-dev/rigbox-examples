@@ -17,7 +17,7 @@ rig workspace deploy --name my-stack
 That:
 
 1. Spawns a workspace from `@rigbox/base@1` + the declared resources.
-2. Installs both child apps from the publisher's recipes (`@jonathan/fpa-api@0.2.0`, `@jonathan/fpa-web@0.2.1`).
+2. Installs both child apps from the publisher's recipes (`@rigbox/fpa-api@0.1.0`, `@rigbox/fpa-web@0.1.0`).
 3. Mints `@<your-vendor>/frontend-plus-api@0.1.0-local-<ts>` in the registry under your community profile — provenance for the deploy, queryable via `rig recipe composition info`.
 4. Boots the workspace; both apps reach their public subdomains.
 

@@ -51,7 +51,7 @@ cd webhook-receiver && rig app deploy --workspace <ws>
 Recipe-only: `source: { kind: git, repo: ... }` makes the VM clone the source at install time, so no local checkout is needed. Install with one line from any machine that has the CLI.
 
 ```bash
-rig recipe app install --ref @jonathan/portable-deploy@0.1.0 --workspace <ws>
+rig recipe app install --ref @rigbox/portable-deploy@0.1.0 --workspace <ws>
 ```
 
 ### [`daily-digest/`](./daily-digest/)
@@ -81,7 +81,7 @@ A two-app composition: a tiny todo API plus a vanilla-JS frontend that talks to 
 
 | Variant | File | Deploy command | What it does |
 |---|---|---|---|
-| Published, registry-deployed | `composition.yaml` (root) | `cd frontend-plus-api && rig workspace deploy` | Children declared as `apps[].ref: @jonathan/fpa-*@x.y.z`. Catalog-launch pulls the published recipes; the composition itself auto-publishes a `-local-<ts>` row under your vendor. |
+| Published, registry-deployed | `composition.yaml` (root) | `cd frontend-plus-api && rig workspace deploy` | Children declared as `apps[].ref: @rigbox/fpa-*@x.y.z`. Catalog-launch pulls the published recipes; the composition itself auto-publishes a `-local-<ts>` row under your vendor. |
 | Local, no publishing | `dev/composition.yaml` | `cd frontend-plus-api/dev && rig workspace deploy` | Children declared as `apps[].path: ../backend` / `../frontend`. Each deploy rsyncs your working copy and re-installs in place. Iteration-friendly; not publishable. |
 
 ## Layout convention

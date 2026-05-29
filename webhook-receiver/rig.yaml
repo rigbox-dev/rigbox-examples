@@ -54,7 +54,7 @@ health:
   timeoutSeconds: 30
 
 recipe:
-  vendor: jonathan
+  vendor: rigbox
   slug: webhook-receiver
   version: 0.1.0
   summary: HMAC-verifying webhook receiver demo.

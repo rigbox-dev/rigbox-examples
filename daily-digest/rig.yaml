@@ -36,7 +36,7 @@ health:
   timeoutSeconds: 30
 
 recipe:
-  vendor: jonathan
+  vendor: rigbox
   slug: daily-digest
   version: 0.1.0
   summary: Scheduled worker that ticks on an interval and surfaces its log over HTTP.

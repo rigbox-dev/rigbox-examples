@@ -23,7 +23,7 @@ There's nothing to clone locally. From any machine with the CLI:
 ```bash
 rig workspace spawn --name portable-demo
 rig recipe app install \
-  --ref @jonathan/portable-deploy@0.1.0 \
+  --ref @rigbox/portable-deploy@0.1.0 \
   --workspace portable-demo
 rig app share --app portable-deploy --public
 ```
