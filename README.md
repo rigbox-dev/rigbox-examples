@@ -56,23 +56,14 @@ rig recipe app install --ref @jonathan/portable-deploy@0.1.0 --workspace <ws>
 
 ## Multi-app composition examples (`composition.yaml`)
 
-Both ship the same two apps (todo API + static frontend); they differ in **how** the composition is deployed.
+### [`frontend-plus-api/`](./frontend-plus-api/)
 
-### [`local-deploy-stack/`](./local-deploy-stack/) — local, no publishing
+A two-app composition: a tiny todo API plus a vanilla-JS frontend that talks to it on a sibling subdomain. Ships **two compositions side-by-side** for the two deploy modes — one source of truth for the app code.
 
-`composition.yaml` declares `apps[].path: ./backend` / `./frontend`. One command spawns a workspace from `base.image` + `base.resources`, then rsyncs each child directory in and runs `rig app deploy` for it. Iteration-friendly.
-
-```bash
-cd local-deploy-stack && rig workspace deploy --name my-stack
-```
-
-### [`frontend-plus-api/`](./frontend-plus-api/) — published, registry-deployed
-
-Same two apps, but the children are published recipes and the composition references them by `@vendor/slug@version`. Deploy the whole stack with one command from any machine.
-
-```bash
-rig recipe composition deploy --ref @jonathan/frontend-plus-api@0.2.1 --name my-stack
-```
+| Variant | File | Deploy command | What it does |
+|---|---|---|---|
+| Published, registry-deployed | `composition.yaml` (root) | `cd frontend-plus-api && rig workspace deploy` | Children declared as `apps[].ref: @jonathan/fpa-*@x.y.z`. Catalog-launch pulls the published recipes; the composition itself auto-publishes a `-local-<ts>` row under your vendor. |
+| Local, no publishing | `dev/composition.yaml` | `cd frontend-plus-api/dev && rig workspace deploy` | Children declared as `apps[].path: ../backend` / `../frontend`. Each deploy rsyncs your working copy and re-installs in place. Iteration-friendly; not publishable. |
 
 ## Layout convention
 
