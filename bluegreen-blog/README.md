@@ -63,11 +63,14 @@ When you're happy:
 rig app deploy --workspace blog-stack --app bg-blog --bluegreen v2 --promote
 ```
 
-The platform does an **in-place rsync of the staged code onto prod's existing systemd unit and configured port** (~1s downtime gap). After promote:
+The platform stages the new build into a release directory next to prod, then **atomically swaps a symlink** to make it live (Capistrano-style). After promote:
 
 - `bg-blog.<workspace-id>` now serves the aurora flavor on the **same port 5100** it was always configured for.
 - The staged `bg-blog-v2` app row + its systemd unit + env file + deploy dir are **deleted** as part of the promote — no resource accumulation.
 - Prod's identity (app row, subdomain, custom domains, access bindings, visibility) is preserved across the cutover.
+- The previous release stays on disk under `<deploy_root>/<slug>.releases/`. Roll back with a single symlink swap + `systemctl restart` if the new build misbehaves; the platform retains the last 3 releases.
+
+The downtime window is whatever it takes the app process to drain SIGTERM and the new process to bind its port — typically ~1s for a Node.js app. The on-disk mutation inside that window is one rename(2) of a symlink, so a kill mid-promote can never leave prod in a half-rsynced state.
 
 ### What about the recipe registry?
 
