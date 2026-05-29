@@ -48,16 +48,14 @@ curl -X POST -H 'content-type: application/json' \
 
 ## Iterate on the source
 
-The default deploy installs the publisher's frozen recipes. To deploy your own modified code, switch each `apps[].ref` to `apps[].path: ./<dir>` in `composition.yaml`, then redeploy. See [`../local-deploy-stack/`](../local-deploy-stack/) for a ready-made path-based variant.
+The default `composition.yaml` installs the publisher's frozen recipes. For an edit-deploy loop against `backend/` and `frontend/` here in this repo, use the sibling **`dev/composition.yaml`** — same two apps, but `apps[].path: ../backend` / `../frontend` instead of `apps[].ref`. Every deploy rsyncs the local working copy and reinstalls; no `rig recipe app publish` round-trip between changes.
 
-```yaml
-apps:
-  - path: ./backend       # was: ref: "@jonathan/fpa-api@0.2.0"
-    alias: api
-  - path: ./frontend      # was: ref: "@jonathan/fpa-web@0.2.1"
-    alias: web
-    dependsOn: [api]
+```bash
+cd dev
+rig workspace deploy --name my-stack
 ```
+
+`dev/composition.yaml` is intentionally non-publishable (the publish schema rejects `apps[].path`). For ad-hoc deploys without editing the source, stay at the repo root with the default `composition.yaml`.
 
 ## Redeploy into the same workspace
 
