@@ -33,17 +33,3 @@ params:
 health:
   path: /healthz
   timeoutSeconds: 30
-
-recipe:
-  vendor: rigbox
-  slug: daily-digest
-  version: 0.1.0
-  summary: Scheduled worker that ticks on an interval and surfaces its log over HTTP.
-  description: |
-    A non-HTTP-shaped workload (background loop on an interval) wrapped
-    in the smallest HTTP surface required by the platform's health
-    check. Shows the canonical "worker + /healthz" pattern.
-  category: starter
-  tags:
-    - worker
-    - scheduled

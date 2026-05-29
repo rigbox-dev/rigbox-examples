@@ -35,18 +35,3 @@ health:
 source:
   kind: git
   repo: https://github.com/rigbox-dev/rigbox-examples.git
-
-recipe:
-  vendor: rigbox
-  slug: portable-deploy
-  version: 0.1.0
-  summary: Deploy from a public git repo — no local checkout needed.
-  description: |
-    Shows the source.kind=git pattern: the VM clones a public repo at
-    install time, so the recipe itself IS the deployable. Once
-    published, anyone can install it onto their workspace without
-    fetching a local copy of the source.
-  category: utility
-  tags:
-    - portable
-    - git-source

@@ -1,8 +1,8 @@
 # portable-deploy
 
-The recipe IS the deploy. `source: { kind: git, repo: ... }` tells
-the VM to `git clone` the source itself at install time, so the
-operator never needs a local checkout to deploy this app.
+The deploy carries no source. `source: { kind: git, repo: ... }` tells
+the VM to `git clone` the source itself at install time, so nothing
+gets rsynced up from the operator's machine.
 
 ## What it shows
 
@@ -18,33 +18,28 @@ VM.
 
 ## Deploy
 
-There's nothing to clone locally. From any machine with the CLI:
-
-```bash
-rig workspace spawn --name portable-demo
-rig recipe app install \
-  --ref @rigbox/portable-deploy@0.1.0 \
-  --workspace portable-demo
-rig app share --app portable-deploy --public
-```
-
-If you cloned this repo, you can also use the v0.12.7 top-level
-dispatcher to deploy from this directory:
-
-```bash
-rig deploy --workspace portable-demo
-```
-
-That auto-detects `rig.yaml` and runs `rig app deploy`. Same workspace,
-same outcome.
-
-If you want to publish your own version first (e.g. you forked the
-repo and want to point at your fork), clone this directory and:
+The `rig.yaml` is a pure deploy spec — no vendor identity baked in.
+From a checkout of this repo:
 
 ```bash
 cd portable-deploy
-rig recipe app publish        # uploads under your community vendor
-rig recipe app install --ref @<your-vendor>/portable-deploy@0.1.0 --workspace portable-demo
+rig deploy --workspace portable-demo
+```
+
+That auto-detects `rig.yaml` and runs `rig app deploy`; the VM clones
+the source itself at install time, so the deploy carries no local
+source either way.
+
+If you want to **publish** this as a reusable catalog recipe — so
+anyone can install it by ref without a checkout — that's a separate,
+deliberate step. Identity comes from the publish flags, not the
+manifest:
+
+```bash
+cd portable-deploy
+rig recipe app publish --vendor <you> --slug portable-deploy --version 0.1.0
+rig recipe app install --ref @<you>/portable-deploy@0.1.0 --workspace portable-demo
+rig app share --app portable-deploy --public
 ```
 
 ## Verify
@@ -56,9 +51,9 @@ curl https://portable-deploy-<ws>.rigbox.dev/              # the demo page
 
 ## When to reach for this
 
-- Sharing a deploy recipe — "anyone can `rig recipe app install` this onto their workspace."
 - CI deploys where the runner shouldn't carry your source.
 - Demos you want to share via a one-line incantation.
+- Once published (see above), anyone can `rig recipe app install` it onto their workspace without a checkout.
 
 ## Requirements
 

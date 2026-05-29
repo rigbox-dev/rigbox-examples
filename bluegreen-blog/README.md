@@ -74,7 +74,7 @@ The downtime window is whatever it takes the app process to drain SIGTERM and th
 
 ### What about the recipe registry?
 
-The bluegreen preview deploy goes through `launch-from-manifest` — no `@<your-vendor>/bg-blog-v2@…` row gets minted in the registry. Previews are purely a workspace-local concern. Only the stable per-recipe publishes (your normal `rig app deploy` of `bg-blog` itself) create registry history.
+The bluegreen preview deploy goes through `launch-from-manifest` — no `@<your-vendor>/bg-blog-v2@…` row gets minted in the registry. Previews are purely a workspace-local concern. In fact no `rig app deploy` touches the registry; the manifests here are pure deploy specs. Registry history only appears when you deliberately publish (`rig recipe app publish --vendor/--slug/--version`).
 
 ## Why this works
 

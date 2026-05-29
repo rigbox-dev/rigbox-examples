@@ -1,11 +1,6 @@
 schemaVersion: 1
 kind: workspace-definition
 
-identity:
-  vendor: rigbox
-  slug: frontend-plus-api
-  version: 0.1.0
-
 metadata:
   name: Frontend + API
   summary: Two-app starter — todo API plus a vanilla-JS frontend that talks to it.
