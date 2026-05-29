@@ -10,13 +10,20 @@ const enableMetrics = (process.env.ENABLE_METRICS || 'false') === 'true';
 let nextId = 1;
 const todos = new Map();
 
+// Sibling frontend lives on a different subdomain (fpa-web-<ws> vs
+// fpa-api-<ws>) so every request from the browser is cross-origin
+// and POST/DELETE trigger a preflight. We answer * because the API
+// has no auth or cookies — if you fork this and add either, lock
+// the origin down.
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type',
+  'access-control-max-age': '86400',
+};
+
 function json(res, status, body) {
-  res.writeHead(status, {
-    'content-type': 'application/json',
-    'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
-    'access-control-allow-headers': 'content-type',
-  });
+  res.writeHead(status, { 'content-type': 'application/json', ...CORS_HEADERS });
   res.end(JSON.stringify(body) + '\n');
 }
 
@@ -31,16 +38,22 @@ function readBody(req) {
 }
 
 const server = http.createServer(async (req, res) => {
-  if (req.method === 'OPTIONS') return json(res, 204, {});
+  // Preflight: 204 No Content per the CORS spec — strictly no body,
+  // strictly no content-type. Stricter browsers reject preflight
+  // responses that violate this.
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, CORS_HEADERS);
+    return res.end();
+  }
   const url = new URL(req.url, `http://${req.headers.host}`);
 
   if (url.pathname === '/healthz') {
-    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.writeHead(200, { 'content-type': 'text/plain', ...CORS_HEADERS });
     return res.end('ok\n');
   }
 
   if (enableMetrics && url.pathname === '/metrics') {
-    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.writeHead(200, { 'content-type': 'text/plain', ...CORS_HEADERS });
     return res.end(`# HELP todos_total Current number of todos\n# TYPE todos_total gauge\ntodos_total ${todos.size}\n`);
   }
 
