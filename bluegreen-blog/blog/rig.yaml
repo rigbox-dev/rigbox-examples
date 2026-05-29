@@ -7,7 +7,6 @@ install: |
   command -v node >/dev/null || sudo apt-get install -y nodejs
 
 env:
-  PORT: "5100"
   DATA_DIR: /home/developer/data
   # BUILD_FLAVOR controls which UI template renders. The migrator
   # doesn't care; only views.js looks at it. Bumped between v1 and v2

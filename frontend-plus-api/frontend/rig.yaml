@@ -16,9 +16,6 @@ install: |
   fi
   command -v node >/dev/null || sudo apt-get install -y nodejs
 
-env:
-  PORT: "5101"
-
 source:
   kind: git
   repo: https://github.com/rigbox-dev/rigbox-examples.git
