@@ -63,7 +63,15 @@ When you're happy:
 rig app deploy --workspace blog-stack --app bg-blog --bluegreen v2 --promote
 ```
 
-The platform swaps the subdomain pointer atomically. `bg-blog.<workspace-id>` now serves the aurora flavor; the previous `-v2` URL collapses on the next deploy.
+The platform does an **in-place rsync of the staged code onto prod's existing systemd unit and configured port** (~1s downtime gap). After promote:
+
+- `bg-blog.<workspace-id>` now serves the aurora flavor on the **same port 5100** it was always configured for.
+- The staged `bg-blog-v2` app row + its systemd unit + env file + deploy dir are **deleted** as part of the promote — no resource accumulation.
+- Prod's identity (app row, subdomain, custom domains, access bindings, visibility) is preserved across the cutover.
+
+### What about the recipe registry?
+
+The bluegreen preview deploy goes through `launch-from-manifest` — no `@<your-vendor>/bg-blog-v2@…` row gets minted in the registry. Previews are purely a workspace-local concern. Only the stable per-recipe publishes (your normal `rig app deploy` of `bg-blog` itself) create registry history.
 
 ## Why this works
 
@@ -114,8 +122,11 @@ curl https://bg-blog-migrator-<workspace-id>.rigbox.dev/healthz
 
 ## Requirements
 
-Latest CLI (v0.12.10+):
+Latest CLI (v0.12.15+) for the in-place promote + launch-from-manifest path:
 
 ```bash
 curl -fsSL https://rigbox.dev/install.sh | bash
+rig --version  # should be 0.12.15 or later
 ```
+
+Older CLIs (≤ 0.12.14) fall back to the legacy subdomain-swap promote which leaks resources across each cutover. The new behavior is server-driven so any CLI hitting an up-to-date control plane benefits automatically.
