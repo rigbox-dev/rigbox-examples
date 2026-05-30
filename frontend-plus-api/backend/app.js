@@ -1,5 +1,5 @@
 // Express-ish backend (using raw http to avoid an npm install) — the
-// `api` half of the frontend-plus-api composition. Surfaces a tiny
+// `api` half of the frontend-plus-api project. Surfaces a tiny
 // in-memory todo list at /api/todos so the frontend has something to
 // render and mutate.
 const http = require('http');
@@ -10,8 +10,8 @@ const enableMetrics = (process.env.ENABLE_METRICS || 'false') === 'true';
 let nextId = 1;
 const todos = new Map();
 
-// Sibling frontend lives on a different subdomain (fpa-web-<ws> vs
-// fpa-api-<ws>) so every request from the browser is cross-origin
+// Sibling frontend lives on a different subdomain (web-<ws> vs
+// api-<ws>) so every request from the browser is cross-origin
 // and POST/DELETE trigger a preflight. We answer * because the API
 // has no auth or cookies — if you fork this and add either, lock
 // the origin down.

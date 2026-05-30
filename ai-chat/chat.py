@@ -1,10 +1,12 @@
 """Passthrough chat — POSTs the user's message to an OpenAI-compatible
 chat completions endpoint with a small system prompt, returns the reply.
 
-When deployed via `rig app deploy` with `ai: managed: true` in
-rig.yaml, the systemd unit gets OPENAI_BASE_URL pointed at the
-workspace's managed AI proxy, so this code doesn't need to know
-anything about it — the standard `openai` env vars Just Work.
+When deployed via `rig deploy` with `ai: managed: true` in rig.yaml,
+the systemd unit gets OPENAI_BASE_URL pointed at the workspace's
+managed AI proxy, so this code doesn't need to know anything about
+it — the standard `openai` env vars Just Work. MODEL defaults to the
+portable `rigbox/default` alias the proxy resolves to its current
+upstream.
 """
 
 import os
@@ -25,7 +27,7 @@ SYSTEM_PROMPT = (
 
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-MODEL = os.environ.get("MODEL", "openai/gpt-4o-mini")
+MODEL = os.environ.get("MODEL", "rigbox/default")
 
 
 app = FastAPI()

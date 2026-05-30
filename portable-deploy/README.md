@@ -18,34 +18,28 @@ VM.
 
 ## Deploy
 
-The `rig.yaml` is a pure deploy spec — no vendor identity baked in.
-From a checkout of this repo:
-
 ```bash
 cd portable-deploy
-rig deploy --workspace portable-demo
+rig deploy --name portable-demo
 ```
 
-That auto-detects `rig.yaml` and runs `rig deploy`; the VM clones
-the source itself at install time, so the deploy carries no local
-source either way.
+`rig deploy` reads `rig.yaml`, spawns a fresh workspace (`--name` labels
+it; omit to reuse the one bound in `.rig.lock` or auto-spawn one), then
+the VM `git clone`s the repo from `source.repo` at install time. No
+local source is rsynced up, so the deploy carries no app code either way
+— a CI runner or a one-line README can deploy it without a checkout.
 
-If you want to **publish** this as a reusable catalog recipe — so
-anyone can install it by ref without a checkout — that's a separate,
-deliberate step. Identity comes from the publish flags, not the
-manifest:
+The CLI prints the workspace id and the app URL. To reach the app
+without logging in, make it public:
 
 ```bash
-cd portable-deploy
-rig recipe app publish --vendor <you> --slug portable-deploy --version 0.1.0
-rig recipe app install --ref @<you>/portable-deploy@0.1.0 --workspace portable-demo
 rig app share --app portable-deploy --public
 ```
 
 ## Verify
 
 ```bash
-curl https://portable-deploy-<ws>.rigbox.dev/healthz       # → ok
+curl https://portable-deploy-<ws>.rigbox.dev/healthz       # → {"ok":true,...}
 curl https://portable-deploy-<ws>.rigbox.dev/              # the demo page
 ```
 
@@ -53,7 +47,6 @@ curl https://portable-deploy-<ws>.rigbox.dev/              # the demo page
 
 - CI deploys where the runner shouldn't carry your source.
 - Demos you want to share via a one-line incantation.
-- Once published (see above), anyone can `rig recipe app install` it onto their workspace without a checkout.
 
 ## Requirements
 

@@ -16,12 +16,14 @@ rig deploy
 
 That:
 
-1. Spawns a workspace from `@rigbox/base@1` + the declared resources (or
+1. Spawns a workspace from the `base` template + the declared resources (or
    attaches to the one recorded in `.rig.lock` / `--workspace <id|name>`).
 2. Rsyncs and installs each app from its `path` — `api` from `./backend`,
    `web` from `./frontend`.
-3. Brings them up in `dependsOn` order (`api`, then `web`); both apps reach
-   their public subdomains.
+3. Brings them up in `dependsOn` order (`api`, then `web`); each app gets its
+   own subdomain — `api-<ws>.rigbox.dev` and `web-<ws>.rigbox.dev`. The web
+   page derives the API origin from its own `web-<ws>` hostname (swapping the
+   prefix to `api-<ws>`), so cross-app wiring needs no per-deploy templating.
 
 The frontend derives the API URL from its own hostname, so no per-deploy
 templating is needed.

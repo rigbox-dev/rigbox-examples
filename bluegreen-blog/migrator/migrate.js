@@ -1,7 +1,7 @@
 // One-shot schema sidecar for bluegreen-blog. Runs once when the
-// composition deploys, ensures the data directory + post index exist,
-// then sits on /healthz so the platform's readiness check passes and
-// the dependsOn'd blog app is allowed to start.
+// workspace deploys (rig deploy), ensures the data directory + post
+// index exist, then sits on /healthz so the platform's readiness check
+// passes and the dependsOn'd blog app is allowed to start.
 //
 // The "schema" is intentionally trivial — a directory and a JSON
 // index — so the example stays free of native npm deps. Reading this
