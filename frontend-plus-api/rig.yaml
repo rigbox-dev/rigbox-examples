@@ -2,11 +2,13 @@
 #
 # `rig deploy` spins up (or attaches to) a workspace, rsyncs each app's
 # code from its `path`, installs, and brings them up in dependency order.
-# Each app gets its own subdomain from its name + the workspace id:
-# frontend-api-<ws>.rigbox.dev and frontend-web-<ws>.rigbox.dev. The
-# frontend derives the API origin from its own frontend-web-<ws> hostname
-# (swapping the prefix to frontend-api-<ws>), so no per-deploy templating
-# is needed.
+# Both apps run as processes on the same workspace VM.
+#
+# Because frontend-web declares `dependsOn: [frontend-api]`, Rigbox injects
+# RIGBOX_FRONTEND_API_URL=http://127.0.0.1:5100 into frontend-web's env.
+# server.js proxies /api to that URL over loopback, so the browser stays
+# same-origin and frontend-api never needs a public subdomain — it stays
+# private (the default). Only frontend-web is opened to the world.
 #
 #   cd frontend-plus-api && rig deploy
 #
@@ -46,13 +48,3 @@ apps:
     health:
       path: /healthz
       timeoutSeconds: 30
-    params:
-      - key: api_url
-        type: url
-        label: API base URL
-        description: >
-          Where the frontend sends /api/todos requests. Leave empty to let
-          the page derive it from window.location (its sibling subdomain).
-        group: Wiring
-        default: ""
-        envVar: RIGBOX_API_URL

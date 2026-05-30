@@ -22,12 +22,41 @@ That:
    `./backend`, `frontend-web` from `./frontend`.
 3. Brings them up in `dependsOn` order (`frontend-api`, then `frontend-web`);
    each app gets its own subdomain — `frontend-api-<ws>.rigbox.dev` and
-   `frontend-web-<ws>.rigbox.dev`. The web page derives the API origin from its
-   own `frontend-web-<ws>` hostname (swapping the prefix to `frontend-api-<ws>`),
-   so cross-app wiring needs no per-deploy templating.
+   `frontend-web-<ws>.rigbox.dev`.
 
-The frontend derives the API URL from its own hostname, so no per-deploy
-templating is needed.
+## How the apps talk (inter-app networking)
+
+Both apps run as processes on the **same workspace VM**, so a sibling is
+reachable over loopback. Because `frontend-web` declares
+`dependsOn: [frontend-api]`, Rigbox does the service discovery for you: it
+injects
+
+```
+RIGBOX_FRONTEND_API_URL=http://127.0.0.1:5100
+```
+
+into `frontend-web`'s environment (`RIGBOX_<APP_NAME>_URL`, name uppercased,
+dashes → underscores). `server.js` reads that var and **proxies `/api`** to the
+backend over loopback. The browser only ever talks to `frontend-web`'s own
+origin — so there's **no CORS**, and `frontend-api` can stay **private** (the
+default). Only `frontend-web` is public; the API is never exposed to the
+internet.
+
+Running locally? The platform var isn't set, so `server.js` falls back to
+`http://127.0.0.1:5100` — `node server.js` in each dir just works.
+
+Apps deploy **private** by default, so open just the public entry point —
+`frontend-web` — to the world (the API needs nothing):
+
+```bash
+rig app share --app frontend-web --public
+```
+
+> The old approach — a browser `fetch` cross-origin to the API's subdomain —
+> failed with `CORS request did not succeed` whenever the API was private (the
+> fetch followed the login redirect). Proxying server-side over the workspace's
+> internal network avoids that entirely and keeps the API key/credentials off
+> the client.
 
 ## What's in the box
 
@@ -38,8 +67,8 @@ code; the app's spec lives inline under `apps.<name>`.
 | Path | What it does |
 |---|---|
 | `rig.yaml` | Workspace blueprint + both app specs inline |
-| `backend/` | `frontend-api` — in-memory todo API on port 5100 (`app.js`) |
-| `frontend/` | `frontend-web` — static UI on port 5101, `dependsOn: [frontend-api]` (`server.js`, `public/`) |
+| `backend/` | `frontend-api` — in-memory todo API on port 5100, stays private (`app.js`) |
+| `frontend/` | `frontend-web` — static UI on port 5101 that proxies `/api` to its sibling; `dependsOn: [frontend-api]` (`server.js`, `public/`) |
 
 Both apps target the base image — no backing services, just `apt install nodejs` at install time.
 
@@ -49,11 +78,15 @@ Both apps target the base image — no backing services, just `apt install nodej
 # Frontend shows the todo list; add/delete works.
 open https://frontend-web-<ws>.rigbox.dev
 
-# API responds directly.
-curl https://frontend-api-<ws>.rigbox.dev/api/todos
+# The API is reached *through* the frontend's same-origin /api proxy:
+curl https://frontend-web-<ws>.rigbox.dev/api/todos
 curl -X POST -H 'content-type: application/json' \
   -d '{"title":"first todo"}' \
-  https://frontend-api-<ws>.rigbox.dev/api/todos
+  https://frontend-web-<ws>.rigbox.dev/api/todos
+
+# frontend-api itself is private — hitting its subdomain directly redirects
+# to login (302). That's expected; the proxy reaches it over loopback.
+curl -s -o /dev/null -w '%{http_code}\n' https://frontend-api-<ws>.rigbox.dev/api/todos
 ```
 
 ## Iterate on the source
