@@ -15,7 +15,7 @@ sample-node-app/
 
 ```bash
 cd sample-node-app
-rig app deploy --workspace <your-workspace>
+rig deploy --workspace <your-workspace>
 ```
 
 ## Verify

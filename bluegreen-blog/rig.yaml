@@ -1,0 +1,58 @@
+# bluegreen-blog — a two-app project that walks through bluegreen +
+# promote against a real-shape stateful app: deploy v1, write content,
+# redesign as a bluegreen sibling on real data, then atomically promote.
+#
+#   migrator — one-shot schema sidecar; creates the data dir + index the
+#              blog reads. `dependsOn`'d by blog so the blog never starts
+#              on uninitialized state.
+#   blog     — vanilla-JS markdown blog. Reads/writes posts under
+#              /home/developer/data/posts/ (OUTSIDE the rsync zone), so
+#              data survives every redeploy.
+#
+#   cd bluegreen-blog && rig deploy
+
+workspace:
+  image: base
+  resources:
+    ramMb: 1024
+    vcpuCount: 1
+    diskSizeMb: 3072
+
+apps:
+  migrator:
+    path: ./migrator
+    port: 5099
+    start: node migrate.js
+    install: |
+      set -e
+      command -v node >/dev/null || sudo apt-get install -y nodejs
+    env:
+      DATA_DIR: /home/developer/data
+    health:
+      path: /healthz
+      timeoutSeconds: 30
+
+  blog:
+    path: ./blog
+    port: 5100
+    start: node server.js
+    install: |
+      set -e
+      command -v node >/dev/null || sudo apt-get install -y nodejs
+    dependsOn: [migrator]
+    env:
+      DATA_DIR: /home/developer/data
+      # BUILD_FLAVOR controls which UI template renders. Bump between v1
+      # and v2 to make the bluegreen cut-over visually obvious.
+      BUILD_FLAVOR: classic
+    params:
+      - key: site_title
+        type: string
+        label: Site title
+        description: Shown in the header and the browser tab.
+        group: Display
+        default: My Blog
+        envVar: SITE_TITLE
+    health:
+      path: /healthz
+      timeoutSeconds: 30

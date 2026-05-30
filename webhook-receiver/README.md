@@ -9,9 +9,9 @@ block lets you flip the signing algorithm without redeploying.
 
 | `rig.yaml` block | What it does | Where the value comes from | Lifecycle |
 |---|---|---|---|
-| `secrets:` | Forwards `WEBHOOK_HMAC_KEY` from your shell into the app's env at deploy time | operator's `$WEBHOOK_HMAC_KEY` | Re-supplied every `rig app deploy`; never lands in rig.yaml or git |
+| `secrets:` | Forwards `WEBHOOK_HMAC_KEY` from your shell into the app's env at deploy time | operator's `$WEBHOOK_HMAC_KEY` | Re-supplied every `rig deploy`; never lands in rig.yaml or git |
 | `credentials.session_secret: generate: true` | Server mints a random value at first install, injects as `CRED_SESSION_SECRET` | platform | Persistent; rotates only if you re-create the app |
-| `params.signing_algorithm` | Typed `select` for the HMAC variant | manifest default or `rig app param set` | Live-editable; resets to manifest default on `rig app deploy` |
+| `params.signing_algorithm` | Typed `select` for the HMAC variant | manifest default or `rig app param set` | Live-editable; resets to manifest default on `rig deploy` |
 
 ## Deploy
 
@@ -23,7 +23,7 @@ export WEBHOOK_HMAC_KEY=$(openssl rand -hex 32)
 # 2. Spawn + deploy.
 rig workspace spawn --name webhook-demo
 cd webhook-receiver
-rig app deploy --workspace webhook-demo
+rig deploy --workspace webhook-demo
 rig app share --app webhook-receiver --public
 ```
 
@@ -55,7 +55,7 @@ rig app restart --app webhook-receiver
 curl …/ | jq .signing_algorithm    # → "hmac-sha512"
 
 # Re-asserting the manifest reverts the live edit.
-rig app deploy --workspace webhook-demo
+rig deploy --workspace webhook-demo
 curl …/ | jq .signing_algorithm    # → "hmac-sha256"  (manifest default)
 ```
 

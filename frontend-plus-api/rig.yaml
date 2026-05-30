@@ -1,0 +1,55 @@
+# Frontend + API — a two-app project.
+#
+# `rig deploy` spins up (or attaches to) a workspace, rsyncs each app's
+# code from its `path`, installs, and brings them up in dependency order.
+# The frontend derives the API URL from its own hostname, so no per-deploy
+# templating is needed.
+#
+#   cd frontend-plus-api && rig deploy
+#
+# Redeploy just one app:  rig deploy --app web
+
+workspace:
+  image: base
+  resources:
+    ramMb: 1024
+    vcpuCount: 1
+    diskSizeMb: 3072
+
+apps:
+  api:
+    path: ./backend
+    port: 5100
+    start: node app.js
+    install: command -v node >/dev/null || sudo apt-get install -y nodejs
+    health:
+      path: /healthz
+      timeoutSeconds: 30
+    params:
+      - key: enable_metrics
+        type: boolean
+        label: Expose Prometheus metrics
+        description: When true, /metrics returns a single todos_total gauge.
+        group: Observability
+        default: "false"
+        envVar: ENABLE_METRICS
+
+  web:
+    path: ./frontend
+    port: 5101
+    start: node server.js
+    install: command -v node >/dev/null || sudo apt-get install -y nodejs
+    dependsOn: [api]
+    health:
+      path: /healthz
+      timeoutSeconds: 30
+    params:
+      - key: api_url
+        type: url
+        label: API base URL
+        description: >
+          Where the frontend sends /api/todos requests. Leave empty to let
+          the page derive it from window.location (its sibling subdomain).
+        group: Wiring
+        default: ""
+        envVar: RIGBOX_API_URL
