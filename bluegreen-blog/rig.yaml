@@ -2,10 +2,10 @@
 # promote against a real-shape stateful app: deploy v1, write content,
 # redesign as a bluegreen sibling on real data, then atomically promote.
 #
-#   migrator — one-shot schema sidecar; creates the data dir + index the
-#              blog reads. `dependsOn`'d by blog so the blog never starts
-#              on uninitialized state.
-#   blog     — vanilla-JS markdown blog. Reads/writes posts under
+#   bluegreen-migrator — one-shot schema sidecar; creates the data dir +
+#              index the blog reads. `dependsOn`'d by bluegreen-blog so the
+#              blog never starts on uninitialized state.
+#   bluegreen-blog     — vanilla-JS markdown blog. Reads/writes posts under
 #              /home/developer/data/posts/ (OUTSIDE the rsync zone), so
 #              data survives every redeploy.
 #
@@ -19,7 +19,7 @@ workspace:
     diskSizeMb: 3072
 
 apps:
-  migrator:
+  bluegreen-migrator:
     path: ./migrator
     port: 5099
     start: node migrate.js
@@ -32,14 +32,14 @@ apps:
       path: /healthz
       timeoutSeconds: 30
 
-  blog:
+  bluegreen-blog:
     path: ./blog
     port: 5100
     start: node server.js
     install: |
       set -e
       command -v node >/dev/null || sudo apt-get install -y nodejs
-    dependsOn: [migrator]
+    dependsOn: [bluegreen-migrator]
     env:
       DATA_DIR: /home/developer/data
       # BUILD_FLAVOR controls which UI template renders. Bump between v1

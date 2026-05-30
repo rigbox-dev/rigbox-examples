@@ -7,12 +7,12 @@ const fs = require('fs');
 const path = require('path');
 
 const port = Number(process.env.PORT || 5101);
-// When RIGBOX_API_URL is set (e.g. the web app's `params.api_url`
+// When RIGBOX_API_URL is set (e.g. the frontend-web app's `params.api_url`
 // override), inject it into index.html as window.RIGBOX_API_URL.
 // Otherwise leave the page to derive the URL from window.location —
 // see public/index.html's deriveApiUrl() — so the default case
-// "talk to my sibling api app on the same workspace" works without
-// any per-deploy templating.
+// "talk to my sibling frontend-api app on the same workspace" works
+// without any per-deploy templating.
 const apiUrl = process.env.RIGBOX_API_URL || '';
 const publicDir = path.join(__dirname, 'public');
 

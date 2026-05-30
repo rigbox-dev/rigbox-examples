@@ -3,13 +3,14 @@
 # `rig deploy` spins up (or attaches to) a workspace, rsyncs each app's
 # code from its `path`, installs, and brings them up in dependency order.
 # Each app gets its own subdomain from its name + the workspace id:
-# api-<ws>.rigbox.dev and web-<ws>.rigbox.dev. The frontend derives the
-# API origin from its own web-<ws> hostname (swapping the prefix to
-# api-<ws>), so no per-deploy templating is needed.
+# frontend-api-<ws>.rigbox.dev and frontend-web-<ws>.rigbox.dev. The
+# frontend derives the API origin from its own frontend-web-<ws> hostname
+# (swapping the prefix to frontend-api-<ws>), so no per-deploy templating
+# is needed.
 #
 #   cd frontend-plus-api && rig deploy
 #
-# Redeploy just one app:  rig deploy --app web
+# Redeploy just one app:  rig deploy --app frontend-web
 
 workspace:
   image: base
@@ -19,7 +20,7 @@ workspace:
     diskSizeMb: 3072
 
 apps:
-  api:
+  frontend-api:
     path: ./backend
     port: 5100
     start: node app.js
@@ -36,12 +37,12 @@ apps:
         default: "false"
         envVar: ENABLE_METRICS
 
-  web:
+  frontend-web:
     path: ./frontend
     port: 5101
     start: node server.js
     install: command -v node >/dev/null || sudo apt-get install -y nodejs
-    dependsOn: [api]
+    dependsOn: [frontend-api]
     health:
       path: /healthz
       timeoutSeconds: 30
