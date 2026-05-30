@@ -13,9 +13,20 @@ The work is a background loop; the HTTP surface exists only because the platform
 
 ## Deploy
 
+`rig deploy` reads the top-level `rig.yaml`, spawns a fresh workspace (or
+reuses the one recorded in `.rig.lock`), and installs the app:
+
 ```bash
 cd daily-digest
-rig deploy --workspace <ws>
+rig deploy
+```
+
+Deploy prints the workspace name and the app URL, e.g.:
+
+```
+✓ Deployed!
+  Workspace: upbeat-sloth
+  • daily-digest  →  https://daily-digest-<workspace-id>.rigbox.dev  (active)
 ```
 
 Watch it tick:
@@ -25,13 +36,20 @@ DIGEST=https://daily-digest-<workspace-id>.rigbox.dev
 curl "$DIGEST"     # shows label, interval, tick count, and the last 50 lines
 ```
 
-After 30 seconds with the default 60s interval you'll see one tick. Set `tick_seconds=5` for faster feedback:
+The app is private by default, so curling the public URL unauthenticated
+returns a 302 to the login page. Use `rig app logs --app daily-digest` to
+watch ticks fire, or SSH in (below) to hit `http://localhost:5101` directly.
+
+After 60 seconds with the default interval you'll see a second tick. Set
+`tick_seconds=5` for faster feedback:
 
 ```bash
-rig app param set --workspace <ws> --app daily-digest tick_seconds=5
+rig app param set --app daily-digest tick_seconds=5
+rig app restart --app daily-digest   # restart picks up the new env value
 ```
 
-The platform restarts the app with the new env value; the worker resumes ticking on the new schedule.
+The worker then resumes ticking on the new schedule. (`rig.yaml` is the
+source of truth — a later `rig deploy` resets params to their defaults.)
 
 ## Inspect the raw log
 
@@ -57,7 +75,7 @@ daily-digest/
 
 ## Requirements
 
-Latest CLI (v0.12.10+):
+Latest CLI (v0.12.20+):
 
 ```bash
 curl -fsSL https://rigbox.dev/install.sh | bash

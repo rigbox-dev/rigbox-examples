@@ -1,3 +1,7 @@
+# daily-digest — a single-app project. Top-level fields describe the one
+# app; `rig deploy` (run from this directory) spawns a fresh workspace on
+# the default `base` template and installs it. Add `image: <template>` to
+# pick a different base template, or a `workspace:` block to pin a name.
 name: daily-digest
 port: 5101
 start: node digest.js

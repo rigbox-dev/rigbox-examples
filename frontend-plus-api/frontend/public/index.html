@@ -31,16 +31,16 @@
   <ul id="list"></ul>
 
   <script>
-    // Composition deploys this app at fpa-web-<ws>.rigbox.dev and
-    // its sibling backend at fpa-api-<ws>.rigbox.dev. Deriving the
-    // backend host from our own location avoids needing the
-    // composition.yaml to template the workspace id into a param.
-    // Both branches end at the `/api` mount point — the backend
-    // routes are `/api/todos`, `/api/todos/:id`, etc.
+    // rig deploys this app at web-<ws>.rigbox.dev and its sibling
+    // backend at api-<ws>.rigbox.dev (the app names are `web` and
+    // `api`). Deriving the backend host from our own location avoids
+    // templating the workspace id into a param. Both branches end at
+    // the `/api` mount point — the backend routes are `/api/todos`,
+    // `/api/todos/:id`, etc.
     function deriveApiUrl() {
       const h = location.host;
-      if (h.startsWith('fpa-web-')) {
-        return location.protocol + '//' + h.replace('fpa-web-', 'fpa-api-') + '/api';
+      if (h.startsWith('web-')) {
+        return location.protocol + '//' + h.replace(/^web-/, 'api-') + '/api';
       }
       return '/api';
     }

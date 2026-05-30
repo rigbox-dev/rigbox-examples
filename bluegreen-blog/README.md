@@ -20,10 +20,13 @@ cd bluegreen-blog
 rig deploy --name blog-stack
 ```
 
-The migrator runs once, creates the data dir + index, then the blog comes up. Visit the blog and create a post:
+`rig deploy` spawns a fresh workspace and deploys **both** apps in one shot: the migrator runs once and creates the data dir + index, then (gated by `dependsOn`) the blog comes up. The CLI prints both app URLs — the blog is at `https://blog-<workspace-id>.rigbox.dev`.
+
+Apps are private by default. Make the blog reachable, then create a post:
 
 ```bash
-BLOG=https://bg-blog-<workspace-id>.rigbox.dev
+rig app share --app blog --public            # or share with specific emails
+BLOG=https://blog-<workspace-id>.rigbox.dev
 curl "$BLOG"                                                    # empty index
 curl -X POST -H 'content-type: application/json' \
   -d '{"title":"Hello world","body":"My first post."}' \
@@ -43,12 +46,12 @@ Stage it as a sibling deploy:
 rig deploy --workspace blog-stack --app blog --bluegreen v2
 ```
 
-The CLI deploys `blog` as a parallel app at `bg-blog-v2.<workspace-id>.rigbox.dev`. **Prod (`bg-blog.<workspace-id>`) is untouched** — users on the existing URL still see the classic look.
+The CLI deploys `blog` as a parallel sibling app at `blog-v2-<workspace-id>.rigbox.dev` (`<base>-<suffix>`). **Prod (`blog-<workspace-id>`) is untouched** — users on the existing URL still see the classic look.
 
 Verify the staged build sees your real post:
 
 ```bash
-BLOG_V2=https://bg-blog-v2-<workspace-id>.rigbox.dev
+BLOG_V2=https://blog-v2-<workspace-id>.rigbox.dev
 curl "$BLOG_V2"     # same "Hello world" post, aurora gradient UI
 curl "$BLOG"        # still classic
 ```
@@ -65,8 +68,8 @@ rig deploy --workspace blog-stack --app blog --bluegreen v2 --promote
 
 The platform stages the new build into a release directory next to prod, then **atomically swaps a symlink** to make it live (Capistrano-style). After promote:
 
-- `bg-blog.<workspace-id>` now serves the aurora flavor on the **same port 5100** it was always configured for.
-- The staged `bg-blog-v2` app row + its systemd unit + env file + deploy dir are **deleted** as part of the promote — no resource accumulation.
+- `blog-<workspace-id>` now serves the aurora flavor on the **same port 5100** it was always configured for.
+- The staged `blog-v2` app row + its systemd unit + env file + deploy dir are **deleted** as part of the promote — no resource accumulation.
 - Prod's identity (app row, subdomain, custom domains, access bindings, visibility) is preserved across the cutover.
 - The previous release stays on disk under `<deploy_root>/<slug>.releases/`. Roll back with a single symlink swap + `systemctl restart` if the new build misbehaves; the platform retains the last 3 releases.
 
@@ -74,7 +77,7 @@ The downtime window is whatever it takes the app process to drain SIGTERM and th
 
 ### What about the recipe registry?
 
-The bluegreen preview deploy goes through `launch-from-manifest` — no `@<your-vendor>/bg-blog-v2@…` row gets minted in the registry. Previews are purely a workspace-local concern. In fact no `rig deploy` touches the registry; the manifests here are pure deploy specs. Registry history only appears when you deliberately publish (`rig recipe app publish --vendor/--slug/--version`).
+The bluegreen preview deploy goes through `launch-from-manifest` — no `@<your-vendor>/blog-v2@…` row gets minted in the registry. Previews are purely a workspace-local concern. In fact no `rig deploy` touches the registry; the manifests here are pure deploy specs. Registry history only appears when you deliberately publish (`rig recipe app publish --vendor/--slug/--version`).
 
 ## Why this works
 
@@ -104,18 +107,18 @@ in the single root `rig.yaml`, and each `path` directory holds only code.
 
 ```bash
 # Index page (classic OR aurora depending on BUILD_FLAVOR)
-curl https://bg-blog-<workspace-id>.rigbox.dev
+curl https://blog-<workspace-id>.rigbox.dev
 
 # Post a new entry
 curl -X POST -H 'content-type: application/json' \
   -d '{"title":"Bluegreen rules","body":"redesign without fear"}' \
-  https://bg-blog-<workspace-id>.rigbox.dev/admin/post
+  https://blog-<workspace-id>.rigbox.dev/admin/post
 
 # Read a single post
-curl https://bg-blog-<workspace-id>.rigbox.dev/post/bluegreen-rules
+curl https://blog-<workspace-id>.rigbox.dev/post/bluegreen-rules
 
-# Migrator's healthz (visible during initial deploy, hidden after)
-curl https://bg-blog-migrator-<workspace-id>.rigbox.dev/healthz
+# Migrator's healthz (its own subdomain; both apps share one workspace)
+curl https://migrator-<workspace-id>.rigbox.dev/healthz
 ```
 
 ## What this example teaches

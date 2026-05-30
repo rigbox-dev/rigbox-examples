@@ -1,5 +1,15 @@
 # param-showcase — exercises every v1 ParamSpec type and attribute.
 #
+# Single-app project: one root rig.yaml with top-level fields. Deploy
+# with `rig deploy` from this directory — it spawns (or reuses) a
+# workspace and installs the app in one step. The bound workspace is
+# recorded in .rig-app-deploy.lock (gitignored).
+#
+# Optional top-level blocks (omitted here, defaults shown):
+#   image: base          # VM TEMPLATE name; defaults to `base`
+#   workspace:           # tune the spawned workspace
+#     vcpus: 1
+#
 # The eight `type:` values supported by the v1 manifest schema are
 # string, number, boolean, secret, select, email, url, textarea.
 # Each param below sets a non-default value for at least one of:

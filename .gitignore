@@ -1,9 +1,11 @@
-# Per-app deploy state (one lock per `rig.yaml`, created by `rig app deploy`).
-.rig-app-deploy.lock
+# Per-project deploy state, created by `rig deploy`. Records which
+# workspace(s) the project is bound to so redeploys target the right one.
+.rig.lock
 
-# Composition-level deploy state (one per `composition.yaml`, created by
-# `rig workspace deploy` / `rig deploy`). Records which workspaces the
-# composition has been deployed to so redeploys target the right one.
+# Legacy per-app / composition lock files (pre-consolidation). No longer
+# written, but ignore them defensively — they could contain resolved
+# secrets and must never be committed.
+.rig-app-deploy.lock
 .rig-workspace-deploy.lock
 
 # Node

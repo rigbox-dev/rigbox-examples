@@ -2,8 +2,10 @@
 #
 # `rig deploy` spins up (or attaches to) a workspace, rsyncs each app's
 # code from its `path`, installs, and brings them up in dependency order.
-# The frontend derives the API URL from its own hostname, so no per-deploy
-# templating is needed.
+# Each app gets its own subdomain from its name + the workspace id:
+# api-<ws>.rigbox.dev and web-<ws>.rigbox.dev. The frontend derives the
+# API origin from its own web-<ws> hostname (swapping the prefix to
+# api-<ws>), so no per-deploy templating is needed.
 #
 #   cd frontend-plus-api && rig deploy
 #
