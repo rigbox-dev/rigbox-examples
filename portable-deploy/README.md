@@ -26,7 +26,7 @@ cd portable-deploy
 rig deploy --workspace portable-demo
 ```
 
-That auto-detects `rig.yaml` and runs `rig app deploy`; the VM clones
+That auto-detects `rig.yaml` and runs `rig deploy`; the VM clones
 the source itself at install time, so the deploy carries no local
 source either way.
 

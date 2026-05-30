@@ -17,7 +17,7 @@ No proxy-specific code in `chat.py`. The same source would work against `api.ope
 
 ```bash
 cd /path/to/ai-chat-sample
-rig app deploy --workspace my-ws
+rig deploy --workspace my-ws
 ```
 
 ## Use

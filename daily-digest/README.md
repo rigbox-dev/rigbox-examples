@@ -15,7 +15,7 @@ The work is a background loop; the HTTP surface exists only because the platform
 
 ```bash
 cd daily-digest
-rig app deploy --workspace <ws>
+rig deploy --workspace <ws>
 ```
 
 Watch it tick:

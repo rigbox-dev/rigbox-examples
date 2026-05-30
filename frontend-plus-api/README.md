@@ -1,8 +1,8 @@
 # frontend-plus-api
 
-A two-app **composition** — one `composition.yaml` describes a whole
-workspace: a tiny todo API on one subdomain and a vanilla-JS frontend
-that talks to it on another.
+A two-app project — one root `rig.yaml` describes the whole workspace: a
+tiny todo API on one subdomain and a vanilla-JS frontend that talks to it
+on another.
 
 ## Deploy in one command
 
@@ -11,81 +11,80 @@ Clone this repo and run:
 ```bash
 git clone https://github.com/rigbox-dev/rigbox-examples.git
 cd rigbox-examples/frontend-plus-api
-rig workspace deploy --name my-stack
+rig deploy
 ```
 
 That:
 
-1. Spawns a workspace from `@rigbox/base@1` + the declared resources.
-2. Installs both child apps from the recipes referenced in `apps[].ref` (`@rigbox/fpa-api@0.1.0`, `@rigbox/fpa-web@0.1.0`).
-3. Boots the workspace; both apps reach their public subdomains.
+1. Spawns a workspace from `@rigbox/base@1` + the declared resources (or
+   attaches to the one recorded in `.rig.lock` / `--workspace <id|name>`).
+2. Rsyncs and installs each app from its `path` — `api` from `./backend`,
+   `web` from `./frontend`.
+3. Brings them up in `dependsOn` order (`api`, then `web`); both apps reach
+   their public subdomains.
 
-No publishing-first dance — the composition is a pure deploy spec with no vendor identity. Adding your stack to the catalog is a separate, deliberate step (`rig recipe composition publish --vendor/--slug/--version`); see [Publishing your own version](#publishing-your-own-version) below.
+The frontend derives the API URL from its own hostname, so no per-deploy
+templating is needed.
 
 ## What's in the box
 
-| File | What it does |
-|---|---|
-| `composition.yaml` | Workspace blueprint — base image, resources, child app refs |
-| `backend/rig.yaml` | `fpa-api` — in-memory todo API on port 5100 |
-| `frontend/rig.yaml` | `fpa-web` — static UI on port 5101 |
+One root `rig.yaml` holds the whole spec — a `workspace:` block (base image
++ resources) and an `apps:` map. Each app's `path` directory holds only
+code; the app's spec lives inline under `apps.<name>`.
 
-Both children target the base image — no backing services, just `apt install nodejs` at install time.
+| Path | What it does |
+|---|---|
+| `rig.yaml` | Workspace blueprint + both app specs inline |
+| `backend/` | `api` — in-memory todo API on port 5100 (`app.js`) |
+| `frontend/` | `web` — static UI on port 5101, `dependsOn: [api]` (`server.js`, `public/`) |
+
+Both apps target the base image — no backing services, just `apt install nodejs` at install time.
 
 ## Verify
 
 ```bash
 # Frontend shows the todo list; add/delete works.
-open https://fpa-web-<ws>.rigbox.dev
+open https://web-<ws>.rigbox.dev
 
 # API responds directly.
-curl https://fpa-api-<ws>.rigbox.dev/api/todos
+curl https://api-<ws>.rigbox.dev/api/todos
 curl -X POST -H 'content-type: application/json' \
   -d '{"title":"first todo"}' \
-  https://fpa-api-<ws>.rigbox.dev/api/todos
+  https://api-<ws>.rigbox.dev/api/todos
 ```
 
 ## Iterate on the source
 
-The default `composition.yaml` installs the publisher's frozen recipes. For an edit-deploy loop against `backend/` and `frontend/` here in this repo, use the sibling **`dev/composition.yaml`** — same two apps, but `apps[].path: ../backend` / `../frontend` instead of `apps[].ref`. Every deploy rsyncs the local working copy and reinstalls; no `rig recipe app publish` round-trip between changes.
+Every deploy rsyncs the local working copy of each app's `path` and
+reinstalls — no publish round-trip between changes. Edit `backend/` or
+`frontend/`, then redeploy.
+
+Redeploy both apps into the same workspace:
 
 ```bash
-cd dev
-rig workspace deploy --name my-stack
+rig deploy
 ```
 
-`dev/composition.yaml` is intentionally non-publishable (the publish schema rejects `apps[].path`). For ad-hoc deploys without editing the source, stay at the repo root with the default `composition.yaml`.
-
-## Redeploy into the same workspace
+Redeploy just one app:
 
 ```bash
-rig workspace deploy
+rig deploy --app web
 ```
 
-The composition lock (`.rig-workspace-deploy.lock`) remembers which workspace you targeted last time, so a bare redeploy lands on the same workspace.
+The project lock (`.rig.lock`) at the repo root remembers which workspace
+you targeted last time, so a bare redeploy lands on the same workspace.
+Pass `--workspace <id|name>` to target a different one.
 
-## Publishing your own version
+## Publishing
 
-If you want to *share* this stack as a registry composition rather than just deploy it:
-
-```bash
-# 1. Publish the two child recipes — identity comes from the flags,
-#    not the manifest.
-cd backend  && rig recipe app publish --vendor <you> --slug fpa-api --version 0.1.0 && cd ..
-cd frontend && rig recipe app publish --vendor <you> --slug fpa-web --version 0.1.0 && cd ..
-
-# 2. Point composition.yaml's apps[].ref at your versions, then publish.
-rig recipe composition publish --vendor <you> --slug frontend-plus-api --version 0.1.0
-
-# 3. Now anyone can deploy your stack with one command.
-rig recipe composition deploy --ref @<you>/frontend-plus-api@0.1.0 --name their-stack
-```
-
-This is the "I want to maintain a public version of this stack" path. For ad-hoc use, you don't need any of it — `rig workspace deploy` does the right thing.
+Publishing a multi-app project to the registry as a workspace-definition is
+a work-in-progress follow-up — not available in this model yet. For now
+these examples are deploy-only. (Individual single-app recipes can still be
+published with `rig recipe app publish --vendor/--slug/--version`.)
 
 ## Requirements
 
-Latest CLI (v0.12.7+):
+Latest CLI:
 
 ```bash
 curl -fsSL https://rigbox.dev/install.sh | bash
