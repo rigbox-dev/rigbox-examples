@@ -31,21 +31,12 @@
   <ul id="list"></ul>
 
   <script>
-    // rig deploys this app at frontend-web-<ws>.rigbox.dev and its sibling
-    // backend at frontend-api-<ws>.rigbox.dev (the app names are
-    // `frontend-web` and `frontend-api`). Deriving the backend host from
-    // our own location avoids templating the workspace id into a param.
-    // Both branches end at the `/api` mount point — the backend routes are
-    // `/api/todos`, `/api/todos/:id`, etc.
-    function deriveApiUrl() {
-      const h = location.host;
-      if (h.startsWith('frontend-web-')) {
-        return location.protocol + '//' + h.replace(/^frontend-web-/, 'frontend-api-') + '/api';
-      }
-      return '/api';
-    }
-    const apiUrl = window.RIGBOX_API_URL || deriveApiUrl();
-    document.getElementById('api-url').textContent = apiUrl;
+    // Same-origin: server.js proxies /api to the sibling backend over the
+    // workspace's loopback interface, so the page never makes a cross-origin
+    // request and the backend can stay private. Backend routes live under
+    // this `/api` mount — `/api/todos`, `/api/todos/:id`, etc.
+    const apiUrl = '/api';
+    document.getElementById('api-url').textContent = apiUrl + ' (proxied to frontend-api)';
 
     async function fetchTodos() {
       const r = await fetch(apiUrl + '/todos');

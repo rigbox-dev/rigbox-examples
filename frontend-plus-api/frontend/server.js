@@ -1,19 +1,20 @@
-// Static-file server with one templating trick: injects the API
-// URL (read from process.env.RIGBOX_API_URL) into index.html as
-// window.RIGBOX_API_URL so the page knows where to reach the backend
-// without baking the address into the HTML at build time.
+// Static-file server that proxies /api to the sibling backend.
+//
+// Rigbox injects RIGBOX_FRONTEND_API_URL=http://127.0.0.1:<port> into this
+// app's environment because rig.yaml declares `dependsOn: [frontend-api]` —
+// co-located apps share the workspace VM's loopback interface, so the
+// backend is reachable at 127.0.0.1 regardless of its (private) external
+// visibility. We proxy /api server-side, so the browser only ever talks to
+// this same origin: no CORS, and the API never needs to be made public.
+//
+// The localhost fallback makes `node server.js` work in local dev too,
+// where the platform var isn't set.
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
 const port = Number(process.env.PORT || 5101);
-// When RIGBOX_API_URL is set (e.g. the frontend-web app's `params.api_url`
-// override), inject it into index.html as window.RIGBOX_API_URL.
-// Otherwise leave the page to derive the URL from window.location —
-// see public/index.html's deriveApiUrl() — so the default case
-// "talk to my sibling frontend-api app on the same workspace" works
-// without any per-deploy templating.
-const apiUrl = process.env.RIGBOX_API_URL || '';
+const apiTarget = process.env.RIGBOX_FRONTEND_API_URL || 'http://127.0.0.1:5100';
 const publicDir = path.join(__dirname, 'public');
 
 const mime = {
@@ -26,6 +27,25 @@ const mime = {
   '.ico': 'image/x-icon',
 };
 
+// Forward /api/* to the backend over loopback, streaming both ways.
+function proxyToApi(req, res) {
+  const target = new URL(req.url, apiTarget);
+  const headers = { ...req.headers, host: target.host };
+  const upstream = http.request(
+    target,
+    { method: req.method, headers },
+    (up) => {
+      res.writeHead(up.statusCode || 502, up.headers);
+      up.pipe(res);
+    },
+  );
+  upstream.on('error', () => {
+    res.writeHead(502, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'backend unreachable', target: apiTarget }));
+  });
+  req.pipe(upstream);
+}
+
 const server = http.createServer((req, res) => {
   const urlPath = (req.url || '/').split('?')[0];
 
@@ -34,15 +54,14 @@ const server = http.createServer((req, res) => {
     return res.end('ok\n');
   }
 
+  if (urlPath === '/api' || urlPath.startsWith('/api/')) {
+    return proxyToApi(req, res);
+  }
+
   if (urlPath === '/' || urlPath === '/index.html') {
     const html = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf-8');
-    // Only inject when there's a real override — otherwise the page's
-    // deriveApiUrl() picks up the sibling backend automatically.
-    const out = apiUrl
-      ? html.replace('</head>', `<script>window.RIGBOX_API_URL = ${JSON.stringify(apiUrl)};</script>\n</head>`)
-      : html;
     res.writeHead(200, { 'content-type': 'text/html' });
-    return res.end(out);
+    return res.end(html);
   }
 
   const filePath = path.join(publicDir, urlPath);
@@ -57,5 +76,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`frontend listening on :${port} (api_url=${apiUrl})`);
+  console.log(`frontend listening on :${port} (proxying /api -> ${apiTarget})`);
 });
