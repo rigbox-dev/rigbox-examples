@@ -1,0 +1,6 @@
+<article class="rb-card rb-stack">
+  <h1><%= @post['title'] %></h1>
+  <p class="rb-muted rb-mono"><%= @post['created_at'] %></p>
+  <div><%= markdown(@post['body']) %></div>
+  <p><a class="rb-btn rb-btn-ghost" href="/">← All posts</a></p>
+</article>

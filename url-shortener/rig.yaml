@@ -1,0 +1,95 @@
+workspace:
+  image: base
+  resources:
+    ramMb: 1536
+    vcpuCount: 1
+    diskSizeMb: 3072
+
+apps:
+  web:
+    path: .
+    port: 5100
+    visibility: public
+    env:
+      DATA_DIR: /home/developer/data
+      DJANGO_SETTINGS_MODULE: config.settings
+    install: |
+      pip install --break-system-packages "django>=5,<6" gunicorn whitenoise
+      python3 manage.py migrate --noinput
+      python3 manage.py collectstatic --noinput
+    # Single-line plain scalar: a folded (>) or block (|) scalar appends a
+    # trailing newline, and the server rejects an exec_start containing newlines.
+    start: gunicorn config.wsgi:application --bind 0.0.0.0:5100 --workers 2
+    health:
+      path: /healthz
+      timeoutSeconds: 60
+
+    params:
+      # url
+      - key: default_redirect_url
+        type: url
+        label: Default redirect URL
+        description: Where unknown short codes send visitors.
+        group: Behavior
+        default: https://rigbox.dev
+        envVar: DEFAULT_REDIRECT_URL
+      # string (with validationPattern)
+      - key: site_name
+        type: string
+        label: Site name
+        description: Shown in the header and page title.
+        group: Display
+        default: Tiny Links
+        validationPattern: "^[A-Za-z0-9 ]{2,32}$"
+        envVar: SITE_NAME
+      # number (with pattern)
+      - key: max_links
+        type: number
+        label: Max links
+        description: Upper bound on stored short links.
+        group: Behavior
+        default: "100"
+        validationPattern: "^[0-9]+$"
+        envVar: MAX_LINKS
+      # boolean
+      - key: require_https
+        type: boolean
+        label: Require HTTPS targets
+        description: Reject http:// targets when on.
+        group: Behavior
+        default: "false"
+        envVar: REQUIRE_HTTPS
+      # select
+      - key: id_strategy
+        type: select
+        label: Short code strategy
+        description: How new short codes are generated.
+        group: Behavior
+        default: random
+        envVar: ID_STRATEGY
+        options:
+          - { value: random, label: "Random (6 chars)" }
+          - { value: sequential, label: "Sequential (0001, 0002, …)" }
+      # email
+      - key: admin_email
+        type: email
+        label: Admin email
+        description: Contact address for this instance.
+        group: Admin
+        envVar: ADMIN_EMAIL
+      # secret (sensitive)
+      - key: admin_token
+        type: secret
+        label: Admin token
+        description: Opaque token gating future admin actions.
+        group: Admin
+        sensitive: true
+        envVar: ADMIN_TOKEN
+      # textarea
+      - key: welcome_message
+        type: textarea
+        label: Welcome message
+        description: Intro copy shown above the form.
+        group: Display
+        default: "Paste a long URL and get a short code. Links persist across redeploys."
+        envVar: WELCOME_MESSAGE

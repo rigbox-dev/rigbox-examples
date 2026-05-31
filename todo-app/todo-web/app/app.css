@@ -1,0 +1,30 @@
+/* Layout-only helpers for the todo list. No new colors/shapes — composes tokens. */
+
+.todo-add { display: flex; gap: var(--rb-s3); align-items: stretch; }
+.todo-add .rb-input { flex: 1; }
+
+.todo-item {
+  display: flex; align-items: center; gap: var(--rb-s3);
+  padding: var(--rb-s3) var(--rb-s4);
+  border: 1px solid var(--rb-border); border-radius: var(--rb-radius-sm);
+  background: var(--rb-surface);
+}
+.todo-item + .todo-item { margin-top: var(--rb-s2); }
+.todo-item .todo-title { flex: 1; }
+.todo-item.is-done .todo-title { color: var(--rb-muted); text-decoration: line-through; }
+
+.todo-check {
+  appearance: none; -webkit-appearance: none;
+  width: 18px; height: 18px; flex: 0 0 auto; cursor: pointer;
+  border: 1.5px solid var(--rb-border); border-radius: 6px;
+  background: var(--rb-surface); display: inline-grid; place-content: center;
+}
+.todo-check:checked { background: var(--rb-accent); border-color: var(--rb-accent); }
+.todo-check:checked::after {
+  content: ""; width: 5px; height: 9px;
+  border: solid var(--rb-accent-ink); border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translateY(-1px);
+}
+
+.todo-empty { padding: var(--rb-s5); text-align: center; }
+.loopback-note { margin-top: var(--rb-s2); }

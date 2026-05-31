@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bluegreen-blog</title>
+  <link rel="stylesheet" href="/tokens.css">
+  <% if accent %>
+    <!-- The "aurora" flavor re-tints the shared iris accent so a bluegreen
+         cut-over is unmistakable, while still using the shared tokens. -->
+    <style>:root { --rb-accent: <%= accent %>; --rb-accent-soft: #d9f3f2; }</style>
+  <% end %>
+</head>
+<body>
+  <header class="rb-header">
+    <span class="rb-title">bluegreen-blog</span>
+    <span class="rb-badge">Rigbox example</span>
+  </header>
+
+  <main class="rb-container">
+    <div class="rb-row" style="justify-content: space-between; margin-bottom: var(--rb-s4);">
+      <span class="rb-pill <%= 'rb-pill-ok' if FLAVOR == 'aurora' %>">theme: <%= FLAVOR %></span>
+      <a class="rb-btn rb-btn-ghost" href="/posts/new">New post</a>
+    </div>
+    <%= yield %>
+  </main>
+
+  <footer class="rb-footer">
+    A Rigbox example · built with <em>Ruby · Sinatra</em> ·
+    <a href="https://rigbox.dev">rigbox.dev</a>
+  </footer>
+</body>
+</html>

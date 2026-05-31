@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Webhook Receiver — Rigbox example</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}" />
+</head>
+<body>
+  <header class="rb-header">
+    <span class="rb-title">Webhook Receiver</span>
+    <span class="rb-badge">Rigbox example</span>
+  </header>
+
+  <main class="rb-container rb-wide">
+    <div class="rb-card rb-stack">
+      <h1>HMAC webhook validator</h1>
+      <p class="rb-muted">
+        POST to <span class="rb-mono">/webhook</span> with an <span class="rb-mono">X-Signature</span>
+        header. The server recomputes the HMAC of the raw body using the shared key and the
+        selected algorithm, then reports valid / invalid.
+      </p>
+      <div class="rb-row">
+        <span class="rb-pill rb-pill-ok">algorithm: {{ algorithm }}</span>
+        {% if key_set %}
+          <span class="rb-pill rb-pill-ok">WEBHOOK_HMAC_KEY: set</span>
+        {% else %}
+          <span class="rb-pill rb-pill-danger">WEBHOOK_HMAC_KEY: missing</span>
+        {% endif %}
+      </div>
+      <div class="rb-field">
+        <span class="rb-label">Endpoint token (server-generated)</span>
+        <div class="rb-mono">{{ endpoint_token }}</div>
+        <div class="rb-hint">Minted by Rigbox and injected as CRED_ENDPOINT_TOKEN. Callers can include it to identify this endpoint.</div>
+      </div>
+    </div>
+
+    <div class="rb-card rb-stack">
+      <h2>Send a test webhook</h2>
+      <p class="rb-muted">Signs the payload correctly with the active key + algorithm, then runs it through the same validator. Expect a green result.</p>
+      <div class="rb-field">
+        <label class="rb-label" for="payload">Payload</label>
+        <textarea id="payload" class="rb-textarea">{"event":"ping","ok":true}</textarea>
+      </div>
+      <div class="rb-row">
+        <button id="send" class="rb-btn">Send test webhook</button>
+        <span id="result"></span>
+      </div>
+    </div>
+
+    <div class="rb-card rb-stack">
+      <h2>Recent webhooks <span class="rb-muted">(in memory)</span></h2>
+      {% if recent %}
+        <div class="rb-stack">
+          {% for w in recent %}
+            <div class="rb-row" style="justify-content: space-between; border-bottom: 1px solid var(--rb-border); padding-bottom: var(--rb-s2);">
+              <div class="rb-row">
+                {% if w.valid %}
+                  <span class="rb-pill rb-pill-ok">valid</span>
+                {% else %}
+                  <span class="rb-pill rb-pill-danger">invalid</span>
+                {% endif %}
+                <span class="rb-mono">{{ w.preview }}</span>
+              </div>
+              <span class="rb-muted">{{ w.detail }} · {{ w.at }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="rb-muted">No webhooks received yet. Send a test above, or POST to /webhook.</p>
+      {% endif %}
+    </div>
+  </main>
+
+  <footer class="rb-footer">
+    A Rigbox example · built with <em>Python · Flask</em> ·
+    <a href="https://rigbox.dev">rigbox.dev</a>
+  </footer>
+
+  <script>
+    document.getElementById('send').addEventListener('click', async function () {
+      var btn = this;
+      var result = document.getElementById('result');
+      btn.disabled = true;
+      result.textContent = '';
+      try {
+        var body = new URLSearchParams();
+        body.set('payload', document.getElementById('payload').value);
+        var res = await fetch('/send-test', { method: 'POST', body: body });
+        var data = await res.json();
+        if (data.valid) {
+          result.innerHTML = '<span class="rb-pill rb-pill-ok">valid</span>';
+        } else {
+          result.innerHTML = '<span class="rb-pill rb-pill-danger">invalid</span>';
+        }
+        setTimeout(function () { location.reload(); }, 600);
+      } catch (e) {
+        result.innerHTML = '<span class="rb-pill rb-pill-danger">error</span>';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

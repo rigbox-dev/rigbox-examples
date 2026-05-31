@@ -1,56 +1,25 @@
-# webhook-receiver — production-shape secret hygiene demo.
-#
-# Single-app project: this one root rig.yaml describes the whole app
-# with top-level fields. `rig deploy` (run from this directory) resolves
-# secrets from your shell, spawns or reuses a workspace, and deploys.
-#
-# Three "secret-shaped" surfaces, each with a different lifecycle:
-#
-#   secrets:               forwarded from the operator's local shell at
-#                          deploy time. Value never lives in rig.yaml, in
-#                          git, or in the workspace's persistent env. If
-#                          the local var is unset, the deploy errors out
-#                          before publishing — fail-fast.
-#
-#   credentials:           server-generates a random value on first
-#                          deploy and injects it as CRED_<UPPER_KEY>.
-#                          Survives restarts; rotates only on re-create.
-#
-#   params:                typed user-tunable knobs. Validated against
-#                          the spec at write time. Editable live via
-#                          `rig app param set`; reset to defaults on
-#                          every `rig deploy`.
-
 name: webhook-receiver
-port: 5500
-start: node app.js
-install: command -v node >/dev/null || sudo apt-get install -y nodejs
-
-# `WEBHOOK_HMAC_KEY` must be set in the operator's local shell at the
-# time of `rig deploy` (e.g. `WEBHOOK_HMAC_KEY=... rig deploy`). The CLI
-# reads it then; it never persists in this manifest or in git. If unset,
-# the deploy fails fast before publishing.
-secrets:
-  - WEBHOOK_HMAC_KEY
-
-# `session_secret` becomes `CRED_SESSION_SECRET` inside the running
-# app. The platform mints the value once on first deploy.
-credentials:
-  session_secret:
-    generate: true
-
-params:
-  - key: signing_algorithm
-    type: select
-    label: HMAC algorithm
-    description: Used to verify the X-Signature header on incoming POSTs.
-    group: Webhook
-    default: hmac-sha256
-    options:
-      - { value: hmac-sha256, label: HMAC-SHA256 }
-      - { value: hmac-sha512, label: HMAC-SHA512 }
-    envVar: SIGNING_ALGORITHM
-
+port: 8080
+install: |
+  pip install --break-system-packages flask
+start: python3 app.py
 health:
   path: /healthz
   timeoutSeconds: 30
+params:
+  - key: signing_algorithm
+    type: select
+    label: Signing algorithm
+    description: HMAC digest used to validate the X-Signature header.
+    group: Signing
+    default: sha256
+    envVar: SIGNING_ALGORITHM
+    options:
+      - { value: sha256, label: "SHA-256" }
+      - { value: sha1,   label: "SHA-1" }
+      - { value: sha512, label: "SHA-512" }
+secrets:
+  - name: WEBHOOK_HMAC_KEY
+credentials:
+  endpoint_token:
+    generate: true   # → injected as CRED_ENDPOINT_TOKEN
