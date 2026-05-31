@@ -16,6 +16,12 @@ DATA   = ENV["DATA_DIR"] || "/home/developer/data"
 # Validated `select` param (rig.yaml: classic | aurora). The server rejects
 # anything else, so the app can trust this value — no defensive parsing.
 FLAVOR = ENV["BUILD_FLAVOR"] || "classic"
+# Optional secret (rig.yaml `secrets:`). Sourced from your shell or a `.env`
+# file at deploy (`rig deploy --stage production` loads `.env.production`).
+# When set, publishing a post requires a matching token; when unset, the blog
+# is open. Different per stage — the production app and a bluegreen staging
+# sibling carry different tokens.
+ADMIN = ENV["ADMIN_TOKEN"].to_s
 
 set :server, "webrick"      # pure-Ruby server: no native build at deploy time
 set :bind, "0.0.0.0"        # MUST bind all interfaces for the Rigbox health probe
@@ -54,6 +60,11 @@ helpers do
   def markdown(text)
     Kramdown::Document.new(text.to_s).to_html
   end
+
+  # Publishing is gated only when an ADMIN_TOKEN secret is present.
+  def admin_required?
+    !ADMIN.empty?
+  end
 end
 
 get "/healthz" do
@@ -71,6 +82,10 @@ get "/posts/new" do
 end
 
 post "/posts" do
+  # Gate writes on the ADMIN_TOKEN secret when one is configured.
+  if admin_required? && params[:token].to_s != ADMIN
+    halt 403, "admin token required to publish"
+  end
   title = params[:title].to_s.strip
   body  = params[:body].to_s
   halt 400, "title required" if title.empty?

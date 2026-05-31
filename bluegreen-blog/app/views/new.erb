@@ -10,6 +10,14 @@
       <textarea class="rb-textarea" id="body" name="body" placeholder="Markdown supported — # headings, **bold**, lists…"></textarea>
       <div class="rb-hint">Rendered with Kramdown.</div>
     </div>
+    <% if admin_required? %>
+    <div class="rb-field">
+      <label class="rb-label" for="token">Admin token</label>
+      <input class="rb-input" id="token" name="token" type="password"
+             placeholder="value of the ADMIN_TOKEN secret">
+      <div class="rb-hint">Required: this deploy carries an <span class="rb-mono">ADMIN_TOKEN</span> secret (from <span class="rb-mono">.env.&lt;stage&gt;</span> or your shell).</div>
+    </div>
+    <% end %>
     <div class="rb-row">
       <button class="rb-btn" type="submit">Publish</button>
       <a class="rb-btn rb-btn-ghost" href="/">Cancel</a>
