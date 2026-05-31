@@ -10,6 +10,10 @@
 # same-origin and frontend-api never needs a public subdomain — it stays
 # private (the default). Only frontend-web is opened to the world.
 #
+# The page has a Private/Internet route toggle: "Internet" makes server.js
+# call frontend-api's *public* subdomain instead, authenticated with the
+# optional RIGBOX_API_KEY secret (see frontend-web.secrets below).
+#
 #   cd frontend-plus-api && rig deploy
 #
 # Redeploy just one app:  rig deploy --app frontend-web
@@ -48,3 +52,10 @@ apps:
     health:
       path: /healthz
       timeoutSeconds: 30
+    # Optional: powers the page's "Internet" route toggle. Export a Rigbox
+    # API key (ideally workspace-scoped) before `rig deploy` and server.js
+    # will authenticate the public-subdomain call with X-Rigbox-Key. Omit it
+    # and the deploy still succeeds — the toggle just shows how to enable it.
+    #   export RIGBOX_API_KEY=rb_...
+    secrets:
+      - { name: RIGBOX_API_KEY, optional: true }

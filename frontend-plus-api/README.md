@@ -52,11 +52,60 @@ Apps deploy **private** by default, so open just the public entry point —
 rig app share --app frontend-web --public
 ```
 
+Re-run that after each `rig deploy` — a deploy resets app visibility to the
+`rig.yaml` default (private).
+
 > The old approach — a browser `fetch` cross-origin to the API's subdomain —
 > failed with `CORS request did not succeed` whenever the API was private (the
 > fetch followed the login redirect). Proxying server-side over the workspace's
 > internal network avoids that entirely and keeps the API key/credentials off
 > the client.
+
+## Toggle: loopback vs the public internet
+
+The page has a **Private / Internet** route switch. Both reach the same
+backend; they differ in *how*:
+
+- **Private (default)** — `server.js` proxies `/api` to `127.0.0.1:5100` over
+  the VM's loopback. Fast, never leaves the VM, and needs no credentials. This
+  is what you should use when the dependency is co-located.
+- **Internet** — `server.js` proxies `/api` to `frontend-api`'s **public
+  subdomain** over the internet (through the gateway). Since `frontend-api` is
+  private, the call is authenticated with an `X-Rigbox-Key` header — so this
+  route exercises the metered, public path instead of loopback.
+
+The key is an **optional deploy secret** the workspace owner sets. It stays
+server-side in `frontend-web`'s env and is **never sent to the browser**:
+
+```bash
+export RIGBOX_API_KEY=rb_...     # your Rigbox API key (the workspace owner's)
+rig deploy
+```
+
+`rig.yaml` declares it as `secrets: [{ name: RIGBOX_API_KEY, optional: true }]`,
+so **deploying without it still works** — the Internet toggle just shows a toast
+explaining how to enable it, and the app keeps running on the Private route.
+Requires CLI ≥ 0.12.33 (optional secrets).
+
+Notes:
+- Use the **owner's** key — a key from another account gets `403` (the API is
+  private to its owner). A non-owner or missing key can't read it.
+- **Prefer a workspace-scoped key** if you have one: a leak is then bounded to
+  this workspace's own apps (which the VM already reaches over loopback). The
+  key does live in the app's server-side env — a deliberate, owner-controlled
+  tradeoff for this demo.
+- Don't reach for Internet mode when loopback works — it's here to show the
+  public/authenticated path, not because you need it for co-located apps.
+
+### Or just make the API public
+
+If you don't want a key at all, share the API and it answers without auth:
+
+```bash
+rig app share --app frontend-api --public
+```
+
+Then anyone can hit it — fine for this throwaway todo data, not for anything real.
 
 ## What's in the box
 
