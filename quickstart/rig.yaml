@@ -1,0 +1,16 @@
+name: quickstart
+port: 8080
+install: npm ci
+start: npm start
+health:
+  path: /healthz
+  timeoutSeconds: 30
+
+# This default config deploys the LOCAL working copy (rsync). To deploy straight
+# from git instead, uncomment the block below — that one change is the whole
+# difference between the two deploy source modes. See the README.
+#
+# source:
+#   kind: git
+#   repo: https://github.com/rigbox-dev/rigbox-examples.git
+#   branch: main

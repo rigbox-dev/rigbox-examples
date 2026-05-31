@@ -1,25 +1,22 @@
 name: ai-chat
 port: 8080
-start: uvicorn chat:app --host 0.0.0.0 --port 8080
 install: |
-  pip install --quiet --break-system-packages fastapi uvicorn pydantic
-
-# Opt this app into the workspace's managed AI proxy. `rig deploy` injects
-# OPENAI_BASE_URL + OPENAI_API_KEY=managed-by-rigbox into the systemd
-# unit's env, so the raw HTTP calls in chat.py route through the
-# workspace proxy (172.16.0.1:9090) automatically. No code change needed
-# to switch between BYO-key and managed.
-ai:
-  managed: true
-
+  pip install --break-system-packages fastapi uvicorn pydantic httpx
+start: uvicorn chat:app --host 0.0.0.0 --port 8080
 health:
   path: /healthz
   timeoutSeconds: 30
-
-env:
-  # Portable Rigbox model alias — the managed proxy resolves it to the
-  # current default upstream, so the app never hardcodes a vendor model
-  # that can be retired. Other aliases: rigbox/fast, rigbox/free.
-  # To pin a specific upstream, change this value (e.g. openai/gpt-5.4)
-  # and re-run `rig deploy` — rig.yaml is the source of truth.
-  MODEL: "rigbox/default"
+ai:
+  managed: true
+params:
+  - key: model
+    type: select
+    label: Model alias
+    description: Portable model alias resolved by the managed AI proxy.
+    group: AI
+    default: rigbox/default
+    envVar: MODEL
+    options:
+      - { value: rigbox/default, label: "Default" }
+      - { value: rigbox/fast, label: "Fast" }
+      - { value: rigbox/free, label: "Free" }

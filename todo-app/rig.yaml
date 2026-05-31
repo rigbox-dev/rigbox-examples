@@ -1,0 +1,38 @@
+workspace:
+  image: base
+  resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 10240 }
+
+apps:
+  todo-api:
+    path: ./todo-api
+    port: 5100
+    install: npm ci
+    # ExecStart is not shell-wrapped, so an inline `PORT=5100 npm start` would
+    # make systemd look for a binary named "PORT=5100". Put PORT in env instead.
+    start: npm start
+    # No visibility key → private. Reachable only by siblings over loopback.
+    health: { path: /healthz, timeoutSeconds: 30 }
+    env:
+      DATA_DIR: /home/developer/data
+      PORT: "5100"
+    params:
+      - key: list_limit
+        type: select
+        label: List size
+        description: How many todos the API returns at most.
+        group: Behavior
+        default: "50"
+        envVar: LIST_LIMIT
+        options:
+          - { value: "20", label: "20 items" }
+          - { value: "50", label: "50 items" }
+          - { value: "100", label: "100 items" }
+
+  todo-web:
+    path: ./todo-web
+    port: 5101
+    install: npm ci && npm run build
+    start: npx next start -H 0.0.0.0 -p 5101
+    dependsOn: [todo-api]   # injects RIGBOX_TODO_API_URL=http://127.0.0.1:5100
+    visibility: public      # only the front door is public
+    health: { path: /healthz, timeoutSeconds: 90 }

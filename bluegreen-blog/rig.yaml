@@ -1,58 +1,46 @@
-# bluegreen-blog — a two-app project that walks through bluegreen +
-# promote against a real-shape stateful app: deploy v1, write content,
-# redesign as a bluegreen sibling on real data, then atomically promote.
-#
-#   bluegreen-migrator — one-shot schema sidecar; creates the data dir +
-#              index the blog reads. `dependsOn`'d by bluegreen-blog so the
-#              blog never starts on uninitialized state.
-#   bluegreen-blog     — vanilla-JS markdown blog. Reads/writes posts under
-#              /home/developer/data/posts/ (OUTSIDE the rsync zone), so
-#              data survives every redeploy.
+# bluegreen-blog — a Sinatra markdown blog that walks through bluegreen +
+# promote against a REAL stateful app, and selects its theme with a
+# server-validated `select` param (not a raw env var).
 #
 #   cd bluegreen-blog && rig deploy
+#
+# Ruby isn't in the base image (Python/Node are), so install apt-installs a
+# lean Ruby + pure-Ruby gems — fast enough to stay well under the deploy cap.
+# Posts live in a JSON file under DATA_DIR (outside the rsync zone), so content
+# survives every redeploy and every bluegreen cut-over.
 
 workspace:
   image: base
-  resources:
-    ramMb: 1024
-    vcpuCount: 1
-    diskSizeMb: 3072
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 
 apps:
-  bluegreen-migrator:
-    path: ./migrator
-    port: 5099
-    start: node migrate.js
-    install: |
-      set -e
-      command -v node >/dev/null || sudo apt-get install -y nodejs
-    env:
-      DATA_DIR: /home/developer/data
-    health:
-      path: /healthz
-      timeoutSeconds: 30
-
-  bluegreen-blog:
-    path: ./blog
+  blog:
+    path: ./app
     port: 5100
-    start: node server.js
+    visibility: public
     install: |
       set -e
-      command -v node >/dev/null || sudo apt-get install -y nodejs
-    dependsOn: [bluegreen-migrator]
-    env:
-      DATA_DIR: /home/developer/data
-      # BUILD_FLAVOR controls which UI template renders. Bump between v1
-      # and v2 to make the bluegreen cut-over visually obvious.
-      BUILD_FLAVOR: classic
-    params:
-      - key: site_title
-        type: string
-        label: Site title
-        description: Shown in the header and the browser tab.
-        group: Display
-        default: My Blog
-        envVar: SITE_TITLE
+      sudo apt-get update -y
+      sudo apt-get install -y --no-install-recommends ruby
+      # All pure-Ruby gems → no native builds, no compiler/headers needed.
+      sudo gem install --no-document sinatra kramdown rackup webrick
+    start: ruby app.rb
     health:
       path: /healthz
-      timeoutSeconds: 30
+      timeoutSeconds: 90
+    env:
+      DATA_DIR: /home/developer/data
+    params:
+      # The whole point: theme is a validated `select`, not a raw env var.
+      # `rig app param set build_flavor=aurora` is accepted; `=bogus` is
+      # rejected server-side before it ever reaches the app.
+      - key: build_flavor
+        type: select
+        label: Theme
+        description: Visual theme for the blog. Switches the accent color.
+        group: Display
+        default: classic
+        envVar: BUILD_FLAVOR
+        options:
+          - { value: classic, label: "Classic" }
+          - { value: aurora,  label: "Aurora" }

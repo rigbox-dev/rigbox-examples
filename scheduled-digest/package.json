@@ -1,0 +1,18 @@
+{
+  "name": "scheduled-digest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Rigbox example: a background worker that produces a periodic digest and serves a status page.",
+  "scripts": {
+    "start": "tsx worker.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "@types/node": "22.10.2"
+  }
+}

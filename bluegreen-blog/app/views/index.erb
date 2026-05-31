@@ -1,0 +1,15 @@
+<div class="rb-card rb-stack">
+  <h1>Posts</h1>
+  <% if @posts.empty? %>
+    <p class="rb-muted">No posts yet. Write the first one — it persists in SQLite
+    under <span class="rb-mono">DATA_DIR</span>, so it survives redeploys and
+    bluegreen cut-overs.</p>
+  <% else %>
+    <% @posts.each do |p| %>
+      <div class="rb-row" style="justify-content: space-between;">
+        <a href="/posts/<%= p['id'] %>"><%= p['title'] %></a>
+        <span class="rb-muted rb-mono"><%= p['created_at'] %></span>
+      </div>
+    <% end %>
+  <% end %>
+</div>

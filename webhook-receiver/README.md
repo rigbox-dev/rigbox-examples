@@ -1,96 +1,55 @@
-# webhook-receiver
+# Webhook Receiver
 
-Production-shape secret hygiene in one app: a local `secrets:` block
-forwards an HMAC key from your shell, a `credentials:` block has the
-platform mint a session secret on first deploy, and a typed `params:`
-block lets you flip the signing algorithm without redeploying.
+An HMAC webhook validator/inspector. POST a payload to `/webhook` with an
+`X-Signature` header and the server recomputes the HMAC of the **raw body** using
+a shared signing key and the selected digest algorithm, then reports the request
+as valid or invalid. The dashboard shows the active algorithm, the
+server-generated endpoint token, the signing-key status, and a live list of the
+most recent webhooks — plus a "send test webhook" button that signs a sample
+payload correctly so you can see a green `valid` result immediately.
 
-This is a **single-app** project — one root `rig.yaml` with top-level
-fields. `rig deploy`, run from this directory, resolves secrets from
-your shell, spawns (or reuses) a workspace, and deploys in one step.
+## The capability it demonstrates
 
-## What it shows
+Secrets + a server-minted credential + a validated `select` param, working together:
 
-| `rig.yaml` block | What it does | Where the value comes from | Lifecycle |
-|---|---|---|---|
-| `secrets:` | Forwards `WEBHOOK_HMAC_KEY` from your shell into the app's env at deploy time | operator's `$WEBHOOK_HMAC_KEY` | Re-supplied every `rig deploy`; never lands in rig.yaml or git |
-| `credentials.session_secret: generate: true` | Server mints a random value on first deploy, injects as `CRED_SESSION_SECRET` | platform | Persistent; rotates only if you re-create the app |
-| `params.signing_algorithm` | Typed `select` for the HMAC variant | manifest default or `rig app param set` | Live-editable; resets to manifest default on `rig deploy` |
-
-## Required secret
-
-This app **requires** `WEBHOOK_HMAC_KEY` to be set in your shell at
-deploy time. It is the HMAC key used to verify the `X-Signature` header
-on incoming `POST /webhook` requests. If it is unset, `rig deploy`
-fails fast before publishing.
-
-```bash
-# Anything works as a key; this generates a strong random one.
-export WEBHOOK_HMAC_KEY=$(openssl rand -hex 32)
-```
+- **Secret** `WEBHOOK_HMAC_KEY` — the shared signing key, supplied from your local
+  env at deploy time and injected into the process. **Required.**
+- **Credential** `endpoint_token` (`generate: true`) — Rigbox mints a random value
+  on first deploy and injects it as `CRED_ENDPOINT_TOKEN`. Stable across redeploys
+  and shown in the UI so callers can identify this endpoint.
+- **Param** `signing_algorithm` — a `select` (sha256 / sha1 / sha512, default
+  sha256) injected as `SIGNING_ALGORITHM`. Flip it live with
+  `rig app param set signing_algorithm=sha512`.
 
 ## Deploy
 
 ```bash
-cd webhook-receiver
-
-# `rig deploy` reads WEBHOOK_HMAC_KEY from the shell, spawns/reuses a
-# workspace, and deploys. Inline form shown; an exported var works too.
-WEBHOOK_HMAC_KEY=$(openssl rand -hex 32) rig deploy
-
-# The /webhook endpoint must be reachable by external senders, so make
-# the app public (it is private — login-gated — by default).
-rig app share --app webhook-receiver --public
+export WEBHOOK_HMAC_KEY=your-shared-signing-key   # REQUIRED — read from local env at deploy
+cd webhook-receiver && rig deploy
 ```
 
-`rig deploy` prints the workspace and the app URL, e.g.
-`https://webhook-receiver-<ws>.rigbox.dev`.
+## After deploy
 
-## Verify
+- Open the app URL. The header shows the active **algorithm** pill and a
+  **WEBHOOK_HMAC_KEY: set** pill (it'll read **missing** in red if you forgot the
+  export above).
+- Note the **endpoint token** in `rb-mono` — that's the server-minted
+  `CRED_ENDPOINT_TOKEN`.
+- Click **Send test webhook** to see a green `valid` row appear in "Recent
+  webhooks".
+- Flip the algorithm with `rig app param set signing_algorithm=sha512` and
+  redeploy/reload to watch the pill change.
 
-```bash
-URL=https://webhook-receiver-<ws>.rigbox.dev
+## Required env
 
-# Health check → 200.
-curl -s -o /dev/null -w '%{http_code}\n' "$URL/healthz"
+- `WEBHOOK_HMAC_KEY` (secret) — export it before `rig deploy`. Without it the app
+  still boots and health-checks fine, but `/webhook` returns `503` and the UI shows
+  the key as missing.
 
-# Status — confirms which algo is live + that the HMAC key is set.
-curl -s "$URL/"
+## Notes
 
-# Sign a payload locally with the SAME key and POST it. The signature
-# is the hex HMAC of the exact request body.
-BODY='{"event":"order.created","id":42}'
-SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_HMAC_KEY" -hex | sed 's/^.* //')
-curl -s -X POST -H "X-Signature: $SIG" -d "$BODY" "$URL/webhook"
-# → { "verified": true, … }   (HTTP 200)
-
-# Wrong or missing signature → 401.
-curl -s -X POST -H "X-Signature: deadbeef" -d "$BODY" "$URL/webhook"
-# → { "error": "signature mismatch" }   (HTTP 401)
-curl -s -X POST -d "$BODY" "$URL/webhook"
-# → { "error": "signature mismatch" }   (HTTP 401)
-```
-
-If you switch the algorithm to `hmac-sha512`, sign with
-`openssl dgst -sha512` instead.
-
-## Live-tune via CLI, then reset via redeploy
-
-```bash
-# Flip to SHA-512 on the running app — no redeploy needed.
-rig app param set --app webhook-receiver signing_algorithm=hmac-sha512
-rig app restart --app webhook-receiver
-curl -s "$URL/" | jq .signing_algorithm    # → "hmac-sha512"
-
-# Re-asserting the manifest reverts the live edit (remember the secret).
-WEBHOOK_HMAC_KEY=$WEBHOOK_HMAC_KEY rig deploy
-curl -s "$URL/" | jq .signing_algorithm    # → "hmac-sha256"  (manifest default)
-```
-
-## Requirements
-
-Latest CLI:
-
-```bash
-curl -fsSL https://rigbox.dev/install.sh | bash
-```
+- **Persistence: none.** The recent-webhooks list is an in-memory ring buffer
+  (last 20) and is cleared on every restart or redeploy. By design — this is an
+  inspector, not a store.
+- Stack: Python · Flask. Built-in dev server, bound to `0.0.0.0:8080` with the
+  reloader off.

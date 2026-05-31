@@ -1,0 +1,76 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ cfg.site_name }} · Rigbox example</title>
+  <link rel="stylesheet" href="{% static 'shortener/tokens.css' %}">
+</head>
+<body>
+  <header class="rb-header">
+    <span class="rb-title">{{ cfg.site_name }}</span>
+    <span class="rb-badge">Rigbox example</span>
+  </header>
+
+  <main class="rb-container">
+    <div class="rb-card rb-stack">
+      <h1>Shorten a link</h1>
+      <p class="rb-muted">{{ cfg.welcome_message }}</p>
+
+      <div class="rb-row">
+        <span class="rb-pill {% if cfg.require_https %}rb-pill-ok{% else %}rb-pill-warn{% endif %}">
+          require_https: {{ cfg.require_https|yesno:"on,off" }}
+        </span>
+        <span class="rb-pill">id_strategy: {{ cfg.id_strategy }}</span>
+        <span class="rb-pill {% if at_capacity %}rb-pill-danger{% endif %}">
+          {{ count }} / {{ cfg.max_links }} links
+        </span>
+      </div>
+
+      {% if error %}
+        <div class="rb-row"><span class="rb-pill rb-pill-danger">{{ error }}</span></div>
+      {% endif %}
+
+      <form method="post" action="{% url 'shorten' %}">
+        <div class="rb-field">
+          <label class="rb-label" for="target">Long URL</label>
+          <input class="rb-input rb-mono" type="text" id="target" name="target"
+                 placeholder="https://example.com/a/very/long/path" autofocus>
+          <div class="rb-hint">
+            Unknown codes redirect to the configured default:
+            <span class="rb-mono">{{ cfg.default_redirect_url }}</span>
+          </div>
+        </div>
+        <button class="rb-btn" type="submit" {% if at_capacity %}disabled{% endif %}>
+          Shorten
+        </button>
+      </form>
+    </div>
+
+    <div class="rb-card rb-stack">
+      <h2>Short links</h2>
+      {% if links %}
+        <div class="rb-stack">
+          {% for link in links %}
+            <div class="rb-row" style="justify-content: space-between;">
+              <span>
+                <a class="rb-mono" href="/{{ link.code }}">/{{ link.code }}</a>
+                <span class="rb-muted">&rarr;</span>
+                <span class="rb-mono rb-muted">{{ link.target }}</span>
+              </span>
+              <span class="rb-pill">{{ link.clicks }} click{{ link.clicks|pluralize }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="rb-muted">No links yet. Create one above.</p>
+      {% endif %}
+    </div>
+  </main>
+
+  <footer class="rb-footer">
+    A Rigbox example · built with <em>Python · Django</em> ·
+    <a href="https://rigbox.dev">rigbox.dev</a>
+  </footer>
+</body>
+</html>

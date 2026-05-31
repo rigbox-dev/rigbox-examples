@@ -1,0 +1,18 @@
+<div class="rb-card">
+  <h1>New post</h1>
+  <form method="post" action="/posts" class="rb-stack">
+    <div class="rb-field">
+      <label class="rb-label" for="title">Title</label>
+      <input class="rb-input" id="title" name="title" required>
+    </div>
+    <div class="rb-field">
+      <label class="rb-label" for="body">Body</label>
+      <textarea class="rb-textarea" id="body" name="body" placeholder="Markdown supported — # headings, **bold**, lists…"></textarea>
+      <div class="rb-hint">Rendered with Kramdown.</div>
+    </div>
+    <div class="rb-row">
+      <button class="rb-btn" type="submit">Publish</button>
+      <a class="rb-btn rb-btn-ghost" href="/">Cancel</a>
+    </div>
+  </form>
+</div>

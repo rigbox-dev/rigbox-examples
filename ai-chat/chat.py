@@ -1,50 +1,38 @@
-"""Passthrough chat — POSTs the user's message to an OpenAI-compatible
-chat completions endpoint with a small system prompt, returns the reply.
+"""Rigbox example — AI chat over the managed AI proxy.
 
-When deployed via `rig deploy` with `ai: managed: true` in rig.yaml,
-the systemd unit gets OPENAI_BASE_URL pointed at the workspace's
-managed AI proxy, so this code doesn't need to know anything about
-it — the standard `openai` env vars Just Work. MODEL defaults to the
-portable `rigbox/default` alias the proxy resolves to its current
-upstream.
+The headline capability: this app never holds a real API key. With
+`ai: { managed: true }` in rig.yaml, Rigbox injects an OpenAI-compatible
+endpoint (OPENAI_BASE_URL) and a sentinel key (OPENAI_API_KEY=managed-by-rigbox).
+The proxy authenticates, meters, and forwards to a real provider — the guest
+just talks to the OpenAI chat-completions API with a portable model alias.
 """
 
 import os
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
-import json
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+import httpx
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-
-SYSTEM_PROMPT = (
-    "You are a passthrough chat assistant running inside a Rigbox VM. "
-    "Keep replies short (1–3 sentences). When asked what you are, "
-    "explain you're a tiny FastAPI app routing through the managed "
-    "Rigbox AI proxy."
-)
-
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "").rstrip("/")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "managed-by-rigbox")
 MODEL = os.environ.get("MODEL", "rigbox/default")
 
+STATIC_DIR = Path(__file__).parent / "static"
 
-app = FastAPI()
+app = FastAPI(title="AI Chat — Rigbox example")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 class ChatRequest(BaseModel):
     message: str
 
 
-@app.get("/")
-def index():
-    return {
-        "service": "ai-chat-sample",
-        "model": MODEL,
-        "proxy": OPENAI_BASE_URL,
-        "usage": "POST /chat { message: '...' }",
-    }
+class ChatReply(BaseModel):
+    reply: str
+    model: str
 
 
 @app.get("/healthz")
@@ -52,50 +40,155 @@ def healthz():
     return {"ok": True}
 
 
-@app.post("/chat")
-def chat(req: ChatRequest):
-    if not req.message.strip():
-        raise HTTPException(status_code=400, detail="message is empty")
+@app.post("/chat", response_model=ChatReply)
+async def chat(req: ChatRequest):
+    message = (req.message or "").strip()
+    if not message:
+        return ChatReply(reply="(say something first)", model=MODEL)
 
-    payload = json.dumps(
-        {
-            "model": MODEL,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": req.message},
-            ],
-            "temperature": 0.7,
-        }
-    ).encode("utf-8")
+    if not OPENAI_BASE_URL:
+        return ChatReply(
+            reply=(
+                "The managed AI proxy isn't wired up. This app expects "
+                "OPENAI_BASE_URL + OPENAI_API_KEY injected by Rigbox "
+                "(ai: { managed: true } in rig.yaml)."
+            ),
+            model=MODEL,
+        )
 
-    request = Request(
-        f"{OPENAI_BASE_URL}/chat/completions",
-        data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-        },
-        method="POST",
-    )
-
-    try:
-        with urlopen(request, timeout=60) as resp:
-            body = json.loads(resp.read())
-    except HTTPError as e:
-        err_body = e.read().decode("utf-8", errors="replace")
-        raise HTTPException(
-            status_code=e.code,
-            detail=f"upstream {e.code}: {err_body[:500]}",
-        ) from e
-    except URLError as e:
-        raise HTTPException(status_code=502, detail=f"upstream unreachable: {e.reason}") from e
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a concise, friendly assistant running inside a Rigbox sandbox.",
+            },
+            {"role": "user", "content": message},
+        ],
+    }
+    headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
 
     try:
-        reply = body["choices"][0]["message"]["content"]
-    except (KeyError, IndexError) as e:
-        raise HTTPException(
-            status_code=502,
-            detail=f"unexpected upstream shape: {body}",
-        ) from e
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{OPENAI_BASE_URL}/chat/completions",
+                json=payload,
+                headers=headers,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        reply = data["choices"][0]["message"]["content"].strip()
+    except httpx.HTTPStatusError as exc:
+        reply = f"Proxy returned {exc.response.status_code}: {exc.response.text[:300]}"
+    except Exception as exc:  # noqa: BLE001 — surface any transport error to the UI
+        reply = f"Could not reach the AI proxy: {exc}"
 
-    return {"reply": reply, "model": body.get("model", MODEL)}
+    return ChatReply(reply=reply, model=MODEL)
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return INDEX_HTML.replace("__MODEL__", MODEL)
+
+
+INDEX_HTML = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Chat — Rigbox example</title>
+<link rel="stylesheet" href="/static/tokens.css" />
+<style>
+  .chat-log {
+    display: flex; flex-direction: column; gap: var(--rb-s3);
+    min-height: 220px; max-height: 50vh; overflow-y: auto;
+    padding: var(--rb-s2);
+  }
+  .msg { max-width: 80%; padding: 9px 13px; border-radius: var(--rb-radius);
+         border: 1px solid var(--rb-border); white-space: pre-wrap; }
+  .msg-user { align-self: flex-end; background: var(--rb-accent-soft);
+              border-color: transparent; }
+  .msg-bot { align-self: flex-start; background: var(--rb-surface-2); }
+  .chat-empty { color: var(--rb-muted); align-self: center; margin: auto 0; }
+  .chat-form { display: flex; gap: var(--rb-s3); align-items: flex-end; }
+  .chat-form .rb-input { flex: 1; }
+</style>
+</head>
+<body>
+<header class="rb-header">
+  <span class="rb-title">AI Chat</span>
+  <span class="rb-badge">Rigbox example</span>
+</header>
+
+<main class="rb-container">
+  <div class="rb-card rb-stack">
+    <div class="rb-row" style="justify-content: space-between;">
+      <h1 style="margin:0;">Chat over the managed AI proxy</h1>
+      <span class="rb-pill rb-pill-ok" id="model-pill">__MODEL__</span>
+    </div>
+    <p class="rb-muted">
+      No API key lives in this VM. Rigbox injects an OpenAI-compatible endpoint
+      and authenticates + meters each call. The model is a portable alias —
+      flip it with <span class="rb-mono">rig app param set model=&lt;alias&gt;</span>.
+    </p>
+
+    <div class="chat-log" id="log">
+      <div class="chat-empty" id="empty">Ask the assistant anything to start.</div>
+    </div>
+
+    <form class="chat-form" id="form">
+      <input class="rb-input" id="input" placeholder="Type a message…" autocomplete="off" />
+      <button class="rb-btn" id="send" type="submit">Send</button>
+    </form>
+  </div>
+</main>
+
+<footer class="rb-footer">
+  A Rigbox example · built with <em>Python · FastAPI</em> ·
+  <a href="https://rigbox.dev">rigbox.dev</a>
+</footer>
+
+<script>
+  const log = document.getElementById("log");
+  const empty = document.getElementById("empty");
+  const form = document.getElementById("form");
+  const input = document.getElementById("input");
+  const send = document.getElementById("send");
+
+  function bubble(text, who) {
+    if (empty) empty.remove();
+    const el = document.createElement("div");
+    el.className = "msg msg-" + who;
+    el.textContent = text;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+    return el;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+    bubble(message, "user");
+    input.value = "";
+    input.disabled = send.disabled = true;
+    const pending = bubble("…", "bot");
+    try {
+      const resp = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      const data = await resp.json();
+      pending.textContent = data.reply;
+      if (data.model) document.getElementById("model-pill").textContent = data.model;
+    } catch (err) {
+      pending.textContent = "Request failed: " + err;
+    } finally {
+      input.disabled = send.disabled = false;
+      input.focus();
+    }
+  });
+</script>
+</body>
+</html>"""

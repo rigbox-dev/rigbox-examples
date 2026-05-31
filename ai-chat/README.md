@@ -1,54 +1,47 @@
-# ai-chat-sample
+# AI Chat — Rigbox example
 
-Tiny FastAPI passthrough chat that proves out `ai: managed: true` in `rig.yaml`.
+A clean single-page AI chatbot built on **Python · FastAPI** (uvicorn). Type a
+message, it POSTs to `/chat`, the server calls an OpenAI-compatible
+chat-completions endpoint and returns the reply.
 
-## How it works
+## The single capability: the managed AI proxy
 
-1. `rig.yaml` sets `ai: managed: true`.
-2. `rig deploy` injects two env vars into the systemd unit:
-   - `OPENAI_BASE_URL=http://172.16.0.1:9090/v1`
-   - `OPENAI_API_KEY=managed-by-rigbox`
-3. `uvicorn` starts `chat.py` with those env vars set.
-4. `chat.py` POSTs to `{base}/chat/completions` — Rigbox's managed proxy
-   (OpenRouter-backed) routes the request and charges the workspace owner's
-   account. `MODEL` defaults to the portable `rigbox/default` alias, which the
-   proxy resolves to its current default upstream (no vendor model hardcoded).
+This app **never holds a real API key**. `rig.yaml` sets:
 
-No proxy-specific code in `chat.py`. The same source would work against
-`api.openai.com` if the env was unset.
+```yaml
+ai:
+  managed: true
+```
+
+so Rigbox injects `OPENAI_BASE_URL` and `OPENAI_API_KEY=managed-by-rigbox` into
+the VM. The app (`chat.py`, using `httpx`) just calls
+`POST {OPENAI_BASE_URL}/chat/completions` with that key — the proxy
+authenticates, meters credits, and forwards to a real provider. No vendor model
+or secret is hardcoded.
+
+The model is a **portable alias** chosen via a validated `select` param (`model`
+→ `MODEL` env, default `rigbox/default`), so the same code works against any
+backend the proxy resolves.
 
 ## Deploy
 
-`rig deploy` reads the single root `rig.yaml`, spawns (or attaches) a
-workspace, and deploys the app — no registry write.
-
 ```bash
-cd ai-chat
-rig deploy                 # spawns a fresh workspace
-# or target an existing one:
-rig deploy --workspace my-ws
+cd ai-chat && rig deploy
 ```
 
-The deploy output prints the workspace id and the app URL
-(`https://ai-chat-<suffix>.rigbox.dev`).
+No required env — the AI credentials are injected by the managed proxy.
 
-## Use
+## After deploy, look at
 
-```bash
-curl https://ai-chat-<suffix>.rigbox.dev/healthz        # {"ok": true}
-curl https://ai-chat-<suffix>.rigbox.dev/               # service info + model
+- The chat page — send a message and watch the assistant reply.
+- The **model alias pill** in the header (top right of the card), e.g.
+  `rigbox/default`.
+- Flip the model live without redeploying:
+  `rig app param set model=rigbox/fast` (options: `rigbox/default`,
+  `rigbox/fast`, `rigbox/free`).
 
-curl -X POST https://ai-chat-<suffix>.rigbox.dev/chat \
-  -H 'content-type: application/json' \
-  -d '{"message":"What are you?"}'
-```
+## Notes
 
-Managed AI must be enabled for your account (`rig ai defaults --mode managed`).
-A `403` from `/chat` means the managed proxy rejected the request — check
-`rig ai defaults` and `rig app logs --app ai-chat`.
-
-## Tear down
-
-```bash
-rig workspace rm --workspace <ws> --force
-```
+- Persistence: none — chat is in-memory per browser session.
+- Build time: fast (a few `pip install`s).
+- Health: `GET /healthz` → `{"ok": true}`; the process binds `0.0.0.0:8080`.

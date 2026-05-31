@@ -1,0 +1,19 @@
+name: scheduled-digest
+port: 8080
+install: |
+  npm install
+start: npx tsx worker.ts
+health:
+  path: /healthz
+  timeoutSeconds: 30
+env:
+  DATA_DIR: /home/developer/data
+params:
+  - key: interval_minutes
+    type: number
+    label: Run every (minutes)
+    description: How often the background worker appends a digest entry.
+    group: Schedule
+    default: "5"
+    envVar: INTERVAL_MINUTES
+    validationPattern: "^[0-9]+$"
