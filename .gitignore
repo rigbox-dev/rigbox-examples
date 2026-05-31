@@ -16,6 +16,14 @@ __pycache__/
 *.pyc
 .venv/
 
+# Local env overrides that hold REAL secret values — never commit these.
+# Committed `.env.example` (template) and `.env.<stage>` (demo values) are
+# fine; real values go in `.env.local` / `.env.<stage>.local` (highest
+# precedence) or your shell, which always win over the committed files.
+.env
+.env.local
+.env.*.local
+
 # Editor / OS
 .DS_Store
 .idea/

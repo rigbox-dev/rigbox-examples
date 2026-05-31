@@ -23,10 +23,25 @@ Secrets + a server-minted credential + a validated `select` param, working toget
 
 ## Deploy
 
+`WEBHOOK_HMAC_KEY` is a required secret. Provide it either by exporting it, or —
+the tidier way — from a `.env` file via `--stage`:
+
 ```bash
-export WEBHOOK_HMAC_KEY=your-shared-signing-key   # REQUIRED — read from local env at deploy
+# From a .env file (this example ships a demo .env.production):
+cd webhook-receiver && rig deploy --stage production   # loads .env.production
+
+# …or export it yourself:
+export WEBHOOK_HMAC_KEY=your-shared-signing-key
 cd webhook-receiver && rig deploy
 ```
+
+`--stage production` loads `.env.production` (and `.env.local`, `.env`) into the
+deploy env, so the names in `secrets:` are picked up without a manual `export`.
+Precedence, highest wins: **real env > `.env.production.local` > `.env.local` >
+`.env.production` > `.env`** — an exported var always beats the file. Only names
+declared in `secrets:` reach the deploy, so an unrelated key in the file is
+ignored. Copy `.env.example` to make your own; put real secrets in `.env.local`
+(gitignored) rather than the committed demo `.env.production`.
 
 ## After deploy
 
@@ -42,9 +57,15 @@ cd webhook-receiver && rig deploy
 
 ## Required env
 
-- `WEBHOOK_HMAC_KEY` (secret) — export it before `rig deploy`. Without it the app
-  still boots and health-checks fine, but `/webhook` returns `503` and the UI shows
-  the key as missing.
+- `WEBHOOK_HMAC_KEY` (secret) — supply via `--stage production` (loads
+  `.env.production`) or `export` before `rig deploy`. Without it the app still
+  boots and health-checks fine, but `/webhook` returns `503` and the UI shows the
+  key as missing.
+
+## Files
+
+- `.env.example` — template documenting the secret (never loaded).
+- `.env.production` — demo value loaded by `rig deploy --stage production`.
 
 ## Notes
 

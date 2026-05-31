@@ -19,7 +19,10 @@
 
   <main class="rb-container">
     <div class="rb-row" style="justify-content: space-between; margin-bottom: var(--rb-s4);">
-      <span class="rb-pill <%= 'rb-pill-ok' if FLAVOR == 'aurora' %>">theme: <%= FLAVOR %></span>
+      <span class="rb-row">
+        <span class="rb-pill <%= 'rb-pill-ok' if FLAVOR == 'aurora' %>">theme: <%= FLAVOR %></span>
+        <span class="rb-pill <%= 'rb-pill-ok' if admin_required? %>">admin: <%= admin_required? ? 'token required' : 'open' %></span>
+      </span>
       <a class="rb-btn rb-btn-ghost" href="/posts/new">New post</a>
     </div>
     <%= yield %>

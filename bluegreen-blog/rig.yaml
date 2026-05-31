@@ -30,6 +30,14 @@ apps:
       timeoutSeconds: 90
     env:
       DATA_DIR: /home/developer/data
+    # Optional secret, sourced from your shell or a `.env` file at deploy.
+    # `rig deploy --stage production` loads `.env.production`; a bluegreen
+    # staging sibling can carry a different token via `--stage staging`
+    # (`.env.staging`). When set, publishing requires a matching token; when
+    # unset, the blog is open. Optional → the deploy never fails for a missing
+    # local value.
+    secrets:
+      - { name: ADMIN_TOKEN, optional: true }
     params:
       # The whole point: theme is a validated `select`, not a raw env var.
       # `rig app param set build_flavor=aurora` is accepted; `=bogus` is
