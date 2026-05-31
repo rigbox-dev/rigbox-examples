@@ -1,108 +1,81 @@
 # rigbox-examples
 
-Small, deployable apps that map each Rigbox manifest surface to a working command. Every example — single-app or multi-app — is described by **one root `rig.yaml`** and deploys with `rig deploy` from the project directory:
+A suite of small, recognizable products — each a **different stack**, each with a
+**minimal UI in one shared design language**, each demonstrating **one Rigbox
+capability** with the proper platform primitive. Every example is described by a
+single root `rig.yaml` and deploys in one command from a fresh clone:
 
-| Project | Root `rig.yaml` shape | Deploy |
+```bash
+cd <example> && rig deploy
+```
+
+## The suite
+
+| Example | Stack | Capability it shows |
 |---|---|---|
-| Single-app | top-level `name`/`port`/`start`/`install`/… | `cd <example> && rig deploy` |
-| Multi-app | optional `workspace:` block + an `apps:` map | `cd <example> && rig deploy` |
+| [`quickstart/`](./quickstart/) | TypeScript (Hono) | the canonical single-app `rig.yaml`, and **both** deploy sources — local rsync vs `source: { kind: git }` |
+| [`ai-chat/`](./ai-chat/) | Python · FastAPI | the **managed AI proxy** (`ai: managed: true`) + a portable model alias as a validated `select` param |
+| [`todo-app/`](./todo-app/) | Next.js (React/TS) + TS API | multi-app **loopback service discovery** (`dependsOn`) + public/private visibility + SQLite |
+| [`bluegreen-blog/`](./bluegreen-blog/) | Ruby · Sinatra | **bluegreen + promote**, and theme selection via a server-validated `select` param (not a raw env var) |
+| [`webhook-receiver/`](./webhook-receiver/) | Python · Flask | `secrets:` + a server-generated `credentials:` + a `select` param for the signing algorithm |
+| [`scheduled-digest/`](./scheduled-digest/) | TypeScript | a background worker loop + `/healthz` + a `number` param for the schedule |
+| [`url-shortener/`](./url-shortener/) | Python · Django | the **full validated param set** (url/string/number/boolean/select/email/secret/textarea) + SQLite migrations |
 
-For a multi-app project, each entry under `apps:` carries its spec inline (`port`, `start`, `install`, `env`, `health`, `params`, `dependsOn`) plus a `path: ./dir` pointing at that app's code. `rig deploy` rsyncs and installs each app's `path` and brings them up in `dependsOn` order; `rig deploy --app <name>` redeploys just one.
+Single-app examples use the top-level `name`/`port`/`start`/`install`/`health`
+shape. Multi-app examples use a `workspace:` block + an `apps:` map, where each app
+carries its spec inline (`port`, `start`, `install`, `env`, `health`, `params`,
+`dependsOn`, `visibility`) plus a `path: ./dir` pointing at its code. `rig deploy`
+rsyncs and installs each app's `path` and brings them up in `dependsOn` order;
+`rig deploy --app <name>` redeploys just one.
 
-Every example here deploys in **one command** from a fresh clone. The manifests are pure deploy specs — no vendor identity baked in. Single-app recipes can be published deliberately with `rig recipe app publish --vendor/--slug/--version`; publishing a multi-app project as a workspace-definition is a work-in-progress follow-up and not available yet.
+## Shared design language
 
-## Single-app examples (`rig.yaml`)
+All seven look like one product family. That comes entirely from
+[`design/`](./design/):
 
-### [`sample-node-app/`](./sample-node-app/)
+- [`design/tokens.css`](./design/tokens.css) — the design tokens (iris accent,
+  light + dark, `rb-*` utility classes: card / btn / input / select / pill /
+  header / footer / badge). Every app ships a byte-identical copy and wires it up
+  per stack (Next imports it globally; Django/Flask/Sinatra `<link>` it; the TS
+  apps serve it static).
+- [`design/STYLE.md`](./design/STYLE.md) — the page skeleton + component rules.
+- [`design/CONTRACT.md`](./design/CONTRACT.md) — the technical contract every
+  example follows (base-image runtime, the `0.0.0.0` + `/healthz` health gate, the
+  rig.yaml schema, params/secrets/credentials, `DATA_DIR` persistence).
 
-Smallest valid `rig.yaml` — Node HTTP server on port 5000, `apt install nodejs` at install time. Reference for the minimum shape.
+## Proper primitives
 
-```bash
-cd sample-node-app && rig deploy --workspace <ws>
-```
+The point of the suite is to model the *right* primitive for each job:
 
-### [`ai-chat/`](./ai-chat/)
-
-FastAPI passthrough chat showing `ai: managed: true`. The CLI injects `OPENAI_BASE_URL` + `OPENAI_API_KEY=managed-by-rigbox`, so the same code routes through the platform-managed OpenAI-compatible proxy without proxy-specific logic.
-
-```bash
-cd ai-chat && rig deploy --workspace <ws>
-```
-
-### [`param-showcase/`](./param-showcase/)
-
-Exercises every `ParamSpec` type (`string` / `number` / `boolean` / `secret` / `select` / `email` / `url` / `textarea`) and every notable attribute. Open the `rig.yaml` for the canonical reference page.
-
-```bash
-cd param-showcase && rig deploy --workspace <ws>
-```
-
-### [`webhook-receiver/`](./webhook-receiver/)
-
-Production-shape secret hygiene in one app: `secrets:` forwards a value from your shell, `credentials: { generate: true }` has the platform mint a random session secret, `params:` lets you flip the HMAC signing algorithm without redeploying.
-
-```bash
-export WEBHOOK_HMAC_KEY=$(openssl rand -hex 32)
-cd webhook-receiver && rig deploy --workspace <ws>
-```
-
-### [`portable-deploy/`](./portable-deploy/)
-
-Git-source deploy: `source: { kind: git, repo: ... }` makes the VM clone the source at install time, so the deploy carries no local source.
-
-```bash
-cd portable-deploy && rig deploy --workspace <ws>
-```
-
-### [`daily-digest/`](./daily-digest/)
-
-Background worker on an interval — the canonical "I want this to run every N seconds" shape. Real work happens in a `setInterval` loop; a 30-line HTTP surface serves `/healthz` because the platform health-checks every app. `tick_seconds` param tunes the schedule.
-
-```bash
-cd daily-digest && rig deploy --workspace <ws>
-```
-
-## Multi-app projects (one root `rig.yaml` + `apps:`)
-
-### [`bluegreen-blog/`](./bluegreen-blog/)
-
-Bluegreen + promote on a real-shape stateful app, with `dependsOn` as a true readiness gate. A markdown blog keeps posts on disk *outside* the rsync zone; a migrator sidecar ensures the data dir exists before the blog starts. Redesign as a bluegreen sibling, verify on live data, then atomically swap.
-
-```bash
-cd bluegreen-blog && rig deploy --name blog-stack
-# … write a post, then redesign:
-rig deploy --workspace blog-stack --app blog --bluegreen v2
-rig deploy --workspace blog-stack --app blog --bluegreen v2 --promote
-```
-
-### [`frontend-plus-api/`](./frontend-plus-api/)
-
-A two-app project: a tiny todo API plus a vanilla-JS frontend that talks to it on a sibling subdomain. One root `rig.yaml` holds a `workspace:` block and an `apps:` map — `api` (`path: ./backend`, port 5100) and `web` (`path: ./frontend`, port 5101, `dependsOn: [api]`). Each deploy rsyncs the local working copy of every app's `path` and reinstalls in place.
-
-```bash
-cd frontend-plus-api && rig deploy
-# Redeploy just the frontend:
-rig deploy --app web
-```
+- **Validated config** is a `param` with a fixed option set (`type: select`), not a
+  free-form env var — the server validates it and it's live-editable with
+  `rig app param set <key>=<value>`. Fixed infra (paths, base URLs) stays in `env:`.
+- **Persistence** lives under `DATA_DIR=/home/developer/data`, *outside* the rsync
+  zone, so SQLite DBs and files survive every redeploy and bluegreen cut-over.
+- **Visibility** is declared in `rig.yaml` (`visibility: public` / `private` /
+  `{ emails: [...] }`) so a redeploy keeps it — only an app's front door is public;
+  siblings reach private apps over loopback via `dependsOn`.
 
 ## Layout convention
 
-Each directory is self-contained. Both shapes use a single root `rig.yaml`:
+Each directory is self-contained:
 
 ```
 single-app-example/
-├── rig.yaml          # what gets deployed
+├── rig.yaml          # the whole deploy spec, top to bottom
 ├── <source files>
-└── README.md         # what it does and the curl that proves it
+└── README.md         # what it is + what to look at after deploy
 
 multi-app-example/
 ├── rig.yaml          # workspace: block + apps: map (every app spec inline)
 ├── <app-name>/       # one dir per app — code only, no per-app manifest
-│   └── <source>
 └── README.md
 ```
 
-`rig.yaml`'s `install:` block installs whatever runtime the example needs at first boot — no extra `package.json` / `requirements.txt`. Single-purpose by design: the file you read top-to-bottom is the whole picture.
+`rig.yaml`'s `install:` provisions whatever runtime the example needs at deploy
+time. The base VM ships `python3`, `node`, `sqlite3`, and `build-essential`; Ruby
+is `apt`-installed by the blog. Each example's own `README.md` covers what it
+demonstrates, the deploy command, what to look at afterward, and any required env.
 
 ## Requirements
 
@@ -112,5 +85,3 @@ Latest CLI:
 curl -fsSL https://rigbox.dev/install.sh | bash
 rig --version
 ```
-
-`rig deploy` requires v0.12.7 or later.
