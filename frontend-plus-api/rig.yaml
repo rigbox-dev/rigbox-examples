@@ -8,7 +8,11 @@
 # RIGBOX_FRONTEND_API_URL=http://127.0.0.1:5100 into frontend-web's env.
 # server.js proxies /api to that URL over loopback, so the browser stays
 # same-origin and frontend-api never needs a public subdomain — it stays
-# private (the default). Only frontend-web is opened to the world.
+# private (the default). Only frontend-web is opened to the world, via its
+# `visibility: public` below. (Visibility is declared here, so a redeploy
+# keeps it — it isn't a one-off `rig app share` that the next deploy resets.)
+# Private apps sit behind a per-request auth check at the gateway; public
+# ones skip it, so the page and its loopback /api calls stay fast.
 #
 # The page has a Private/Internet route toggle: "Internet" makes server.js
 # call frontend-api's *public* subdomain instead, authenticated with the
@@ -49,6 +53,11 @@ apps:
     start: node server.js
     install: command -v node >/dev/null || sudo apt-get install -y nodejs
     dependsOn: [frontend-api]
+    # The public front door. Omit this (or set `private`) and the gateway
+    # auth-gates every request. For a privileged allow-list instead, use:
+    #   visibility:
+    #     emails: [you@example.com]
+    visibility: public
     health:
       path: /healthz
       timeoutSeconds: 30
