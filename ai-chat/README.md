@@ -23,10 +23,42 @@ The model is a **portable alias** chosen via a validated `select` param (`model`
 → `MODEL` env, default `rigbox/default`), so the same code works against any
 backend the proxy resolves.
 
+## Docker build + the hybrid deploy
+
+Instead of running `pip install` on every deploy, this example freezes its
+Python deps into an image once. The `Dockerfile` is `FROM rigbox-base` (the
+Debian-12 base with python3.11 + pip) and bakes `fastapi uvicorn pydantic httpx`
+into the image's system site-packages:
+
+```dockerfile
+FROM rigbox-base
+RUN pip install --break-system-packages --no-cache-dir \
+      fastapi uvicorn pydantic httpx
+```
+
+`rig.yaml` points at it with a `build:` block (no `install:`):
+
+```yaml
+build:
+  dockerfile: Dockerfile
+```
+
+The deploy is **hybrid** — image for the env, rsync for the code:
+
+- **First `rig deploy --reproducible`**: builds the image from the local
+  `Dockerfile` (deps frozen once), boots the workspace from that image, then
+  rsyncs `chat.py` + `static/` on top.
+- **Later `rig deploy --reproducible`**: if the build inputs (Dockerfile/deps)
+  are unchanged, it **reuses the cached image** and only rsyncs the changed code
+  — no pip re-run, fast.
+
+Because the deps live in the image at system paths (not in the synced app dir),
+the rsynced code finds them at runtime.
+
 ## Deploy
 
 ```bash
-cd ai-chat && rig deploy
+cd ai-chat && rig deploy --reproducible
 ```
 
 No required env — the AI credentials are injected by the managed proxy.
@@ -43,5 +75,5 @@ No required env — the AI credentials are injected by the managed proxy.
 ## Notes
 
 - Persistence: none — chat is in-memory per browser session.
-- Build time: fast (a few `pip install`s).
+- Build time: deps are baked into the image once; later deploys skip pip.
 - Health: `GET /healthz` → `{"ok": true}`; the process binds `0.0.0.0:8080`.

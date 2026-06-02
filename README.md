@@ -20,6 +20,12 @@ cd <example> && rig deploy
 | [`webhook-receiver/`](./webhook-receiver/) | Python · Flask | `secrets:` + a server-generated `credentials:` + a `select` param for the signing algorithm |
 | [`scheduled-digest/`](./scheduled-digest/) | TypeScript | a background worker loop + `/healthz` + a `number` param for the schedule |
 | [`url-shortener/`](./url-shortener/) | Python · Django | the **full validated param set** (url/string/number/boolean/select/email/secret/textarea) + SQLite migrations |
+| [`markdown-notes/`](./markdown-notes/) | Python · Flask | a **Dockerfile reproducible build** (deps frozen into the image) + SQLite persistence — deploy with `rig deploy --reproducible` |
+
+Most examples deploy with `rig deploy` (rsync + `install:` on the VM). Two —
+[`ai-chat/`](./ai-chat/) and [`markdown-notes/`](./markdown-notes/) — freeze their
+environment into an image with a `Dockerfile` and deploy with
+`rig deploy --reproducible` (see **Docker builds & the hybrid deploy** below).
 
 Single-app examples use the top-level `name`/`port`/`start`/`install`/`health`
 shape. Multi-app examples use a `workspace:` block + an `apps:` map, where each app
@@ -30,7 +36,7 @@ rsyncs and installs each app's `path` and brings them up in `dependsOn` order;
 
 ## Shared design language
 
-All seven look like one product family. That comes entirely from
+All of them look like one product family. That comes entirely from
 [`design/`](./design/):
 
 - [`design/tokens.css`](./design/tokens.css) — the design tokens (iris accent,
@@ -55,6 +61,23 @@ The point of the suite is to model the *right* primitive for each job:
 - **Visibility** is declared in `rig.yaml` (`visibility: public` / `private` /
   `{ emails: [...] }`) so a redeploy keeps it — only an app's front door is public;
   siblings reach private apps over loopback via `dependsOn`.
+
+## Docker builds & the hybrid deploy
+
+Most examples install their runtime on the VM with `install:` and deploy with
+`rig deploy`. **`ai-chat`** and **`markdown-notes`** instead **freeze their
+environment into an image** with a `Dockerfile` (`FROM rigbox-base`) and deploy
+with `rig deploy --reproducible`:
+
+- the **first** deploy builds the image from the local Dockerfile (the CLI uploads
+  the project dir as the build context — no git repo needed), boots from that
+  frozen image, and rsyncs the code;
+- **later** deploys reuse the cached image when the Dockerfile/deps are unchanged
+  and **only rsync the changed code** — no rebuild, no re-install.
+
+That's the hybrid: build the slow, stable environment once; ride fast-changing
+code over it with rsync. See [`design/CONTRACT.md`](./design/CONTRACT.md) →
+*Reproducible builds* for the full rules and when to pick which.
 
 ## Layout convention
 

@@ -1,0 +1,10 @@
+name: markdown-notes
+port: 8080
+build:
+  dockerfile: Dockerfile
+start: gunicorn --bind 0.0.0.0:8080 app:app
+health:
+  path: /healthz
+  timeoutSeconds: 30
+env:
+  DATA_DIR: /home/developer/data
