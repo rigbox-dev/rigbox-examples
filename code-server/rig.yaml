@@ -1,0 +1,14 @@
+name: code-server
+port: 8080
+build:
+  dockerfile: Dockerfile
+start: >-
+  code-server --bind-addr 0.0.0.0:8080 --auth none
+  --user-data-dir /home/developer/data/code-server
+  --extensions-dir /home/developer/data/code-server/extensions
+  /home/developer/data
+health:
+  path: /healthz
+  timeoutSeconds: 90
+env:
+  DATA_DIR: /home/developer/data

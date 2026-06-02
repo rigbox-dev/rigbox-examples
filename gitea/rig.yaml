@@ -1,0 +1,17 @@
+name: gitea
+port: 8080
+build:
+  dockerfile: Dockerfile
+# start.sh generates app.ini (headless, INSTALL_LOCK on) under $DATA_DIR, then
+# exec's `gitea web --config`. The raw gitea binary ignores GITEA__* env vars
+# (only the upstream Docker entrypoint translates them), so configuration lives
+# in the generated app.ini instead.
+start: /usr/local/bin/gitea-start.sh
+health:
+  path: /api/healthz
+  timeoutSeconds: 90
+env:
+  DATA_DIR: /home/developer/data
+  # Gitea's working dir — its custom/conf/app.ini, SQLite DB, repos, and runtime
+  # state live under $DATA_DIR, so they survive the rsync wipe on every redeploy.
+  GITEA_WORK_DIR: /home/developer/data/gitea

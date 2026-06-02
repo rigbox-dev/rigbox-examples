@@ -23,11 +23,24 @@ cd <example> && rig deploy
 | [`markdown-notes/`](./markdown-notes/) | Python · Flask | a **Dockerfile reproducible build** (deps frozen into the image) + SQLite persistence |
 
 Every example deploys with the same command — `rig deploy`. Most rsync code and
-run `install:` on the VM. Two — [`ai-chat/`](./ai-chat/) and
-[`markdown-notes/`](./markdown-notes/) — declare a `Dockerfile`, which makes
+run `install:` on the VM. Several declare a `Dockerfile`, which makes
 `rig deploy` **freeze the environment into an image** and boot from it (see
 **Docker builds & the hybrid deploy** below). No flag: the Dockerfile is the
 signal.
+
+### Established products, run reproducibly
+
+These run real, recognizable self-hosted products on Rigbox via a
+`FROM rigbox-base` Dockerfile that installs the product on top of the base. The
+image freezes the install; `rig deploy` builds it once, then reuses it. (Upstream
+images like `postgres:16` can't be booted directly — they lack the rigbox agent +
+init — so each installs the product on the rigbox base instead.)
+
+| Example | Product | What it shows |
+|---|---|---|
+| [`code-server/`](./code-server/) | **code-server** (VS Code) | run an established product via a reproducible Dockerfile; settings/extensions persist under `$DATA_DIR` |
+| [`gitea/`](./gitea/) | **Gitea** (Git hosting) | a headless single-binary service (install wizard locked) with SQLite + repos under `$DATA_DIR` |
+| [`n8n/`](./n8n/) | **n8n** (workflow automation) | freeze a heavy `npm install` into the image (`sizeMb` bump); workflows persist under `$DATA_DIR` |
 
 Single-app examples use the top-level `name`/`port`/`start`/`install`/`health`
 shape. Multi-app examples use a `workspace:` block + an `apps:` map, where each app
