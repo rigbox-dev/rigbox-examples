@@ -1,5 +1,12 @@
 name: n8n
 port: 8080
+# n8n is memory-hungry — it OOMs (V8 "heap out of memory") in the default 1GB
+# workspace. Give it the free-tier ceiling (2GB/2vCPU); NODE_OPTIONS raises the
+# V8 old-space heap so the Node process has real headroom inside the VM.
+workspace:
+  resources:
+    ramMb: 2048
+    vcpuCount: 2
 build:
   dockerfile: Dockerfile
   # n8n's node_modules is large; the base + install overflow the default rootfs.
@@ -8,7 +15,7 @@ build:
 start: n8n start
 health:
   path: /healthz
-  timeoutSeconds: 90
+  timeoutSeconds: 120
 env:
   DATA_DIR: /home/developer/data
   N8N_USER_FOLDER: /home/developer/data
@@ -16,3 +23,4 @@ env:
   N8N_LISTEN_ADDRESS: 0.0.0.0
   N8N_SECURE_COOKIE: "false"
   N8N_RUNNERS_ENABLED: "true"
+  NODE_OPTIONS: --max-old-space-size=1536
