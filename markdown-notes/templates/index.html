@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Markdown Notes — Rigbox example</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}" />
+  <style>
+    /* Pygments classes for fenced code blocks, generated server-side. */
+    {{ pygments_css }}
+    .note-body { font-size: .95rem; }
+    .note-body :first-child { margin-top: 0; }
+    .note-body :last-child { margin-bottom: 0; }
+    .note-body pre {
+      background: var(--rb-surface-2); border: 1px solid var(--rb-border);
+      border-radius: var(--rb-radius-sm); padding: var(--rb-s3);
+      overflow-x: auto; font-family: var(--rb-mono); font-size: .85rem;
+    }
+    .note-body code { font-family: var(--rb-mono); font-size: .9em; }
+    .note-body :not(pre) > code {
+      background: var(--rb-surface-2); border: 1px solid var(--rb-border);
+      border-radius: 6px; padding: 1px 5px;
+    }
+    .note-body blockquote {
+      margin: 0 0 var(--rb-s3); padding-left: var(--rb-s3);
+      border-left: 3px solid var(--rb-border); color: var(--rb-muted);
+    }
+    .note-body table { border-collapse: collapse; }
+    .note-body th, .note-body td { border: 1px solid var(--rb-border); padding: 4px 10px; }
+  </style>
+</head>
+<body>
+  <header class="rb-header">
+    <span class="rb-title">Markdown Notes</span>
+    <span class="rb-badge">Rigbox example</span>
+  </header>
+
+  <main class="rb-container rb-stack">
+    <div class="rb-card rb-stack">
+      <h1>Jot a note in Markdown</h1>
+      <p class="rb-muted">
+        Notes render with fenced code blocks and syntax highlighting, and are stored in
+        SQLite under <span class="rb-mono">$DATA_DIR</span> — so they survive every redeploy.
+      </p>
+      <div class="rb-row">
+        <span class="rb-pill rb-pill-ok">persisted in SQLite</span>
+        <span class="rb-pill">{{ notes|length }} note{{ '' if notes|length == 1 else 's' }}</span>
+      </div>
+      <form method="post" action="{{ url_for('create_note') }}" class="rb-stack">
+        <div class="rb-field">
+          <label class="rb-label" for="title">Title</label>
+          <input id="title" name="title" class="rb-input" placeholder="Release notes" />
+        </div>
+        <div class="rb-field">
+          <label class="rb-label" for="body">Markdown</label>
+          <textarea id="body" name="body" class="rb-textarea"
+            placeholder="## Heading&#10;&#10;Some **bold** text and a code block:&#10;&#10;```python&#10;print(&quot;hi&quot;)&#10;```"></textarea>
+          <div class="rb-hint">Supports headings, lists, tables, blockquotes, and fenced code blocks.</div>
+        </div>
+        <div class="rb-row">
+          <button type="submit" class="rb-btn">Save note</button>
+        </div>
+      </form>
+    </div>
+
+    {% if notes %}
+      {% for note in notes %}
+        <div class="rb-card rb-stack">
+          <div class="rb-row" style="justify-content: space-between;">
+            <h2 style="margin: 0;">{{ note.title }}</h2>
+            <span class="rb-muted rb-mono">{{ note.created_at }}</span>
+          </div>
+          <div class="note-body">{{ note.html }}</div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="rb-card">
+        <p class="rb-muted" style="margin: 0;">No notes yet. Write one above and hit Save.</p>
+      </div>
+    {% endif %}
+  </main>
+
+  <footer class="rb-footer">
+    A Rigbox example · built with <em>Python · Flask</em> ·
+    <a href="https://rigbox.dev">rigbox.dev</a>
+  </footer>
+</body>
+</html>

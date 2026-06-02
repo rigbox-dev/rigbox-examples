@@ -79,6 +79,54 @@ apps:
 app name) into the dependent's env, pointing at the sibling over loopback. Boot
 order follows the dependency graph.
 
+## Reproducible builds — Dockerfile + the hybrid deploy
+
+Most examples install their runtime with `install:`, which runs on the booted VM
+on every deploy. An example can instead **freeze its environment into an image**
+with a Dockerfile and deploy reproducibly:
+
+```yaml
+name: my-app
+port: 8080
+build:
+  dockerfile: Dockerfile        # local path; no source: block needed
+start: <command that binds 0.0.0.0:8080>
+health: { path: /healthz, timeoutSeconds: 30 }
+```
+
+```dockerfile
+# Dockerfile — MUST be FROM rigbox-base. The platform asserts the rigbox agent
+# + systemd are present and rejects any other base at build time, so you keep
+# the platform's opinions while adding your own dependencies on top.
+FROM rigbox-base
+RUN pip install --break-system-packages --no-cache-dir flask gunicorn
+```
+
+Deploy with `rig deploy --reproducible`:
+
+- **First deploy** builds the image from the local `Dockerfile` — the CLI uploads
+  the project directory as the build context, so **no git repo is required** —
+  boots the workspace from that frozen image, then rsyncs the app code.
+- **Later deploys** reuse the cached image when the build inputs (the Dockerfile,
+  declared deps/lockfiles, base image) are unchanged and **only rsync the changed
+  code**: no rebuild, no re-install. Edit the Dockerfile or a lockfile and the
+  next deploy rebuilds the image.
+
+That's the **hybrid model**: the slow, stable environment is built once and
+frozen; fast-changing app code rides over it via rsync. It fits interpreted
+runtimes — deps install to **system paths** (e.g. pip `--break-system-packages`),
+so the rsynced code finds them. Keep your app's own source **out** of the image;
+it arrives by rsync.
+
+When to use which:
+
+- `install:` (no Dockerfile) — simple apps with fast installs. The default.
+- `build: { dockerfile }` + `rig deploy --reproducible` — heavier or slower
+  environments you want frozen and byte-identical across deploys.
+
+Examples on the Dockerfile path: **`ai-chat`** and **`markdown-notes`**. The rest
+use `install:`.
+
 ## Resources
 
 Defaults are 1024 MB / 1 vCPU / 3072 MB disk. Free-tier ceiling is **2048 MB /
