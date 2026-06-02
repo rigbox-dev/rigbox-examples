@@ -20,12 +20,14 @@ cd <example> && rig deploy
 | [`webhook-receiver/`](./webhook-receiver/) | Python · Flask | `secrets:` + a server-generated `credentials:` + a `select` param for the signing algorithm |
 | [`scheduled-digest/`](./scheduled-digest/) | TypeScript | a background worker loop + `/healthz` + a `number` param for the schedule |
 | [`url-shortener/`](./url-shortener/) | Python · Django | the **full validated param set** (url/string/number/boolean/select/email/secret/textarea) + SQLite migrations |
-| [`markdown-notes/`](./markdown-notes/) | Python · Flask | a **Dockerfile reproducible build** (deps frozen into the image) + SQLite persistence — deploy with `rig deploy --reproducible` |
+| [`markdown-notes/`](./markdown-notes/) | Python · Flask | a **Dockerfile reproducible build** (deps frozen into the image) + SQLite persistence |
 
-Most examples deploy with `rig deploy` (rsync + `install:` on the VM). Two —
-[`ai-chat/`](./ai-chat/) and [`markdown-notes/`](./markdown-notes/) — freeze their
-environment into an image with a `Dockerfile` and deploy with
-`rig deploy --reproducible` (see **Docker builds & the hybrid deploy** below).
+Every example deploys with the same command — `rig deploy`. Most rsync code and
+run `install:` on the VM. Two — [`ai-chat/`](./ai-chat/) and
+[`markdown-notes/`](./markdown-notes/) — declare a `Dockerfile`, which makes
+`rig deploy` **freeze the environment into an image** and boot from it (see
+**Docker builds & the hybrid deploy** below). No flag: the Dockerfile is the
+signal.
 
 Single-app examples use the top-level `name`/`port`/`start`/`install`/`health`
 shape. Multi-app examples use a `workspace:` block + an `apps:` map, where each app
@@ -64,10 +66,10 @@ The point of the suite is to model the *right* primitive for each job:
 
 ## Docker builds & the hybrid deploy
 
-Most examples install their runtime on the VM with `install:` and deploy with
-`rig deploy`. **`ai-chat`** and **`markdown-notes`** instead **freeze their
-environment into an image** with a `Dockerfile` (`FROM rigbox-base`) and deploy
-with `rig deploy --reproducible`:
+Most examples install their runtime on the VM with `install:`. **`ai-chat`** and
+**`markdown-notes`** instead **freeze their environment into an image** with a
+`Dockerfile` (`FROM rigbox-base`). The command is the same — `rig deploy` — and a
+Dockerfile in `rig.yaml` is all it takes to switch on the image build (no flag):
 
 - the **first** deploy builds the image from the local Dockerfile (the CLI uploads
   the project dir as the build context — no git repo needed), boots from that

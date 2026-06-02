@@ -45,10 +45,10 @@ build:
 
 The deploy is **hybrid** — image for the env, rsync for the code:
 
-- **First `rig deploy --reproducible`**: builds the image from the local
+- **First `rig deploy`**: builds the image from the local
   `Dockerfile` (deps frozen once), boots the workspace from that image, then
   rsyncs `chat.py` + `static/` on top.
-- **Later `rig deploy --reproducible`**: if the build inputs (Dockerfile/deps)
+- **Later `rig deploy`**: if the build inputs (Dockerfile/deps)
   are unchanged, it **reuses the cached image** and only rsyncs the changed code
   — no pip re-run, fast.
 
@@ -58,7 +58,7 @@ the rsynced code finds them at runtime.
 ## Deploy
 
 ```bash
-cd ai-chat && rig deploy --reproducible
+cd ai-chat && rig deploy
 ```
 
 No required env — the AI credentials are injected by the managed proxy.

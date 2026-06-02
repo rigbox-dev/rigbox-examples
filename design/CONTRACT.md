@@ -102,7 +102,9 @@ FROM rigbox-base
 RUN pip install --break-system-packages --no-cache-dir flask gunicorn
 ```
 
-Deploy with `rig deploy --reproducible`:
+Declaring a `build.dockerfile` (or `build.image`) is the **only** signal needed —
+`rig deploy` then takes the reproducible path automatically (no flag). Plain
+`rig deploy`:
 
 - **First deploy** builds the image from the local `Dockerfile` — the CLI uploads
   the project directory as the build context, so **no git repo is required** —
@@ -121,8 +123,8 @@ it arrives by rsync.
 When to use which:
 
 - `install:` (no Dockerfile) — simple apps with fast installs. The default.
-- `build: { dockerfile }` + `rig deploy --reproducible` — heavier or slower
-  environments you want frozen and byte-identical across deploys.
+- `build: { dockerfile }` — heavier or slower environments you want frozen and
+  byte-identical across deploys; `rig deploy` builds + mounts the image for you.
 
 Examples on the Dockerfile path: **`ai-chat`** and **`markdown-notes`**. The rest
 use `install:`.

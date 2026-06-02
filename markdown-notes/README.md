@@ -38,10 +38,10 @@ Two things work together here:
 The deploy is **hybrid** — the image carries the environment, rsync carries the
 code:
 
-- **First `rig deploy --reproducible`**: builds the image from the local
+- **First `rig deploy`**: builds the image from the local
   `Dockerfile` (pip deps frozen once), boots the workspace from that image, then
   rsyncs `app.py` + `templates/` + `static/` on top.
-- **Later `rig deploy --reproducible`**: if the build inputs (Dockerfile/deps)
+- **Later `rig deploy`**: if the build inputs (Dockerfile/deps)
   are unchanged, it **reuses the cached image** and only rsyncs the changed code
   — no pip re-run, fast.
 
@@ -52,7 +52,7 @@ runtime, and `gunicorn --bind 0.0.0.0:8080 app:app` imports the synced module.
 ## Deploy
 
 ```bash
-cd markdown-notes && rig deploy --reproducible
+cd markdown-notes && rig deploy
 ```
 
 No required env — `DATA_DIR` is set in `rig.yaml`.
@@ -62,7 +62,7 @@ No required env — `DATA_DIR` is set in `rig.yaml`.
 - The page — write a note with a fenced code block and watch it render with
   syntax highlighting.
 - The **persisted in SQLite** pill and the note count in the header card.
-- Redeploy (`rig deploy --reproducible`) and confirm your notes are **still
+- Redeploy (`rig deploy`) and confirm your notes are **still
   there** — that's `$DATA_DIR` surviving the rsync wipe.
 
 ## Notes
