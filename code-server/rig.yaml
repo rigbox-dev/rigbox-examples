@@ -1,5 +1,8 @@
 name: code-server
 port: 8080
+# A browser IDE needs headroom for language servers, extensions, and terminals.
+workspace:
+  resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 3072 }
 build:
   dockerfile: Dockerfile
 start: >-

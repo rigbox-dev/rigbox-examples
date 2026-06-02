@@ -1,5 +1,8 @@
 name: gitea
 port: 8080
+# Gitea is a single lightweight Go binary — 1GB is comfortable.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 build:
   dockerfile: Dockerfile
 # start.sh generates app.ini (headless, INSTALL_LOCK on) under $DATA_DIR, then

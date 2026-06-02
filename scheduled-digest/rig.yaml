@@ -1,5 +1,8 @@
 name: scheduled-digest
 port: 8080
+# Tiny TypeScript worker — 1GB is plenty.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 install: |
   npm install
 start: npx tsx worker.ts
