@@ -3,8 +3,7 @@ port: 8080
 # Light FastAPI app behind the managed AI proxy — 1GB is plenty.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
+install: pip install --break-system-packages fastapi uvicorn pydantic httpx
 start: uvicorn chat:app --host 0.0.0.0 --port 8080
 health:
   path: /healthz

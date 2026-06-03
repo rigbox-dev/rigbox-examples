@@ -20,7 +20,7 @@ cd <example> && rig deploy
 | [`webhook-receiver/`](./webhook-receiver/) | Python · Flask | `secrets:` + a server-generated `credentials:` + a `select` param for the signing algorithm |
 | [`scheduled-digest/`](./scheduled-digest/) | TypeScript | a background worker loop + `/healthz` + a `number` param for the schedule |
 | [`url-shortener/`](./url-shortener/) | Python · Django | the **full validated param set** (url/string/number/boolean/select/email/secret/textarea) + SQLite migrations |
-| [`markdown-notes/`](./markdown-notes/) | Python · Flask | a **Dockerfile reproducible build** (deps frozen into the image) + SQLite persistence |
+| [`markdown-notes/`](./markdown-notes/) | Python · Flask | **SQLite persistence** that survives redeploys (`$DATA_DIR` outside the rsync zone) + Markdown rendering |
 
 Every example deploys with the same command — `rig deploy`. Most rsync code and
 run `install:` on the VM. Several declare a `Dockerfile`, which makes
@@ -86,10 +86,11 @@ The point of the suite is to model the *right* primitive for each job:
 
 ## Docker builds & the hybrid deploy
 
-Most examples install their runtime on the VM with `install:`. **`ai-chat`** and
-**`markdown-notes`** instead **freeze their environment into an image** with a
-`Dockerfile` (`FROM rigbox-base`). The command is the same — `rig deploy` — and a
-Dockerfile in `rig.yaml` is all it takes to switch on the image build (no flag):
+Most examples install their runtime on the VM with `install:`. The established
+products — **`code-server`**, **`gitea`**, and **`n8n`** — instead **freeze their
+environment into an image** with a `Dockerfile` (`FROM rigbox-base`). The command
+is the same — `rig deploy` — and a Dockerfile in `rig.yaml` is all it takes to
+switch on the image build (no flag):
 
 - the **first** deploy builds the image from the local Dockerfile (the CLI uploads
   the project dir as the build context — no git repo needed), boots from that
