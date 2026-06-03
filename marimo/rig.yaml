@@ -1,0 +1,23 @@
+name: marimo
+port: 2718
+# Marimo is lighter than Jupyter — pure Python + a small web bundle.
+workspace:
+  resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 2048 }
+build:
+  dockerfile: Dockerfile
+# Token-less auth: the app is private by default and the Rigbox gateway
+# auth-gates anonymous traffic, so Marimo's own token gate is redundant — the
+# gateway is the front door. Don't set this app `public` without dropping
+# --no-token. --headless leaves browser-launch off (we're behind a proxy).
+start: >-
+  /usr/local/bin/marimo edit
+  --host 0.0.0.0 --port 2718
+  --headless --no-token --no-skew-protection
+  --allow-origins '*'
+  /home/developer/data
+health:
+  # Marimo's healthcheck endpoint.
+  path: /health
+  timeoutSeconds: 60
+env:
+  DATA_DIR: /home/developer/data

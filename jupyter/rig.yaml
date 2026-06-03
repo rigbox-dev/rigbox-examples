@@ -1,0 +1,26 @@
+name: jupyter
+port: 8888
+# JupyterLab + the python deps it pulls (tornado, ipykernel, jedi, etc.) need a
+# bit of headroom; 1GB / 1vCPU is comfortable for an interactive notebook.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
+build:
+  dockerfile: Dockerfile
+# Token-less auth: the app is private by default and the Rigbox gateway
+# auth-gates anonymous traffic, so Jupyter's own token gate is redundant —
+# the gateway is the front door. Don't set this app `public` without re-adding
+# a token (drop --IdentityProvider.token='').
+start: >-
+  /usr/local/bin/jupyter lab
+  --ip=0.0.0.0 --port=8888 --no-browser
+  --notebook-dir=/home/developer/data
+  --IdentityProvider.token=''
+  --ServerApp.allow_origin='*'
+  --ServerApp.trust_xheaders=True
+  --ServerApp.disable_check_xsrf=True
+health:
+  # JupyterLab's built-in liveness endpoint.
+  path: /api/status
+  timeoutSeconds: 90
+env:
+  DATA_DIR: /home/developer/data

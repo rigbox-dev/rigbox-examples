@@ -1,0 +1,34 @@
+name: pgweb
+port: 8081
+# pgweb is a tiny single Go binary. 256MB / 0.5GB disk is plenty.
+workspace:
+  resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
+build:
+  dockerfile: Dockerfile
+# pgweb auto-reads DATABASE_URL on startup if --url is not passed, so all the
+# connection config lives in the param below. --sessions lets a user open new
+# connections through the UI instead of being pinned to DATABASE_URL.
+start: >-
+  /usr/local/bin/pgweb
+  --bind=0.0.0.0 --listen=8081
+  --skip-open --sessions
+health:
+  # pgweb has no dedicated /health endpoint; its homepage is a static SPA shell
+  # that renders 200 even without a DB connection. Good enough for liveness.
+  path: /
+  timeoutSeconds: 30
+env:
+  DATA_DIR: /home/developer/data
+
+params:
+  - key: database_url
+    type: secret
+    label: Database URL
+    description: >-
+      PostgreSQL connection string (e.g.
+      postgres://user:pass@host:5432/dbname?sslmode=require). Stored as a
+      secret and injected at boot. Leave blank to start without a connection
+      and connect via the UI instead.
+    group: Connection
+    sensitive: true
+    envVar: DATABASE_URL

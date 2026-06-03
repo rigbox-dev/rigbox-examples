@@ -1,0 +1,24 @@
+name: kilocode
+port: 8080
+# Kilo Code is a TUI agent — the workspace is for SSH-CLI use. The HTTP port
+# below exists only to satisfy Rigbox's "every app has a front door" contract:
+# it serves a single static landing page that tells visitors how to SSH in.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+build:
+  dockerfile: Dockerfile
+# Serve the prebuilt /opt/landing/index.html. http.server returns 200 on `/`
+# when an index.html is present, which is all the health probe needs.
+start: >-
+  python3 -m http.server 8080
+  --bind 0.0.0.0
+  --directory /opt/landing
+health:
+  path: /
+  timeoutSeconds: 30
+# Forward the operator's OpenRouter key into the workspace. Kilo Code reads
+# KILO_PROVIDER_TYPE=openrouter + KILO_OPEN_ROUTER_API_KEY; the image's
+# /etc/profile.d/kilocode-routing.sh pins the provider and maps the generic
+# key into Kilo's namespace at every shell start.
+secrets:
+  - OPENROUTER_API_KEY

@@ -1,0 +1,21 @@
+name: streamlit
+port: 8501
+# Streamlit + pandas/altair pulled by typical apps want some headroom.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+build:
+  dockerfile: Dockerfile
+# Streamlit runs the rsynced app.py (CWD is the synced app dir, like other
+# single-app examples). --server.headless skips the "open browser" prompt and
+# the "send anonymous stats" first-run question; we're behind the gateway.
+start: >-
+  /usr/local/bin/streamlit run app.py
+  --server.port 8501 --server.address 0.0.0.0
+  --server.headless true
+  --browser.gatherUsageStats false
+health:
+  # Streamlit's built-in liveness probe.
+  path: /_stcore/health
+  timeoutSeconds: 60
+env:
+  DATA_DIR: /home/developer/data

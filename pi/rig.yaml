@@ -1,0 +1,22 @@
+name: pi
+port: 8080
+# Pi itself is light (a small Node CLI). 512MB is plenty; bumping vCPU to 1
+# matches the catalog minimum.
+workspace:
+  resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
+build:
+  dockerfile: Dockerfile
+# Pi is CLI-only — no built-in web UI. Serve a tiny static page on :8080 with
+# the SSH instructions so the rigbox subdomain has something to render, while
+# the real product (the `pi` REPL) lives in the SSH session.
+start: python3 -m http.server 8080 --directory /home/developer/landing
+health:
+  path: /
+  timeoutSeconds: 30
+# Opt into the Rigbox managed AI proxy. Pi reads OPENROUTER_API_KEY natively,
+# so the proxy-injected placeholder is enough — no code wiring, no .env.
+ai:
+  managed: true
+env:
+  NPM_CONFIG_PREFIX: /home/developer/.npm-global
+  PATH: /home/developer/.npm-global/bin:/usr/local/bin:/usr/bin:/bin

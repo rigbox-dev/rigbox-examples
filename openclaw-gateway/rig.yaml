@@ -1,0 +1,50 @@
+name: openclaw-gateway
+# OpenClaw's gateway listens on 18789 and speaks WebSocket. The rigbox
+# subdomain layer routes wss:// → 18789 inside the VM.
+port: 18789
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+build:
+  dockerfile: Dockerfile
+# The wrapper synthesizes openclaw.json + auth-profiles.json from env at every
+# boot, then exec's `openclaw gateway --bind lan --port 18789`.
+start: /home/developer/.openclaw/bin/rigbox-openclaw-gateway
+# Opt into the Rigbox managed AI proxy. The wrapper detects AI_PROXY_URL and
+# wires OpenClaw's custom provider entry at the proxy's /v1 endpoint.
+ai:
+  managed: true
+env:
+  NODE_OPTIONS: --max-old-space-size=2048
+  NODE_COMPILE_CACHE: /home/developer/.cache/nodejs
+  PATH: /home/developer/.npm-global/bin:/home/developer/.openclaw/bin:/home/developer/.local/bin:/usr/local/bin:/usr/bin:/bin
+  OPENCLAW_PROVIDER: anthropic
+  OPENCLAW_DEFAULT_MODEL: anthropic/claude-sonnet-4.6
+  OPENCLAW_SYSTEM_PROMPT: "You are a helpful AI assistant."
+params:
+  - key: ai_model
+    type: string
+    label: Default model
+    description: Provider/model slug OpenClaw routes new conversations to (e.g. `anthropic/claude-sonnet-4.6`, `rigbox/default`).
+    group: AI
+    default: anthropic/claude-sonnet-4.6
+    envVar: OPENCLAW_DEFAULT_MODEL
+  - key: system_prompt
+    type: string
+    label: System prompt
+    description: Override the system prompt applied to every new conversation.
+    group: AI
+    default: "You are a helpful AI assistant."
+    envVar: OPENCLAW_SYSTEM_PROMPT
+  - key: telegram_bot_token
+    type: string
+    label: Telegram bot token
+    description: When set, enables the Telegram channel on the gateway.
+    group: Messaging
+    default: ""
+    envVar: TELEGRAM_BOT_TOKEN
+credentials:
+  # The Control UI's WebSocket handshake authenticates with this token. The
+  # Clawd dashboard reads it from `rig app credentials get` and sends it as
+  # the `token` query param on the wss:// connection.
+  gateway_token:
+    generate: true

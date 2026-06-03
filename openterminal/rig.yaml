@@ -1,0 +1,25 @@
+name: openterminal
+port: 8000
+# Open Terminal is a small FastAPI/uvicorn app — 256MB matches the catalog
+# minimum, but a touch more disk lets pip cache the install on first boot.
+workspace:
+  resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
+build:
+  dockerfile: Dockerfile
+# start.sh writes the api-key config from $CRED_API_KEY on first boot, then
+# exec's `open-terminal run`. The catalog uses a wrapper at the same path.
+start: /usr/local/bin/openterminal-start.sh
+health:
+  path: /health
+  timeoutSeconds: 60
+params:
+  - key: working_directory
+    type: string
+    label: Working Directory
+    description: Root directory for file operations. The agent can only read/write files under this path.
+    group: Sandbox Configuration
+    default: /home/developer
+    envVar: OPENTERMINAL_WORKING_DIRECTORY
+credentials:
+  api_key:
+    generate: true   # → injected as CRED_API_KEY, written into config.toml on boot

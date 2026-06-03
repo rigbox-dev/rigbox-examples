@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenCode — Rigbox</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fbfcfd; --surface: #fff; --border: #e6e8eb;
+      --ink: #1a1d24; --muted: #6b7280; --accent: #5b5bd6;
+      --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#0b0c10; --surface:#16181c; --border:#272a31; --ink:#e6e8eb; --muted:#8b919b; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      display: grid; place-items: center; padding: 24px;
+    }
+    main {
+      max-width: 640px; width: 100%; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px; padding: 32px;
+      box-shadow: 0 1px 2px rgba(16,18,24,.05), 0 8px 24px rgba(16,18,24,.05);
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .lede { margin: 0 0 24px; color: var(--muted); }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em;
+         color: var(--muted); margin: 24px 0 8px; }
+    pre {
+      margin: 0; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px; overflow-x: auto;
+      font: 13px/1.5 var(--mono);
+    }
+    code { font: 13px/1.5 var(--mono); }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>OpenCode</h1>
+    <p class="lede">The open-source AI coding agent — terminal-first, Go-based TUI, native OpenRouter support. SSH in and run <code>opencode</code>.</p>
+
+    <h2>1. Get the SSH command</h2>
+    <pre><code>rig workspace ssh-info --workspace &lt;name-or-id&gt;</code></pre>
+
+    <h2>2. Connect and run</h2>
+    <pre><code>ssh "$(rig workspace ssh-info --workspace &lt;name-or-id&gt; --output json | jq -r .ssh_target)"
+opencode</code></pre>
+
+    <h2>Routing</h2>
+    <p style="color: var(--muted); margin: 0;">
+      OpenCode reads <code>OPENROUTER_API_KEY</code> natively — no env
+      translation required. The key forwarded at deploy time is what the
+      agent uses to call models on
+      <a href="https://openrouter.ai">OpenRouter</a>.
+    </p>
+  </main>
+</body>
+</html>

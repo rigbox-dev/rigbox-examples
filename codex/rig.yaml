@@ -1,0 +1,26 @@
+name: codex
+port: 8080
+# Codex CLI is a TUI agent — the workspace is for SSH-CLI use. The HTTP port
+# below exists only to satisfy Rigbox's "every app has a front door" contract:
+# it serves a single static landing page that tells visitors how to SSH in.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+build:
+  dockerfile: Dockerfile
+# Serve the prebuilt /opt/landing/index.html. http.server returns 200 on `/`
+# when an index.html is present, which is all the health probe needs.
+start: >-
+  python3 -m http.server 8080
+  --bind 0.0.0.0
+  --directory /opt/landing
+health:
+  path: /
+  timeoutSeconds: 30
+# Forward the operator's OpenRouter key into the workspace. Codex CLI reads
+# OPENAI_BASE_URL + OPENAI_API_KEY; the image's
+# /etc/profile.d/codex-routing.sh translates OPENROUTER_* into the OpenAI
+# shape (OpenRouter speaks the OpenAI API at /v1) at every shell start.
+secrets:
+  - OPENROUTER_API_KEY
+env:
+  OPENROUTER_BASE_URL: https://openrouter.ai/api/v1

@@ -1,0 +1,25 @@
+name: t3code
+port: 3773
+# Web GUI + Node.js process — give it real headroom so the model picker and
+# the per-agent UIs stay responsive.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+build:
+  dockerfile: Dockerfile
+# rigbox-t3code-start sources $HOME/.rigbox/.env, translates managed-proxy /
+# OPENROUTER_API_KEY into the ANTHROPIC_*/OPENAI_* shapes T3 reads, then exec's
+# the absolute t3 binary on 0.0.0.0:3773.
+start: /home/developer/.local/bin/rigbox-t3code-start
+health:
+  # T3 doesn't expose a dedicated probe; the app root returns the SPA shell
+  # once the Node server is listening.
+  path: /
+  timeoutSeconds: 90
+# Opt into the Rigbox managed AI proxy. The start wrapper picks up the injected
+# OPENROUTER_API_KEY/AI_PROXY_URL and routes every model T3 can drive through
+# it — no per-provider key needed.
+ai:
+  managed: true
+env:
+  NPM_CONFIG_PREFIX: /home/developer/.npm-global
+  PATH: /home/developer/.npm-global/bin:/home/developer/.local/bin:/usr/local/bin:/usr/bin:/bin

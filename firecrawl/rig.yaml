@@ -1,0 +1,63 @@
+name: firecrawl
+port: 3002
+# Firecrawl runs api + playwright + postgres-17 + redis + rabbitmq + a
+# headless chromium in one VM. The dropped template hinted 4GB; we give it
+# 4.5GB + 8GB disk to leave headroom for crawls and the playwright cache.
+workspace:
+  resources: { ramMb: 4608, vcpuCount: 2, diskSizeMb: 8192 }
+build:
+  dockerfile: Dockerfile
+  # The frozen image carries firecrawl@v2.9.0 + its node_modules + chromium
+  # under /opt/pw-browsers — roughly 6GB on disk. The default rootfs is way
+  # too small to receive the docker→ext4 export; size generously.
+  sizeMb: 12288
+# start.sh ensures postgres is up, creates the firecrawl role + DB if missing,
+# loads the nuq schema once, then exec's the firecrawl api harness.
+start: /usr/local/bin/firecrawl-start.sh
+health:
+  # v2.9.0 doesn't expose /v2/health; the harness returns 200 JSON at `/` once
+  # the api is up. Generous timeout because postgres + nuq init runs on first
+  # boot before the listener binds.
+  path: /
+  timeoutSeconds: 240
+env:
+  NODE_OPTIONS: --max-old-space-size=2048
+  PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+params:
+  - key: ai_proxy_mode
+    type: select
+    label: AI Proxy Mode
+    description: Use Rigbox managed credits, bring your own OpenAI key, or disable AI features.
+    group: AI Configuration
+    default: "off"
+    envVar: AI_PROXY_MODE
+    options:
+      - { value: managed, label: "Managed (Rigbox Credits)" }
+      - { value: byok,    label: "Bring Your Own Key" }
+      - { value: "off",   label: "Off" }
+  - key: proxy_server
+    type: string
+    label: Proxy Server
+    description: Optional. HTTP proxy for outbound scraping requests (e.g. http://host:port).
+    group: Network
+    default: ""
+    envVar: PROXY_SERVER
+  - key: proxy_username
+    type: string
+    label: Proxy Username
+    description: Optional. Username for proxy authentication.
+    group: Network
+    default: ""
+    envVar: PROXY_USERNAME
+secrets:
+  - name: OPENAI_API_KEY
+  - name: PROXY_PASSWORD
+credentials:
+  # All three are generated on first deploy and shown once. They land in
+  # /home/developer/.firecrawl/.env on every boot via start.sh.
+  api_key:
+    generate: true              # → CRED_API_KEY (the bearer for /v2/scrape etc.)
+  postgres_password:
+    generate: true              # → CRED_POSTGRES_PASSWORD
+  bull_auth_key:
+    generate: true              # → CRED_BULL_AUTH_KEY

@@ -1,0 +1,21 @@
+name: excalidraw
+port: 5000
+# Excalidraw itself is a static React SPA — it serves fine on 256MB at runtime,
+# but the vite bundle is large and the catalog ships 1024MB to leave margin.
+# We bake the build at image-build time so the VM only runs `serve`.
+workspace:
+  resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
+build:
+  dockerfile: Dockerfile
+  # vite + react + @excalidraw + node_modules + the built bundle don't fit in
+  # the default rootfs at image-export time. Bump the frozen image's ext4.
+  sizeMb: 4096
+# Serve the prebuilt SPA. --no-clipboard matches the catalog (the Rigbox proxy
+# isn't an HTTPS origin from the browser's POV for clipboard APIs).
+start: >-
+  /opt/excalidraw/node_modules/.bin/serve
+  -s /opt/excalidraw/build
+  -l 5000 --no-clipboard
+health:
+  path: /
+  timeoutSeconds: 60

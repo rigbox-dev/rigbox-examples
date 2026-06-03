@@ -1,0 +1,34 @@
+FROM rigbox-base
+# Bake OpenCode (https://opencode.ai) into the image so deploys don't re-run
+# the upstream installer on every boot. OpenCode is a Go-based TUI agent —
+# the installer drops a single static binary at $HOME/.opencode/bin/opencode
+# (earlier releases used $HOME/.local/bin). We accept either, then symlink
+# whichever exists to /usr/local/bin so it's on the standard SSH PATH.
+#
+# The install mirrors the catalog's opencode/install.sh so this image and the
+# catalog-installed shape stay byte-compatible.
+
+# 1. Install the CLI as the developer user.
+RUN su - developer -s /bin/bash -c '\
+      set -euo pipefail; \
+      curl -fsSL https://opencode.ai/install | bash; \
+      [ -x "$HOME/.opencode/bin/opencode" ] || [ -x "$HOME/.local/bin/opencode" ] \
+    ' \
+ && if [ -x /home/developer/.opencode/bin/opencode ]; then \
+      ln -sfn /home/developer/.opencode/bin/opencode /usr/local/bin/opencode ; \
+    else \
+      ln -sfn /home/developer/.local/bin/opencode  /usr/local/bin/opencode ; \
+    fi
+
+# 2. Make ~/.opencode/bin and ~/.local/bin reachable from non-interactive
+#    login shells too (catalog scripts, sshd ForceCommand, ...) so a fresh SSH
+#    session sees `opencode` on PATH without depending on per-user rc state.
+#    OpenCode reads OPENROUTER_API_KEY natively — no env translation needed,
+#    just a PATH nudge.
+COPY opencode-routing.sh /etc/profile.d/opencode-routing.sh
+RUN chmod 644 /etc/profile.d/opencode-routing.sh
+
+# 3. Static landing page served by `python3 -m http.server`. The CLI lives on
+#    SSH; the HTTP front door exists only to satisfy the health probe.
+COPY landing/ /opt/landing/
+RUN chmod -R a+r /opt/landing

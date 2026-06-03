@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Boot wrapper for the OpenClaw gateway. Synthesizes per-VM config from env,
+# then exec's the openclaw binary on the Rigbox-routed port.
+set -euo pipefail
+mkdir -p /home/developer/.openclaw/agents/main/agent /home/developer/.cache/nodejs
+node /home/developer/.openclaw/bin/gateway.js
+exec /home/developer/.npm-global/bin/openclaw gateway \
+  --bind lan --port 18789 --allow-unconfigured

@@ -1,0 +1,31 @@
+name: claude
+port: 8080
+# Claude Code is a TUI agent — the workspace is for SSH-CLI use. The HTTP port
+# below exists only to satisfy Rigbox's "every app has a front door" contract:
+# it serves a single static landing page that tells visitors how to SSH in.
+# Bump RAM and disk a touch over the CLI catalog item's hint (256MB/512MB) so
+# the agent has comfortable headroom for repo-wide edits and node_modules.
+workspace:
+  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+build:
+  dockerfile: Dockerfile
+# Serve the prebuilt /opt/landing/index.html. http.server returns 200 on `/`
+# when an index.html is present, which is all the health probe needs.
+start: >-
+  python3 -m http.server 8080
+  --bind 0.0.0.0
+  --directory /opt/landing
+health:
+  path: /
+  timeoutSeconds: 30
+# Forward the operator's OpenRouter key into the workspace. Claude Code reads
+# ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN; the image's
+# /etc/profile.d/claude-routing.sh translates OPENROUTER_* into the Anthropic
+# shape at every shell start, so an SSH session sees `claude` wired up.
+secrets:
+  - OPENROUTER_API_KEY
+env:
+  # Point Claude Code (via the profile.d translator) at openrouter.ai by
+  # default. Override OPENROUTER_BASE_URL if you front the key with your own
+  # proxy or want to point at a different OpenAI-compatible endpoint.
+  OPENROUTER_BASE_URL: https://openrouter.ai/api

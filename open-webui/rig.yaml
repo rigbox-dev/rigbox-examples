@@ -1,0 +1,41 @@
+name: open-webui
+port: 8080
+# Open WebUI + uv-installed Python 3.12 + CPU torch wheel — the install footprint
+# is sizeable, so bump the workspace disk and the frozen image accordingly.
+workspace:
+  resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 8192 }
+build:
+  dockerfile: Dockerfile
+  sizeMb: 8192
+start: /home/developer/.open-webui/start.sh
+health:
+  path: /health
+  timeoutSeconds: 600
+# Route every chat through the Rigbox managed AI proxy: no API key in the VM,
+# usage is metered against workspace credits. Open WebUI reads
+# OPENAI_API_BASE_URL/OPENAI_API_KEY directly — both are injected by the
+# workspace env layer when `managed: true`.
+ai:
+  managed: true
+env:
+  # Persistence: webui.db (chat history + config) lives under DATA_DIR, which
+  # is outside the rsync zone — chats survive redeploys.
+  DATA_DIR: /home/developer/.open-webui/data
+  # Local-only auth: signups disabled, the workspace owner is the admin. Drop
+  # ENABLE_SIGNUP if you want a multi-user instance.
+  WEBUI_AUTH: "True"
+  ENABLE_SIGNUP: "False"
+  # Disable the Ollama integration entirely — we're proxy-only here.
+  ENABLE_OPENAI_API: "True"
+  ENABLE_OLLAMA_API: "False"
+  # Sensible defaults for the model picker.
+  DEFAULT_MODELS: rigbox/free
+  DEFAULT_PINNED_MODELS: rigbox/free,qwen/qwen3-coder:free,meta-llama/llama-3.3-70b-instruct:free
+  DEFAULT_MODEL_PARAMS: '{"max_tokens":4096}'
+credentials:
+  # First-boot admin login. `generate: true` mints a strong password once and
+  # exposes it as $CRED_ADMIN_PASSWORD in the workspace; Open WebUI maps that
+  # to WEBUI_ADMIN_PASSWORD via the catalog item — here you can map it the
+  # same way, or just read the credential from `rig app credentials get`.
+  admin_password:
+    generate: true

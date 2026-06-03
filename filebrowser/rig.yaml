@@ -1,0 +1,22 @@
+name: filebrowser
+port: 8080
+# File Browser is a tiny single Go binary — the catalog item declares 128MB/64MB,
+# but the VM floors push to a usable minimum and leave headroom for uploads.
+workspace:
+  resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
+build:
+  dockerfile: Dockerfile
+# Serve /home/developer/data so uploads and edits persist across redeploys.
+# The catalog item uses --noauth (gateway-fronted); the example also lets
+# filebrowser's default admin/admin login take effect so you can see its
+# own auth UI. Flip to --noauth if you prefer relying on the gateway only.
+start: >-
+  /usr/local/bin/filebrowser
+  --address 0.0.0.0 --port 8080
+  --root /home/developer/data
+  --database /home/developer/data/filebrowser/filebrowser.db
+health:
+  path: /health
+  timeoutSeconds: 30
+env:
+  DATA_DIR: /home/developer/data
