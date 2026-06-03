@@ -42,32 +42,12 @@ init — so each installs the product on the rigbox base instead.)
 | [`gitea/`](./gitea/) | **Gitea** (Git hosting) | a headless single-binary service (install wizard locked) with SQLite + repos under `$DATA_DIR` |
 | [`n8n/`](./n8n/) | **n8n** (workflow automation) | freeze a heavy `npm install` into the image (`sizeMb` bump); workflows persist under `$DATA_DIR` |
 
-### Catalog apps
+## Catalog apps
 
-Standalone reproductions of every app in the [Rigbox catalog](https://docs.rigbox.dev/) — same product the catalog installs, but shipped as a regular `rig deploy`-able example you can fork, modify, and run on its own.
+Standalone reproductions of every app in the [Rigbox catalog](https://docs.rigbox.dev/), kept in [`catalog-apps/`](./catalog-apps/) so they don't crowd the curated example suite. Each is a regular `rig deploy`-able example you can fork, modify, and run on its own — see [`catalog-apps/README.md`](./catalog-apps/README.md) for the full index.
 
-| Example | Product | One-line capability |
-|---|---|---|
-| [`jupyter/`](./jupyter/) | **JupyterLab** | reproducible notebook server; notebooks persist under `$DATA_DIR` |
-| [`marimo/`](./marimo/) | **Marimo** | reactive (git-friendly `.py` cells) Python notebook |
-| [`streamlit/`](./streamlit/) | **Streamlit** | framework frozen in the image; edit `app.py` and redeploy without re-running pip |
-| [`pgweb/`](./pgweb/) | **pgweb** | single Go binary frontend for *any* external Postgres (secret `database_url` param) |
-| [`excalidraw/`](./excalidraw/) | **Excalidraw** | virtual whiteboard, vite-built static SPA frozen into the image |
-| [`filebrowser/`](./filebrowser/) | **File Browser** | pinned single Go binary serving `$DATA_DIR` over a web UI |
-| [`openterminal/`](./openterminal/) | **Open Terminal** | sandboxed REST API for shell + filesystem, designed for AI agents; key materialised on boot |
-| [`firecrawl/`](./firecrawl/) | **Firecrawl** | self-hosted web-scraping API — Postgres-17 + Redis + RabbitMQ + Chromium frozen in a 12GB ext4 image |
-| [`hermes-agent/`](./hermes-agent/) | **Hermes Agent** | self-improving agent + a separate user-bus messaging gateway bridging Telegram/Discord/Slack/WhatsApp/Signal |
-| [`t3code/`](./t3code/) | **T3 Code** | multiple browser-tabbed coding agents (Claude Code, Codex, …) behind one web UI |
-| [`open-webui/`](./open-webui/) | **Open WebUI** | full-featured chat UI fronted by the Rigbox managed AI proxy — every chat metered against workspace credits |
-| [`openclaw-gateway/`](./openclaw-gateway/) | **OpenClaw Gateway** | WebSocket control-plane gateway that powers the Clawd browser dashboard |
-| [`claude/`](./claude/) | **Claude Code** | Anthropic's coding agent, `OPENROUTER_* → ANTHROPIC_*` env translation, accessed via SSH |
-| [`codex/`](./codex/) | **Codex CLI** | OpenAI's Codex CLI with one-rename `OPENROUTER_* → OPENAI_*` shim (OpenRouter is OpenAI-compatible at `/v1`) |
-| [`opencode/`](./opencode/) | **OpenCode** | OSS Go-based TUI from sst/opencode with **native** `OPENROUTER_API_KEY` (no translation shim) |
-| [`junie/`](./junie/) | **Junie** | JetBrains' AI agent with a heavy postinstall archive frozen into the image once |
-| [`kilocode/`](./kilocode/) | **Kilo Code** | multi-provider CLI (100+ providers) pinned at image-build time to OpenRouter |
-| [`pi/`](./pi/) | **Pi** | OpenRouter-native CLI coding agent (`@mariozechner/pi-coding-agent`); SSH in and run `pi` |
-
-The catalog AI-CLI examples (`claude`, `codex`, `opencode`, `junie`, `kilocode`, `pi`) ship a small `python3 -m http.server` landing page on `:8080` so they satisfy the platform's "every app has a health-checkable port" contract — the value is the CLI on SSH.
+- [`catalog-apps/service/`](./catalog-apps/service/) — 12 examples that expose a port + health probe (jupyter, marimo, streamlit, pgweb, excalidraw, filebrowser, openterminal, firecrawl, hermes-agent, t3code, open-webui, openclaw-gateway).
+- [`catalog-apps/cli/`](./catalog-apps/cli/) — 6 SSH-first CLI examples (claude, codex, opencode, junie, kilocode, pi). Each ships a small landing page on `:8080` so it satisfies the platform's "every app has a health-checkable port" contract — the value is the CLI on SSH.
 
 Single-app examples use the top-level `name`/`port`/`start`/`install`/`health`
 shape. Multi-app examples use a `workspace:` block + an `apps:` map, where each app
