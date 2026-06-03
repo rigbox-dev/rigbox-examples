@@ -1,23 +1,13 @@
 name: junie
-port: 8080
-# Junie is a TUI agent — the workspace is for SSH-CLI use. The HTTP port below
-# exists only to satisfy Rigbox's "every app has a front door" contract: it
-# serves a single static landing page that tells visitors how to SSH in.
+kind: cli
+# Junie is a TUI agent — the workspace is for SSH-CLI use. `kind: cli` declares
+# that explicitly: no HTTP port, no health probe, no start command.
 # 1.5GB disk for the JetBrains postinstall binary archive (heavier than pure
 # npm CLIs) — leaves comfortable headroom for project repos on top.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
 build:
   dockerfile: Dockerfile
-# Serve the prebuilt /opt/landing/index.html. http.server returns 200 on `/`
-# when an index.html is present, which is all the health probe needs.
-start: >-
-  python3 -m http.server 8080
-  --bind 0.0.0.0
-  --directory /opt/landing
-health:
-  path: /
-  timeoutSeconds: 30
 # Forward the operator's OpenRouter key into the workspace. Junie reads
 # JUNIE_OPENROUTER_API_KEY first and falls back to OPENROUTER_API_KEY; the
 # image's /etc/profile.d/junie-routing.sh translates the latter into the

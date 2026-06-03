@@ -30,10 +30,9 @@ build:
 
 ## SSH-in to use it
 
-Junie is a TUI — there is **no web UI**. The `port: 8080` in `rig.yaml` is just
-a static landing page (`python3 -m http.server` serving
-`/opt/landing/index.html`) so the platform's "every app has a front door"
-health probe stays green. The real UX is SSH:
+Junie is a TUI — there is **no web UI**. The app is declared with `kind: cli`,
+so `rig.yaml` carries no `port`, `start`, or `health` — the platform doesn't
+expect an HTTP front door. The real UX is SSH:
 
 ```bash
 ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ssh_target)"
@@ -69,8 +68,7 @@ local shell into the workspace.
 - **Persistence: yes.** `~/.local/share/junie` (the cached JetBrains-bundled
   binary + agent state) lives on the workspace disk, outside the rsync zone —
   durable across redeploys.
-- **No public UI.** The HTTP front door is auth-gated by the Rigbox gateway and
-  only shows a "SSH in to use the CLI" landing page. Don't set this app
-  `public` — the CLI is the value, not the page.
+- **No public UI.** `kind: cli` means there's no HTTP front door at all — the
+  workspace is reachable only via SSH on the rigbox gateway.
 - **Disk: 4096MB.** Sized to comfortably hold the JetBrains-bundled archive
   Junie downloads on top of any project repo you check out.

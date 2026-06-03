@@ -1,23 +1,13 @@
 name: claude
-port: 8080
-# Claude Code is a TUI agent — the workspace is for SSH-CLI use. The HTTP port
-# below exists only to satisfy Rigbox's "every app has a front door" contract:
-# it serves a single static landing page that tells visitors how to SSH in.
+kind: cli
+# Claude Code is a TUI agent — the workspace is for SSH-CLI use. `kind: cli`
+# declares that explicitly: no HTTP port, no health probe, no start command.
 # Bump RAM and disk a touch over the CLI catalog item's hint (256MB/512MB) so
 # the agent has comfortable headroom for repo-wide edits and node_modules.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 build:
   dockerfile: Dockerfile
-# Serve the prebuilt /opt/landing/index.html. http.server returns 200 on `/`
-# when an index.html is present, which is all the health probe needs.
-start: >-
-  python3 -m http.server 8080
-  --bind 0.0.0.0
-  --directory /opt/landing
-health:
-  path: /
-  timeoutSeconds: 30
 # Forward the operator's OpenRouter key into the workspace. Claude Code reads
 # ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN; the image's
 # /etc/profile.d/claude-routing.sh translates OPENROUTER_* into the Anthropic

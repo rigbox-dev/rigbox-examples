@@ -29,8 +29,3 @@ RUN su - developer -s /bin/bash -c '\
 #    and API_KEY are set the CLI prefers API_KEY, silently bypassing routing.
 COPY claude-routing.sh /etc/profile.d/claude-routing.sh
 RUN chmod 644 /etc/profile.d/claude-routing.sh
-
-# 3. Static landing page served by `python3 -m http.server`. The CLI lives on
-#    SSH; the HTTP front door exists only to satisfy the health probe.
-COPY landing/ /opt/landing/
-RUN chmod -R a+r /opt/landing

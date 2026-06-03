@@ -1,21 +1,11 @@
 name: opencode
-port: 8080
-# OpenCode is a TUI agent — the workspace is for SSH-CLI use. The HTTP port
-# below exists only to satisfy Rigbox's "every app has a front door" contract:
-# it serves a single static landing page that tells visitors how to SSH in.
+kind: cli
+# OpenCode is a TUI agent — the workspace is for SSH-CLI use. `kind: cli`
+# declares that explicitly: no HTTP port, no health probe, no start command.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 build:
   dockerfile: Dockerfile
-# Serve the prebuilt /opt/landing/index.html. http.server returns 200 on `/`
-# when an index.html is present, which is all the health probe needs.
-start: >-
-  python3 -m http.server 8080
-  --bind 0.0.0.0
-  --directory /opt/landing
-health:
-  path: /
-  timeoutSeconds: 30
 # OpenCode reads OPENROUTER_API_KEY natively — no env translation needed.
 # Forward the operator's key into the workspace and you're done.
 secrets:

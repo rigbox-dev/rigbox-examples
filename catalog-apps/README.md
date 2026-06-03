@@ -25,7 +25,7 @@ Apps that expose a port + health probe, accessed in a browser at the workspace's
 
 ## CLI apps — [`cli/`](./cli/)
 
-AI coding CLIs/TUIs accessed by SSHing into the workspace. The catalog ships each as `AppKind::Cli` (no port, no health probe) but `rig.yaml` requires a port and health gate today, so every CLI example serves a small `python3 -m http.server` landing page on `:8080` that explains the SSH workflow. The value is the CLI on SSH.
+AI coding CLIs/TUIs accessed by SSHing into the workspace. Each declares `kind: cli` in `rig.yaml` — no `port`, no `start`, no `health` — so the platform doesn't expect an HTTP front door. The value is the CLI on SSH.
 
 | Example | Product | One-line capability |
 |---|---|---|

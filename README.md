@@ -47,7 +47,7 @@ init — so each installs the product on the rigbox base instead.)
 Standalone reproductions of every app in the [Rigbox catalog](https://docs.rigbox.dev/), kept in [`catalog-apps/`](./catalog-apps/) so they don't crowd the curated example suite. Each is a regular `rig deploy`-able example you can fork, modify, and run on its own — see [`catalog-apps/README.md`](./catalog-apps/README.md) for the full index.
 
 - [`catalog-apps/service/`](./catalog-apps/service/) — 12 examples that expose a port + health probe (jupyter, marimo, streamlit, pgweb, excalidraw, filebrowser, openterminal, firecrawl, hermes-agent, t3code, open-webui, openclaw-gateway).
-- [`catalog-apps/cli/`](./catalog-apps/cli/) — 6 SSH-first CLI examples (claude, codex, opencode, junie, kilocode, pi). Each ships a small landing page on `:8080` so it satisfies the platform's "every app has a health-checkable port" contract — the value is the CLI on SSH.
+- [`catalog-apps/cli/`](./catalog-apps/cli/) — 6 SSH-first CLI examples (claude, codex, opencode, junie, kilocode, pi). Each declares `kind: cli` so there's no port, start, or health probe — the value is the CLI on SSH.
 
 Single-app examples use the top-level `name`/`port`/`start`/`install`/`health`
 shape. Multi-app examples use a `workspace:` block + an `apps:` map, where each app

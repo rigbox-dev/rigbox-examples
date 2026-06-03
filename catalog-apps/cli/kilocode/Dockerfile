@@ -26,8 +26,3 @@ RUN su - developer -s /bin/bash -c '\
 #    set as well so Kilo's secondary fallback also resolves it.
 COPY kilocode-routing.sh /etc/profile.d/kilocode-routing.sh
 RUN chmod 644 /etc/profile.d/kilocode-routing.sh
-
-# 3. Static landing page served by `python3 -m http.server`. The CLI lives on
-#    SSH; the HTTP front door exists only to satisfy the health probe.
-COPY landing/ /opt/landing/
-RUN chmod -R a+r /opt/landing

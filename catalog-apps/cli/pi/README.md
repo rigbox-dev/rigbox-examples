@@ -21,12 +21,11 @@ To use a real OpenRouter key instead (and skip managed credits):
 rig app secret set OPENROUTER_API_KEY=sk-or-v1-…
 ```
 
-## A note on the web page
+## SSH-in to use it
 
-Pi has no web UI of its own. The `:8080` route this example exposes serves a
-small static "SSH in and run `pi`" landing page so the rigbox subdomain has
-something to render — not the agent itself. The real product lives in your
-terminal:
+Pi has no web UI of its own. The app is declared with `kind: cli`, so `rig.yaml`
+carries no `port`, `start`, or `health` — the platform doesn't expect an HTTP
+front door. The real product lives in your terminal:
 
 ```bash
 rig workspace ssh
@@ -39,7 +38,6 @@ $ pi
 ```dockerfile
 FROM rigbox-base
 RUN npm install -g @mariozechner/pi-coding-agent
-COPY landing /home/developer/landing
 ```
 
 - **First `rig deploy`**: builds the image (one npm install), boots from it.
@@ -54,9 +52,8 @@ rig workspace ssh    # then run `pi` interactively
 
 ## Notes
 
-- **CLI app via the service shape.** Rigbox apps need a `port` + `start`, so
-  this example expresses Pi as "tiny static landing page on :8080 + `pi` on
-  the SSH PATH." That's the same trick the catalog uses internally (Pi is
-  `AppKind::Cli`; this rig.yaml just makes it fit the deploy contract).
+- **CLI app, declaratively.** `kind: cli` tells the platform there's no HTTP
+  port to probe; the deploy just bakes `pi` onto the SSH PATH and stops there.
+  That matches the catalog's internal `AppKind::Cli` shape exactly.
 - **Persistence**: Pi keeps no state of its own; conversations are
   ephemeral per terminal session.

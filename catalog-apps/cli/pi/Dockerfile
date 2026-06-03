@@ -26,8 +26,3 @@ RUN set -eu; \
     '; \
     install -d -m 755 /usr/local/bin; \
     ln -sfn /home/developer/.npm-global/bin/pi /usr/local/bin/pi
-
-# Pi has no web UI of its own. Ship a tiny static landing page on :8080 so the
-# rigbox subdomain can host a "how to use this" placeholder while the real
-# product (the interactive `pi` REPL) runs in the SSH session.
-COPY landing /home/developer/landing
