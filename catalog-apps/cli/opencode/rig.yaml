@@ -6,7 +6,9 @@ workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 build:
   dockerfile: Dockerfile
-# OpenCode reads OPENROUTER_API_KEY natively — no env translation needed.
-# Forward the operator's key into the workspace and you're done.
-secrets:
-  - OPENROUTER_API_KEY
+# Opt into the Rigbox managed AI proxy — no OpenRouter key to set, so deploying
+# this example is never blocked on a local secret. The image bakes an
+# ~/.config/opencode/opencode.json that registers a custom OpenAI-compatible
+# provider pointed at the managed proxy, so `opencode` works on first SSH.
+ai:
+  managed: true

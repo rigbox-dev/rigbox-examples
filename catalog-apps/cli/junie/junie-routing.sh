@@ -1,10 +1,9 @@
-# Managed by rigbox-examples (junie). Junie reads JUNIE_OPENROUTER_API_KEY
-# first, then falls back to OPENROUTER_API_KEY. Translate the latter for users
-# who set only the generic OpenRouter key at deploy time.
+# Managed by rigbox-examples (junie). Junie ignores the generic OPENAI_* env, so
+# the AI backend is a baked custom LLM profile at ~/.junie/models/rigbox.json
+# (OpenAI-compatible, pointed at the workspace's managed AI proxy). Select it at
+# every login and keep the npm-global bin on PATH for non-interactive shells.
 case ":${PATH}:" in
   *":${HOME:-/home/developer}/.npm-global/bin:"*) ;;
   *) export PATH="${HOME:-/home/developer}/.npm-global/bin:${PATH}" ;;
 esac
-if [ -n "${OPENROUTER_API_KEY:-}" ] && [ -z "${JUNIE_OPENROUTER_API_KEY:-}" ]; then
-  export JUNIE_OPENROUTER_API_KEY="$OPENROUTER_API_KEY"
-fi
+export JUNIE_MODEL="custom:rigbox"

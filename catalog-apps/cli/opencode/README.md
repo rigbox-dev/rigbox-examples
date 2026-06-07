@@ -2,15 +2,15 @@
 
 Runs [**OpenCode**](https://opencode.ai) — the open-source, terminal-first AI
 coding agent — on Rigbox. It's a single static Go binary, ships as a TUI, and
-reads `OPENROUTER_API_KEY` directly without any env-var translation. You SSH
-in and run `opencode`.
+routes through Rigbox's **managed AI proxy** via a baked provider config — no
+API key to set. You SSH in and run `opencode`.
 
-## The single capability: a single-binary OSS agent with native OpenRouter
+## The single capability: a single-binary OSS agent, zero-key managed AI
 
 The whole point here is **running the OSS terminal agent on a persistent VM**
-with no glue code. Where Claude Code and Codex CLI need a `/etc/profile.d/…`
-shim to translate provider env vars, OpenCode reads `OPENROUTER_API_KEY`
-itself — set it once at deploy time and you're done.
+with no glue code. The image bakes an `opencode.json` that registers a custom
+OpenAI-compatible provider pointed at the workspace's managed AI proxy, so
+`opencode` works on first SSH — nothing to set, no key to forward.
 
 The `Dockerfile` is `FROM rigbox-base` (the required base — the platform asserts
 the rigbox agent + systemd are present and rejects any other base at build
@@ -40,23 +40,36 @@ ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ss
 opencode
 ```
 
-## Native OpenRouter, no shim
+## Managed AI via a baked provider config
 
-OpenCode reads `OPENROUTER_API_KEY` directly. The image's
-`/etc/profile.d/opencode-routing.sh` only puts `~/.opencode/bin` on `PATH`
-for non-interactive login shells — there's no env-translation block because
-none is needed. That's the whole pitch versus Claude/Codex: one less moving
-part.
+OpenCode's provider, base URL, key, and model live in a config file, not env
+vars. The image bakes `~/.config/opencode/opencode.json` with a custom
+`@ai-sdk/openai-compatible` provider pointed at the managed proxy:
+
+```jsonc
+{
+  "model": "rigbox/anthropic/claude-sonnet-4.5",
+  "provider": {
+    "rigbox": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": { "baseURL": "http://172.16.0.1:9090/v1", "apiKey": "managed-by-rigbox" }
+    }
+  }
+}
+```
+
+`/etc/profile.d/opencode-routing.sh` only puts `~/.opencode/bin` on `PATH` for
+non-interactive login shells — the AI wiring is entirely in the config file.
 
 ## Deploy
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-...
 cd opencode && rig deploy
 ```
 
-The `secrets:` block in `rig.yaml` forwards `OPENROUTER_API_KEY` from your
-local shell into the workspace.
+No secret required — `ai: managed: true` routes OpenCode through the workspace's
+managed AI proxy (your account's AI mode must be `managed`, which is the
+default).
 
 ## Notes
 

@@ -8,9 +8,10 @@ workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
 build:
   dockerfile: Dockerfile
-# Forward the operator's OpenRouter key into the workspace. Junie reads
-# JUNIE_OPENROUTER_API_KEY first and falls back to OPENROUTER_API_KEY; the
-# image's /etc/profile.d/junie-routing.sh translates the latter into the
-# former so users who only set the generic key are wired up automatically.
-secrets:
-  - OPENROUTER_API_KEY
+# Opt into the Rigbox managed AI proxy — no OpenRouter key to set, so deploying
+# this example is never blocked on a local secret. Junie ignores the generic
+# OPENAI_* env, so the image bakes a custom LLM profile at
+# ~/.junie/models/rigbox.json (OpenAI-compatible, pointed at the managed proxy)
+# and /etc/profile.d/junie-routing.sh selects it via JUNIE_MODEL=custom:rigbox.
+ai:
+  managed: true

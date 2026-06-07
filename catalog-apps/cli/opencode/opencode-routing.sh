@@ -1,8 +1,10 @@
-# Managed by rigbox-examples (opencode). OpenCode reads OPENROUTER_API_KEY
-# natively (https://github.com/sst/opencode) — no env translation required.
-# The upstream installer drops the binary at ~/.opencode/bin (or, on older
-# releases, ~/.local/bin) and only patches per-user rc files, so we add both
-# candidates to PATH here for non-interactive login shells.
+# Managed by rigbox-examples (opencode). The AI backend is configured in the
+# baked ~/.config/opencode/opencode.json (a custom OpenAI-compatible provider
+# pointed at the workspace's managed AI proxy), so no env translation is needed
+# here. This script only ensures the opencode binary is on PATH for
+# non-interactive login shells (catalog scripts, sshd ForceCommand, ...): the
+# upstream installer drops it at ~/.opencode/bin (or, on older releases,
+# ~/.local/bin) and only patches per-user rc files.
 for _rb_bin in "${HOME:-/home/developer}/.opencode/bin" "${HOME:-/home/developer}/.local/bin"; do
   if [ -d "$_rb_bin" ]; then
     case ":${PATH}:" in

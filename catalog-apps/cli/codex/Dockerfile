@@ -16,9 +16,14 @@ RUN su - developer -s /bin/bash -c '\
     ' \
  && ln -sfn /home/developer/.npm-global/bin/codex /usr/local/bin/codex
 
-# 2. Translate OPENROUTER_* -> OPENAI_* at shell start. Codex reads
-#    OPENAI_BASE_URL + OPENAI_API_KEY (OpenRouter is OpenAI-API-compatible at
-#    /v1, so a one-line rename is enough). Sourced by every interactive login
-#    shell — SSHing in is enough to activate the routing.
+# 2. Codex 0.137+ reads its provider from ~/.codex/config.toml (not env), so the
+#    routing script only makes sure $OPENAI_API_KEY (the proxy placeholder) is
+#    present for the config's env_key. Sourced by every interactive login shell.
 COPY codex-routing.sh /etc/profile.d/codex-routing.sh
 RUN chmod 644 /etc/profile.d/codex-routing.sh
+
+# 3. Bake the managed-AI provider config so `codex` works on first SSH with no
+#    key to set: a custom provider over the Responses wire pointed at the managed
+#    AI proxy (plain HTTP — no websocket). Owned by developer so the CLI reads it.
+RUN install -d -o developer -g developer -m 755 /home/developer/.codex
+COPY --chown=developer:developer config.toml /home/developer/.codex/config.toml

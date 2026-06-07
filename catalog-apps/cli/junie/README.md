@@ -39,29 +39,32 @@ ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ss
 junie
 ```
 
-## OpenRouter routing, one rename
+## Managed AI via a baked custom LLM profile
 
-Junie reads `JUNIE_OPENROUTER_API_KEY` first, then falls back to the generic
-`OPENROUTER_API_KEY`. The image's `/etc/profile.d/junie-routing.sh` re-exports
-the generic key as the Junie-specific one, so a single `OPENROUTER_API_KEY` at
-deploy time wires it up:
+Junie ignores the generic `OPENAI_*` env, so the AI backend is a **custom LLM
+profile**: the image bakes `~/.junie/models/rigbox.json` (OpenAI-compatible,
+pointed at the managed proxy) and selects it at every shell start.
+
+```jsonc
+// ~/.junie/models/rigbox.json — filename (minus .json) is the profile id
+{ "id": "anthropic/claude-sonnet-4.5", "baseUrl": "http://172.16.0.1:9090/v1",
+  "apiType": "OpenAICompletion", "apiKey": "managed-by-rigbox" }
+```
 
 ```sh
-# baked into the image, sourced by every login shell
-if [ -n "$OPENROUTER_API_KEY" ] && [ -z "$JUNIE_OPENROUTER_API_KEY" ]; then
-  export JUNIE_OPENROUTER_API_KEY="$OPENROUTER_API_KEY"
-fi
+# /etc/profile.d/junie-routing.sh, sourced by every login shell
+export JUNIE_MODEL="custom:rigbox"
 ```
 
 ## Deploy
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-...
 cd junie && rig deploy
 ```
 
-The `secrets:` block in `rig.yaml` forwards `OPENROUTER_API_KEY` from your
-local shell into the workspace.
+No secret required — `ai: managed: true` routes Junie through the workspace's
+managed AI proxy (your account's AI mode must be `managed`, which is the
+default).
 
 ## Notes
 

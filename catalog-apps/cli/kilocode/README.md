@@ -2,19 +2,18 @@
 
 Runs [**Kilo Code**](https://kilocode.ai) — an all-in-one AI coding CLI that
 fronts 100+ providers behind one binary — on Rigbox. You SSH in and run
-`kilocode`. Where Claude Code is Anthropic-shaped and Codex CLI is OpenAI-shaped,
-Kilo's distinguishing capability is **provider portability**: pick the provider
-in env (`KILO_PROVIDER_TYPE`) and swap it out without touching install scripts.
+`kilocode`. Kilo CLI 1.0 is an [OpenCode](https://opencode.ai) fork, so its
+provider, base URL, key, and model live in a config file — the image bakes one
+pointed at Rigbox's **managed AI proxy**, with no API key to set.
 
-## The single capability: a multi-provider agent, pinned to OpenRouter in image
+## The single capability: a multi-provider agent, zero-key managed AI
 
-The whole point here is **running a provider-agnostic AI CLI** while pinning
-the choice (OpenRouter) at image-build time so a fresh SSH session is
-immediately wired up. The `Dockerfile` is `FROM rigbox-base` (the required
-base — the platform asserts the rigbox agent + systemd are present and rejects
-any other base at build time), bakes the npm-published CLI into the image, and
-drops a profile.d shim that exports `KILO_PROVIDER_TYPE=openrouter` on every
-shell start:
+The whole point here is **running a provider-agnostic AI CLI** wired up at
+image-build time so a fresh SSH session is immediately ready. The `Dockerfile`
+is `FROM rigbox-base` (the required base — the platform asserts the rigbox
+agent + systemd are present and rejects any other base at build time), bakes
+the npm-published CLI into the image, and drops a config file that points Kilo
+at the workspace's managed AI proxy:
 
 ```dockerfile
 FROM rigbox-base
@@ -40,31 +39,36 @@ ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ss
 kilocode
 ```
 
-## OpenRouter routing, two-line shim
+## Managed AI via a baked provider config
 
-Kilo Code reads `KILO_PROVIDER_TYPE` and `KILO_OPEN_ROUTER_API_KEY`. The
-image's `/etc/profile.d/kilocode-routing.sh` pins the provider and maps the
-generic key on every shell start:
+Kilo CLI 1.0 (an OpenCode fork) configures providers in a file, not env vars —
+the pre-1.0 `KILO_PROVIDER_TYPE` / `KILO_OPEN_ROUTER_API_KEY` vars no longer
+exist. The image bakes `~/.config/kilo/opencode.json` with an
+`openai-compatible` provider pointed at the managed proxy:
 
-```sh
-# baked into the image, sourced by every login shell
-export KILO_PROVIDER_TYPE="openrouter"
-export KILO_OPEN_ROUTER_API_KEY="${OPENROUTER_API_KEY}"
+```jsonc
+{
+  "model": "openai-compatible/anthropic/claude-sonnet-4.5",
+  "provider": {
+    "openai-compatible": {
+      "options": { "baseURL": "http://172.16.0.1:9090/v1", "apiKey": "managed-by-rigbox" }
+    }
+  }
+}
 ```
 
-Want a different provider (Anthropic-direct, OpenAI-direct, …)? Override
-`KILO_PROVIDER_TYPE` in `rig.yaml`'s `env:` block and forward the matching
-provider key as a `secret`.
+`/etc/profile.d/kilocode-routing.sh` just exports `KILO_PROVIDER=openai-compatible`
+so a stray interactive selection can't shadow the baked provider.
 
 ## Deploy
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-...
 cd kilocode && rig deploy
 ```
 
-The `secrets:` block in `rig.yaml` forwards `OPENROUTER_API_KEY` from your
-local shell into the workspace.
+No secret required — `ai: managed: true` routes Kilo through the workspace's
+managed AI proxy (your account's AI mode must be `managed`, which is the
+default).
 
 ## Notes
 
@@ -73,6 +77,6 @@ local shell into the workspace.
   redeploys.
 - **No public UI.** `kind: cli` means there's no HTTP front door at all — the
   workspace is reachable only via SSH on the rigbox gateway.
-- **Pinned at image-build time, overridable at deploy time.** The profile.d
-  shim pins OpenRouter as the default; nothing stops you from `export`-ing a
-  different `KILO_PROVIDER_TYPE` inside a session.
+- **Pinned at image-build time.** The baked `opencode.json` selects the managed
+  proxy and model; edit it (or drop a project-level `opencode.json`) to point
+  Kilo at a different provider or model.

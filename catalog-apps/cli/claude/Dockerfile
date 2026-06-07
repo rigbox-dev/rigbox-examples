@@ -21,11 +21,10 @@ RUN su - developer -s /bin/bash -c '\
     ' \
  && ln -sfn /home/developer/.local/bin/claude /usr/local/bin/claude
 
-# 2. Translate the workspace-level OPENROUTER_* env (forwarded from the
-#    operator's shell via rig.yaml's `secrets:` block) into the ANTHROPIC_*
-#    env Claude Code reads. Sourced by every interactive login shell, so
-#    SSHing in is enough to activate the routing — no per-session `export`
-#    dance. ANTHROPIC_API_KEY is deliberately cleared: when both AUTH_TOKEN
-#    and API_KEY are set the CLI prefers API_KEY, silently bypassing routing.
+# 2. Wire Claude Code to an AI backend at every interactive login shell. The
+#    routing script points ANTHROPIC_BASE_URL/ANTHROPIC_AUTH_TOKEN at the
+#    workspace's managed AI proxy (Anthropic /v1/messages shape) by default, or
+#    at OpenRouter if the operator brings their own OPENROUTER_API_KEY. SSHing
+#    in is enough to activate it — no per-session `export` dance.
 COPY claude-routing.sh /etc/profile.d/claude-routing.sh
 RUN chmod 644 /etc/profile.d/claude-routing.sh

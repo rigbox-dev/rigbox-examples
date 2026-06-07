@@ -20,9 +20,16 @@ RUN su - developer -s /bin/bash -c '\
     ' \
  && ln -sfn /home/developer/.npm-global/bin/junie /usr/local/bin/junie
 
-# 2. Translate the workspace-level OPENROUTER_API_KEY into Junie's preferred
-#    JUNIE_OPENROUTER_API_KEY (Junie reads the latter first, then falls back to
-#    the generic name). Sourced by every interactive login shell, so SSHing in
-#    is enough to activate the routing.
+# 2. Select the baked managed-AI profile at every shell start
+#    (JUNIE_MODEL=custom:rigbox) and keep the npm-global bin on PATH. Junie
+#    ignores the generic OPENAI_* env, so the actual backend is the custom LLM
+#    profile baked in step 3.
 COPY junie-routing.sh /etc/profile.d/junie-routing.sh
 RUN chmod 644 /etc/profile.d/junie-routing.sh
+
+# 3. Bake the managed-AI custom LLM profile so `junie` works on first SSH with
+#    no key to set: an OpenAI-compatible profile pointed at the managed AI
+#    proxy. junie-routing.sh selects it via JUNIE_MODEL=custom:rigbox. The
+#    filename (minus .json) is the profile id. Owned by developer to read.
+RUN install -d -o developer -g developer -m 755 /home/developer/.junie/models
+COPY --chown=developer:developer rigbox.json /home/developer/.junie/models/rigbox.json

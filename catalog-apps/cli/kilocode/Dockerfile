@@ -21,8 +21,16 @@ RUN su - developer -s /bin/bash -c '\
       ln -sfn /home/developer/.npm-global/bin/kilo     /usr/local/bin/kilocode ; \
     fi
 
-# 2. Pin Kilo to the OpenRouter provider and map OPENROUTER_API_KEY into Kilo's
-#    KILO_OPEN_ROUTER_API_KEY at every shell start. OPENROUTER_API_KEY stays
-#    set as well so Kilo's secondary fallback also resolves it.
+# 2. Force the baked provider active at every shell start (KILO_PROVIDER=
+#    openai-compatible). The provider's base URL, key, and model live in the
+#    config baked in step 3 — Kilo CLI 1.0 (an OpenCode fork) configures
+#    providers in a file, not via the pre-1.0 KILO_* env vars.
 COPY kilocode-routing.sh /etc/profile.d/kilocode-routing.sh
 RUN chmod 644 /etc/profile.d/kilocode-routing.sh
+
+# 3. Bake the managed-AI provider config (Kilo CLI 1.0 = OpenCode fork): an
+#    openai-compatible provider pointed at the managed AI proxy, so `kilocode`
+#    works on first SSH with no key to set. Owned by developer so the CLI can
+#    read it (and cache beside it).
+RUN install -d -o developer -g developer -m 755 /home/developer/.config/kilo
+COPY --chown=developer:developer opencode.json /home/developer/.config/kilo/opencode.json

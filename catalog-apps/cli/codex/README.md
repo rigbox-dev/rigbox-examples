@@ -4,8 +4,8 @@ Runs [**Codex CLI**](https://github.com/openai/codex) — OpenAI's lightweight
 coding agent for the terminal — on Rigbox. The CLI lives inside the workspace;
 you SSH in and run `codex`. It's the OpenAI-shaped counterpart to Claude Code:
 small, fast, and natively speaks the OpenAI API, which makes it trivial to
-point at [OpenRouter](https://openrouter.ai) (or any OpenAI-compatible proxy)
-without provider-specific config.
+point at Rigbox's **managed AI proxy** (an OpenAI-compatible endpoint) — no API
+key to set, so deploying is never blocked on a local secret.
 
 ## The single capability: an OpenAI-shaped AI agent baked into an image
 
@@ -40,29 +40,42 @@ ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ss
 codex
 ```
 
-## OpenRouter routing, one rename
+## Managed AI routing, no key to set
 
-Codex CLI reads `OPENAI_BASE_URL` + `OPENAI_API_KEY`. OpenRouter speaks the
-OpenAI API at `/v1`, so the image's `/etc/profile.d/codex-routing.sh` just
-renames the env vars on every shell start:
+`rig.yaml` opts into the workspace's managed AI proxy:
 
-```sh
-# baked into the image, sourced by every login shell
-export OPENAI_BASE_URL="${OPENROUTER_BASE_URL%/}"   # already ends in /v1
-export OPENAI_API_KEY="${OPENROUTER_API_KEY}"
+```yaml
+ai:
+  managed: true
 ```
 
-You set `OPENROUTER_API_KEY` once at deploy time; an SSH session just works.
+Codex 0.137+ reads its provider from `~/.codex/config.toml`, not env vars, and
+only speaks the Responses wire. The image bakes a config that declares the
+managed proxy as a custom provider (plain HTTP, no websocket):
+
+```toml
+model = "anthropic/claude-sonnet-4.5"
+model_provider = "rigbox"
+
+[model_providers.rigbox]
+base_url = "http://172.16.0.1:9090/v1"
+env_key = "OPENAI_API_KEY"
+wire_api = "responses"
+```
+
+The API key comes from `$OPENAI_API_KEY`; `/etc/profile.d/codex-routing.sh`
+sources the managed proxy's `~/.rigbox/proxy.env` to supply the placeholder. An
+SSH session just works — no key, no `export` dance.
 
 ## Deploy
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-...
 cd codex && rig deploy
 ```
 
-The `secrets:` block in `rig.yaml` forwards `OPENROUTER_API_KEY` from your
-local shell into the workspace.
+No secret required — `ai: managed: true` routes Codex through the workspace's
+managed AI proxy (your account's AI mode must be `managed`, which is the
+default).
 
 ## Notes
 
@@ -70,5 +83,6 @@ local shell into the workspace.
   workspace disk, outside the rsync zone — durable across redeploys.
 - **No public UI.** `kind: cli` means there's no HTTP front door at all — the
   workspace is reachable only via SSH on the rigbox gateway.
-- **`OPENAI_API_KEY` is set inside the VM**, but it's an OpenRouter key — Codex
-  doesn't care, OpenAI-API-compatible is OpenAI-API-compatible.
+- **`OPENAI_API_KEY` inside the VM is a placeholder** (`managed-by-rigbox`); the
+  managed proxy authenticates by source IP, not by the key, and meters usage to
+  your account.

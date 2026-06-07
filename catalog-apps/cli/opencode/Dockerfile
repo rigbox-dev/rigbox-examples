@@ -23,7 +23,12 @@ RUN su - developer -s /bin/bash -c '\
 # 2. Make ~/.opencode/bin and ~/.local/bin reachable from non-interactive
 #    login shells too (catalog scripts, sshd ForceCommand, ...) so a fresh SSH
 #    session sees `opencode` on PATH without depending on per-user rc state.
-#    OpenCode reads OPENROUTER_API_KEY natively — no env translation needed,
-#    just a PATH nudge.
+#    The AI backend is configured in the baked config (step 3), not via env.
 COPY opencode-routing.sh /etc/profile.d/opencode-routing.sh
 RUN chmod 644 /etc/profile.d/opencode-routing.sh
+
+# 3. Bake the managed-AI provider config so `opencode` works on first SSH with
+#    no key to set: a custom OpenAI-compatible provider pointed at the managed
+#    AI proxy. Owned by developer so the CLI can read it (and cache beside it).
+RUN install -d -o developer -g developer -m 755 /home/developer/.config/opencode
+COPY --chown=developer:developer opencode.json /home/developer/.config/opencode/opencode.json

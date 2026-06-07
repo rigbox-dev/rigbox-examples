@@ -3,8 +3,9 @@
 Runs [**Claude Code**](https://docs.anthropic.com/en/docs/claude-code/overview) —
 Anthropic's AI coding agent — on Rigbox. The CLI lives inside the workspace; you
 SSH in and run `claude`. It can plan, read, edit, and ship across an entire
-codebase from a single terminal session, with model routing through
-[OpenRouter](https://openrouter.ai) so you keep one key for every provider.
+codebase from a single terminal session, with model routing through Rigbox's
+**managed AI proxy** — no API key to set, so deploying is never blocked on a
+local secret.
 
 ## The single capability: a long-lived AI-agent workspace, baked into an image
 
@@ -43,30 +44,41 @@ The onboarding wizard is pre-accepted at image-build time
 (`~/.claude.json` + `~/.claude/settings.json`), so `claude` drops you straight
 into a session — no first-launch prompts.
 
-## OpenRouter routing, no env-var wrangling
+## Managed AI routing, no key to set
 
-Claude Code reads `ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN`. You set
-`OPENROUTER_API_KEY` once; the image's `/etc/profile.d/claude-routing.sh`
-translates it on every shell start:
+`rig.yaml` opts into the workspace's managed AI proxy:
+
+```yaml
+ai:
+  managed: true
+```
+
+Claude Code reads `ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN`. The managed
+proxy serves the Anthropic `/v1/messages` shape, and the image's
+`/etc/profile.d/claude-routing.sh` points Claude at it on every shell start:
 
 ```sh
 # baked into the image, sourced by every login shell
-export ANTHROPIC_BASE_URL="${OPENROUTER_BASE_URL%/v1}"
-export ANTHROPIC_AUTH_TOKEN="${OPENROUTER_API_KEY}"
+. ~/.rigbox/proxy.env                               # OPENAI_BASE_URL=<proxy>/v1, OPENAI_API_KEY=<placeholder>
+export ANTHROPIC_BASE_URL="${OPENAI_BASE_URL%/v1}"  # Claude appends /v1/messages itself
+export ANTHROPIC_AUTH_TOKEN="${OPENAI_API_KEY}"
 export ANTHROPIC_API_KEY=""   # AUTH_TOKEN wins; clear API_KEY so it can't override
 ```
 
-So an SSH session just works — no `export` dance.
+So an SSH session just works — no key, no `export` dance.
+
+**Bring your own key instead?** Export `OPENROUTER_API_KEY` at deploy time and
+the routing script prefers it, pointing Claude straight at OpenRouter.
 
 ## Deploy
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-...
 cd claude && rig deploy
 ```
 
-The `secrets:` block in `rig.yaml` forwards `OPENROUTER_API_KEY` from your
-local shell into the workspace.
+No secret required — `ai: managed: true` routes Claude through the workspace's
+managed AI proxy (your account's AI mode must be `managed`, which is the
+default).
 
 ## Notes
 
