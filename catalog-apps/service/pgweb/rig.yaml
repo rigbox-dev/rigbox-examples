@@ -3,8 +3,28 @@ port: 8081
 # pgweb is a tiny single Go binary. 256MB / 0.5GB disk is plenty.
 workspace:
   resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
-build:
-  dockerfile: Dockerfile
+# Freeze the pinned pgweb binary into an image: `rig deploy` runs `install:`
+# once in a builder VM and later deploys reuse the cached image instead of
+# re-downloading. Bump PGWEB_VERSION here to upgrade.
+reproducible: true
+install: |
+  set -euo pipefail
+  # pgweb ships as a single static Linux binary inside a release .zip (the
+  # rigbox base ships `unzip`). Frozen into the reproducible image so deploys
+  # don't re-download it.
+  PGWEB_VERSION=0.16.2
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64|amd64) PGWEB_ARCH=linux_amd64 ;;
+    aarch64|arm64) PGWEB_ARCH=linux_arm64 ;;
+    *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
+  esac
+  curl -fsSL "https://github.com/sosedoff/pgweb/releases/download/v${PGWEB_VERSION}/pgweb_${PGWEB_ARCH}.zip" \
+    -o /tmp/pgweb.zip
+  unzip -o /tmp/pgweb.zip -d /tmp
+  sudo install -m 755 "/tmp/pgweb_${PGWEB_ARCH}" /usr/local/bin/pgweb
+  rm -f /tmp/pgweb.zip "/tmp/pgweb_${PGWEB_ARCH}"
+  /usr/local/bin/pgweb --version
 # pgweb auto-reads DATABASE_URL on startup if --url is not passed, so all the
 # connection config lives in the param below. --sessions lets a user open new
 # connections through the UI instead of being pinned to DATABASE_URL.

@@ -33,15 +33,24 @@ $ pi
 > refactor the auth handler to use early returns
 ```
 
-## Docker build + the hybrid deploy
+## Reproducible deploy + the hybrid model
 
-```dockerfile
-FROM rigbox-base
-RUN npm install -g @mariozechner/pi-coding-agent
+```yaml
+reproducible: true
+install: |
+  set -euo pipefail
+  npm install -g --no-fund --silent @mariozechner/pi-coding-agent
+  sudo ln -sfn "$NPM_CONFIG_PREFIX/bin/pi" /usr/local/bin/pi
 ```
 
-- **First `rig deploy`**: builds the image (one npm install), boots from it.
-- **Later `rig deploy`**: cached image reused, no re-install.
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (one npm install), snapshots the rootfs as a
+  content-addressed image, boots the workspace from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, the cached image is reused — no re-install.
 
 ## Deploy
 
@@ -53,7 +62,7 @@ rig workspace ssh    # then run `pi` interactively
 ## Notes
 
 - **CLI app, declaratively.** `kind: cli` tells the platform there's no HTTP
-  port to probe; the deploy just bakes `pi` onto the SSH PATH and stops there.
+  port to probe; the deploy just puts `pi` on the SSH PATH and stops there.
   That matches the catalog's internal `AppKind::Cli` shape exactly.
 - **Persistence**: Pi keeps no state of its own; conversations are
   ephemeral per terminal session.

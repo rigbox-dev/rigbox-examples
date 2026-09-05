@@ -3,30 +3,35 @@
 Runs [**Kilo Code**](https://kilocode.ai) — an all-in-one AI coding CLI that
 fronts 100+ providers behind one binary — on Rigbox. You SSH in and run
 `kilocode`. Kilo CLI 1.0 is an [OpenCode](https://opencode.ai) fork, so its
-provider, base URL, key, and model live in a config file — the image bakes one
-pointed at Rigbox's **managed AI proxy**, with no API key to set.
+provider, base URL, key, and model live in a config file — `install:` writes
+one pointed at Rigbox's **managed AI proxy**, with no API key to set.
 
 ## The single capability: a multi-provider agent, zero-key managed AI
 
 The whole point here is **running a provider-agnostic AI CLI** wired up at
-image-build time so a fresh SSH session is immediately ready. The `Dockerfile`
-is `FROM rigbox-base` (the required base — the platform asserts the rigbox
-agent + systemd are present and rejects any other base at build time), bakes
-the npm-published CLI into the image, and drops a config file that points Kilo
-at the workspace's managed AI proxy:
-
-```dockerfile
-FROM rigbox-base
-RUN su - developer -s /bin/bash -c 'npm install -g --no-fund --silent @kilocode/cli'
-RUN ln -sfn /home/developer/.npm-global/bin/kilocode /usr/local/bin/kilocode
-```
-
-`rig.yaml` points at it with a `build:` block (no `install:`):
+install time so a fresh SSH session is immediately ready. `rig.yaml` sets
+`reproducible: true`, so `rig deploy` runs the `install:` script once in a
+builder VM — it installs the npm-published CLI and drops a config file that
+points Kilo at the workspace's managed AI proxy — freezes the result as an
+image, and later deploys boot from it:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  npm install -g --no-fund --silent @kilocode/cli          # → ~/.npm-global/bin/kilocode
+  sudo ln -sfn "$HOME/.npm-global/bin/kilocode" /usr/local/bin/kilocode
+  sudo tee /etc/profile.d/kilocode-routing.sh <<'EOF'
+  …                                                       # KILO_PROVIDER, below
+  EOF
+  cat > "$HOME/.config/kilo/opencode.json" <<'EOF'
+  …                                                       # managed-AI provider, below
+  EOF
 ```
+
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, with passwordless `sudo` for the system-path steps);
+`reproducible: true` is what makes `rig deploy` freeze its result.
 
 ## SSH-in to use it
 
@@ -39,11 +44,11 @@ ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ss
 kilocode
 ```
 
-## Managed AI via a baked provider config
+## Managed AI via a provider config
 
 Kilo CLI 1.0 (an OpenCode fork) configures providers in a file, not env vars —
 the pre-1.0 `KILO_PROVIDER_TYPE` / `KILO_OPEN_ROUTER_API_KEY` vars no longer
-exist. The image bakes `~/.config/kilo/opencode.json` with an
+exist. `install:` writes `~/.config/kilo/opencode.json` with an
 `openai-compatible` provider pointed at the managed proxy:
 
 ```jsonc
@@ -57,8 +62,9 @@ exist. The image bakes `~/.config/kilo/opencode.json` with an
 }
 ```
 
-`/etc/profile.d/kilocode-routing.sh` just exports `KILO_PROVIDER=openai-compatible`
-so a stray interactive selection can't shadow the baked provider.
+The `/etc/profile.d/kilocode-routing.sh` that `install:` writes just exports
+`KILO_PROVIDER=openai-compatible` so a stray interactive selection can't shadow
+the configured provider.
 
 ## Deploy
 
@@ -77,6 +83,6 @@ default).
   redeploys.
 - **No public UI.** `kind: cli` means there's no HTTP front door at all — the
   workspace is reachable only via SSH on the rigbox gateway.
-- **Pinned at image-build time.** The baked `opencode.json` selects the managed
-  proxy and model; edit it (or drop a project-level `opencode.json`) to point
-  Kilo at a different provider or model.
+- **Pinned at install time.** The `opencode.json` that `install:` writes
+  selects the managed proxy and model; edit it (or drop a project-level
+  `opencode.json`) to point Kilo at a different provider or model.

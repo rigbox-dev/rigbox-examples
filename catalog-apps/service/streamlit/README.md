@@ -11,25 +11,26 @@ The framework install (`pip install streamlit`, ~80MB with deps) happens
 **once**, frozen into the image. Your `app.py` rsyncs in on every deploy — so
 iterating on the app is fast, but you never re-install Streamlit:
 
-```dockerfile
-FROM rigbox-base
-RUN /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
-      --break-system-packages streamlit
-```
-
-`rig.yaml` points at it with a `build:` block — no `install:`, no flag:
-
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  sudo /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
+    --break-system-packages streamlit
 ```
 
-## Docker build + the hybrid deploy
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
-- **First `rig deploy`**: builds the image (Streamlit installed once), boots
-  the workspace from it, rsyncs `app.py` on top, runs `streamlit run`.
-- **Later `rig deploy`**: image is cached; only the changed `app.py` rsyncs.
-  Edit a widget, redeploy, the page refreshes.
+## Reproducible deploy + the hybrid model
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (Streamlit installed once), snapshots the rootfs as
+  a content-addressed image, boots the workspace from it, rsyncs `app.py` on
+  top, runs `streamlit run`.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, the image is cached; only the changed `app.py` rsyncs. Edit a
+  widget, redeploy, the page refreshes.
 
 ## Persistence
 
@@ -54,4 +55,5 @@ No required env — everything is set in `rig.yaml`.
   probe). The process binds `0.0.0.0:8501`.
 - **`--server.headless true`** skips the "open browser" prompt and Streamlit's
   first-run "send anonymous stats" question, which would hang the boot.
-- Stack: Streamlit on Debian's `python3` (3.11), baked into the image.
+- Stack: Streamlit on Debian's `python3` (3.11), frozen into the reproducible
+  image.

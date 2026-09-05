@@ -22,25 +22,26 @@ cd <example> && rig deploy
 | [`url-shortener/`](./url-shortener/) | Python · Django | the **full validated param set** (url/string/number/boolean/select/email/secret/textarea) + SQLite migrations |
 | [`markdown-notes/`](./markdown-notes/) | Python · Flask | **workspace volume-backed SQLite persistence** + Markdown rendering |
 
-Every example deploys with the same command — `rig deploy`. Most rsync code and
-run `install:` on the VM. Several declare a `Dockerfile`, which makes
-`rig deploy` **freeze the environment into an image** and boot from it (see
-**Docker builds & the hybrid deploy** below). No flag: the Dockerfile is the
-signal.
+Every example deploys with the same command — `rig deploy`. All of them rsync
+code and describe their environment with `install:`. Several also set
+`reproducible: true`, which makes `rig deploy` **freeze the result of `install:`
+into an image** and boot from it (see **Reproducible deploys & the hybrid model**
+below). No Dockerfile anywhere — the flag is the signal.
 
 ### Established products, run reproducibly
 
 These run real, recognizable self-hosted products on Rigbox via a
-`FROM rigbox-base` Dockerfile that installs the product on top of the base. The
-image freezes the install; `rig deploy` builds it once, then reuses it. (Upstream
-images like `postgres:16` can't be booted directly — they lack the rigbox agent +
-init — so each installs the product on the rigbox base instead.)
+`reproducible: true` `install:` script that installs the product on top of the
+Rigbox base. `rig deploy` runs the script once in a builder VM, freezes the
+result as an image, then reuses it. (Upstream Docker images like `postgres:16`
+can't be booted — they lack the rigbox agent + init — so each installs the
+product on the rigbox base instead.)
 
 | Example | Product | What it shows |
 |---|---|---|
-| [`code-server/`](./code-server/) | **code-server** (VS Code) | run an established product via a reproducible Dockerfile; settings/extensions persist under `$DATA_DIR` |
+| [`code-server/`](./code-server/) | **code-server** (VS Code) | run an established product via a reproducible `install:`; settings/extensions persist under `$DATA_DIR` |
 | [`gitea/`](./gitea/) | **Gitea** (Git hosting) | a headless single-binary service (install wizard locked) with SQLite + repos under `$DATA_DIR` |
-| [`n8n/`](./n8n/) | **n8n** (workflow automation) | freeze a heavy `npm install` into the image (`sizeMb` bump); workflows persist under `$DATA_DIR` |
+| [`n8n/`](./n8n/) | **n8n** (workflow automation) | freeze a heavy `npm install` into the image; workflows persist under `$DATA_DIR` |
 
 ## Catalog apps
 
@@ -86,23 +87,36 @@ The point of the suite is to model the *right* primitive for each job:
   `{ emails: [...] }`) so a redeploy keeps it — only an app's front door is public;
   siblings reach private apps over loopback via `dependsOn`.
 
-## Docker builds & the hybrid deploy
+## Reproducible deploys & the hybrid model
 
-Most examples install their runtime on the VM with `install:`. The established
-products — **`code-server`**, **`gitea`**, and **`n8n`** — instead **freeze their
-environment into an image** with a `Dockerfile` (`FROM rigbox-base`). The command
-is the same — `rig deploy` — and a Dockerfile in `rig.yaml` is all it takes to
-switch on the image build (no flag):
+Every example installs its runtime with `install:`. By default that script runs
+on the workspace VM on each deploy. The established products —
+**`code-server`**, **`gitea`**, **`n8n`**, and every [`catalog-apps/`](./catalog-apps/)
+example — add one line, `reproducible: true`, which makes the same `install:`
+**freeze into an image** instead. The command is the same — `rig deploy`:
 
-- the **first** deploy builds the image from the local Dockerfile (the CLI uploads
-  the project dir as the build context — no git repo needed), boots from that
-  frozen image, and rsyncs the code;
-- **later** deploys reuse the cached image when the Dockerfile/deps are unchanged
-  and **only rsync the changed code** — no rebuild, no re-install.
+- the **first** deploy boots a throwaway builder VM from the `base` image, runs
+  `install:` inside it, snapshots the rootfs as a content-addressed image, boots
+  the workspace from that frozen image, and rsyncs the code;
+- **later** deploys reuse the cached image when the build inputs (`install:`
+  script, base image, lockfiles) are unchanged and **only rsync the changed
+  code** — no rebuild, no re-install.
 
 That's the hybrid: build the slow, stable environment once; ride fast-changing
-code over it with rsync. See [`design/CONTRACT.md`](./design/CONTRACT.md) →
-*Reproducible builds* for the full rules and when to pick which.
+code over it with rsync. `install:` runs as `developer` (with passwordless
+`sudo`) in an **empty** deploy dir inside the builder — so it must be
+self-contained (inline any config it needs via heredocs) and idempotent, since
+the exact same script runs on the workspace VM when `reproducible` is off.
+Runtime wrappers (`start.sh`) still rsync in with the code: `start: bash start.sh`.
+
+> **Builder sizing.** The builder VM currently boots with the platform defaults
+> (1GB RAM / 1 vCPU / 3GB disk); there's no per-app knob yet. The heavier
+> examples (`n8n`, `firecrawl`, `open-webui`, `hermes-agent`, `excalidraw`) note
+> their footprint in their README — sizing the builder from
+> `workspace.resources` is a platform follow-up.
+
+See [`design/CONTRACT.md`](./design/CONTRACT.md) → *Reproducible builds* for the
+full rules and when to pick which.
 
 ## Layout convention
 

@@ -4,11 +4,32 @@ name: openclaw-gateway
 port: 18789
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
-# The wrapper synthesizes openclaw.json + auth-profiles.json from env at every
-# boot, then exec's `openclaw gateway --bind lan --port 18789`.
-start: /home/developer/.openclaw/bin/rigbox-openclaw-gateway
+# Freeze `npm install -g openclaw` into an image: `rig deploy` runs `install:`
+# once in a builder VM, snapshots the rootfs, and later deploys with unchanged
+# inputs boot from the cached image instead of re-installing. Bump
+# OPENCLAW_VERSION below to upgrade.
+reproducible: true
+install: |
+  set -euo pipefail
+  # OpenClaw Gateway — the WebSocket gateway that powers the Clawd browser UI.
+  # Pinned to a known-good upstream release.
+  OPENCLAW_VERSION=2026.4.29
+
+  # Install openclaw globally into the base image's user-writable npm prefix so
+  # root is never required at runtime. The script runs as `developer`, the same
+  # user the systemd unit runs as, so there's no `su -` dance here.
+  mkdir -p "$HOME/.npm-global/bin" "$HOME/.cache/nodejs" \
+           "$HOME/.openclaw/agents/main/agent"
+  touch "$HOME/.openclaw/.env"
+  npm config set prefix "$HOME/.npm-global"
+  export PATH="$HOME/.npm-global/bin:$PATH"
+  export NODE_ENV=production
+  npm install -g --no-fund --no-audit --omit=dev "openclaw@${OPENCLAW_VERSION}"
+  openclaw --version >/dev/null
+# start.sh + gateway.js rsync in with the app: the wrapper synthesizes
+# openclaw.json + auth-profiles.json from env at every boot, then exec's
+# `openclaw gateway --bind lan --port 18789`.
+start: bash start.sh
 # Opt into the Rigbox managed AI proxy. The wrapper detects AI_PROXY_URL and
 # wires OpenClaw's custom provider entry at the proxy's /v1 endpoint.
 ai:
@@ -16,7 +37,7 @@ ai:
 env:
   NODE_OPTIONS: --max-old-space-size=2048
   NODE_COMPILE_CACHE: /home/developer/.cache/nodejs
-  PATH: /home/developer/.npm-global/bin:/home/developer/.openclaw/bin:/home/developer/.local/bin:/usr/local/bin:/usr/bin:/bin
+  PATH: /home/developer/.npm-global/bin:/home/developer/.local/bin:/usr/local/bin:/usr/bin:/bin
   OPENCLAW_PROVIDER: anthropic
   OPENCLAW_DEFAULT_MODEL: anthropic/claude-sonnet-4.6
   OPENCLAW_SYSTEM_PROMPT: "You are a helpful AI assistant."

@@ -4,51 +4,56 @@
 a lightweight GitHub-in-a-box with repos, issues, pull requests, and a web UI,
 shipped as a single static Go binary. This example runs it on Rigbox unchanged.
 
-## The single capability: run Gitea reproducibly on Rigbox via a Docker build
+## The single capability: run Gitea reproducibly on Rigbox
 
 This isn't a toy app we wrote — it's a real, off-the-shelf product running on the
-platform. The one thing it demonstrates is the **reproducible `FROM rigbox-base`
-Docker build**: the `Dockerfile` downloads a **pinned** Gitea binary
-(`1.22.6`, checksum-verified) onto the Rigbox base image once, and every deploy
-boots from that frozen image instead of re-downloading.
-
-```dockerfile
-FROM rigbox-base
-ARG GITEA_VERSION=1.22.6
-RUN curl -fsSL "https://dl.gitea.com/gitea/${GITEA_VERSION}/gitea-${GITEA_VERSION}-linux-amd64" \
-      -o /usr/local/bin/gitea \
- && echo "<sha256>  /usr/local/bin/gitea" | sha256sum -c - \
- && chmod +x /usr/local/bin/gitea
-```
-
-`rig.yaml` points at it with a `build:` block — no `install:`, no flag:
+platform. The one thing it demonstrates is the **reproducible deploy**: the
+`install:` script downloads a **pinned** Gitea binary (`1.22.6`,
+checksum-verified) onto the Rigbox base once, and every deploy boots from that
+frozen image instead of re-downloading.
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  GITEA_VERSION=1.22.6
+  GITEA_SHA256=fd77f1a0…
+  curl -fsSL "https://dl.gitea.com/gitea/${GITEA_VERSION}/gitea-${GITEA_VERSION}-linux-amd64" -o /tmp/gitea
+  echo "${GITEA_SHA256}  /tmp/gitea" | sha256sum -c -
+  sudo install -m 755 /tmp/gitea /usr/local/bin/gitea
 ```
 
-## Docker build + the hybrid deploy
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
+
+## Reproducible deploy + the hybrid model
 
 The deploy is **hybrid** — the image carries the Gitea binary, rsync carries the
 app config:
 
-- **First `rig deploy`**: builds the image from the local `Dockerfile` (Gitea
-  binary frozen once), boots the workspace from it, then rsyncs `start.sh` on top.
-- **Later `rig deploy`**: if the build inputs (Dockerfile/version) are unchanged,
-  it **reuses the cached image** and only rsyncs the changed code — no
-  re-download, fast. Bump `GITEA_VERSION` in the Dockerfile to upgrade.
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (Gitea binary frozen once), snapshots the rootfs as
+  a content-addressed image, boots the workspace from it, then rsyncs `start.sh`
+  on top.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** and only rsyncs the changed
+  code — no re-download, fast. Bump `GITEA_VERSION` (and the sha256) in
+  `rig.yaml` to upgrade.
+
+`start: bash start.sh` runs the rsynced wrapper from the synced app dir — the
+wrapper isn't part of the image, so editing it is a code-only redeploy.
 
 ## No setup wizard (the crux)
 
 Gitea normally greets a fresh install with an interactive web **install wizard** —
 which would hang the health check forever. This example boots **headless**:
 
-- Everything is configured up front via `GITEA__<section>__<KEY>` environment
-  variables in `rig.yaml` (Gitea reads these at startup) — HTTP address/port,
-  SQLite database, repository root, data/log/session paths.
-- **`GITEA__security__INSTALL_LOCK=true`** is the bypass: it makes Gitea boot
-  straight to the app and refuse to serve `/install`. The wizard never appears.
+- `start.sh` generates `app.ini` under `$DATA_DIR` on first boot — HTTP
+  address/port, SQLite database, repository root, data/log/session paths. (The
+  raw gitea binary ignores `GITEA__section__KEY` env vars; only the upstream
+  Docker entrypoint translates those, so the config is generated as a file.)
+- **`INSTALL_LOCK = true`** is the bypass: it makes Gitea boot straight to the
+  app and refuse to serve `/install`. The wizard never appears.
 
 So Gitea comes up clean, binds `0.0.0.0:8080`, and `GET /api/healthz` goes green
 without any human in the loop.
@@ -91,5 +96,6 @@ No required env — everything is set in `rig.yaml`.
 - **Persistence: yes.** SQLite + repos + work dir under `$DATA_DIR`, durable
   across redeploys.
 - Health: `GET /api/healthz` → 2xx; the process binds `0.0.0.0:8080`.
-- Wizard: bypassed via `GITEA__security__INSTALL_LOCK=true` + full env config.
-- Stack: Gitea (single static Go binary), pinned + checksum-verified in the image.
+- Wizard: bypassed via `INSTALL_LOCK = true` in the generated `app.ini`.
+- Stack: Gitea (single static Go binary), pinned + checksum-verified in the
+  reproducible image.

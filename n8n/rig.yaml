@@ -7,11 +7,14 @@ workspace:
   resources:
     ramMb: 2048
     vcpuCount: 2
-build:
-  dockerfile: Dockerfile
-  # n8n's node_modules is large; the base + install overflow the default rootfs.
-  # Size the frozen image's ext4 generously so the docker→ext4 export fits.
-  sizeMb: 8192
+# Freeze the heavy `npm install -g n8n` into an image: `rig deploy` runs
+# `install:` once in a builder VM, snapshots the rootfs, and later deploys with
+# unchanged inputs boot from the cached image and only rsync code.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Global install to a system path so `n8n start` resolves on the unit's PATH.
+  sudo npm install -g n8n
 start: n8n start
 health:
   path: /healthz

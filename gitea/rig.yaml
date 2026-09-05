@@ -3,13 +3,24 @@ port: 8080
 # Gitea is a single lightweight Go binary — 1GB is comfortable.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
-# start.sh generates app.ini (headless, INSTALL_LOCK on) under $DATA_DIR, then
-# exec's `gitea web --config`. The raw gitea binary ignores GITEA__* env vars
-# (only the upstream Docker entrypoint translates them), so configuration lives
-# in the generated app.ini instead.
-start: /usr/local/bin/gitea-start.sh
+# Freeze the pinned, checksum-verified Gitea binary into an image: `rig deploy`
+# runs `install:` once in a builder VM and later deploys reuse the cached image
+# instead of re-downloading. Bump GITEA_VERSION (+ sha256) here to upgrade.
+reproducible: true
+install: |
+  set -euo pipefail
+  GITEA_VERSION=1.22.6
+  GITEA_SHA256=fd77f1a0273c85a0950207c1cfa6753a9fa57604e4ab1382484b191cc919ce15
+  curl -fsSL "https://dl.gitea.com/gitea/${GITEA_VERSION}/gitea-${GITEA_VERSION}-linux-amd64" -o /tmp/gitea
+  echo "${GITEA_SHA256}  /tmp/gitea" | sha256sum -c -
+  sudo install -m 755 /tmp/gitea /usr/local/bin/gitea
+  rm -f /tmp/gitea
+  gitea --version
+# start.sh rsyncs in with the app and generates app.ini (headless, INSTALL_LOCK
+# on) under $DATA_DIR, then exec's `gitea web --config`. The raw gitea binary
+# ignores GITEA__* env vars (only the upstream Docker entrypoint translates
+# them), so configuration lives in the generated app.ini instead.
+start: bash start.sh
 health:
   path: /api/healthz
   timeoutSeconds: 90

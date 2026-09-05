@@ -4,9 +4,10 @@
 # .firecrawl/.env from the rigbox-generated credentials + user params, then
 # exec the firecrawl api harness.
 #
-# The Dockerfile bakes the firecrawl source + node_modules + chromium into
-# the image; postgres data lives at /var/lib/postgresql/17/main on the VM
-# (not in the image) so the database itself is initialized here.
+# rig.yaml's `install:` bakes the firecrawl source + node_modules + chromium
+# into the reproducible image, but not the live database: the postgres data dir
+# at /var/lib/postgresql/17/main is workspace state, so the role/DB/schema are
+# initialized here on first boot.
 set -euo pipefail
 
 PG_PORT="5433"
@@ -15,8 +16,8 @@ ENV_DIR="/home/developer/.firecrawl"
 ENV_FILE="$ENV_DIR/.env"
 
 # ---------------------------------------------------------------------------
-# Ensure system services are up. The Dockerfile installed but didn't enable
-# them across reboots; do it idempotently here.
+# Ensure system services are up. `install:` installed but didn't enable them
+# across reboots; do it idempotently here.
 # ---------------------------------------------------------------------------
 systemctl enable --now postgresql@17-main
 systemctl enable --now redis-server

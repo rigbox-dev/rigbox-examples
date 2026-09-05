@@ -1,13 +1,54 @@
 name: open-webui
 port: 8080
-# Open WebUI + uv-installed Python 3.12 + CPU torch wheel — the install footprint
-# is sizeable, so bump the workspace disk and the frozen image accordingly.
+# Open WebUI + a uv-managed Python 3.12 + the CPU torch wheel — the install
+# footprint is sizeable, so the workspace disk is bumped well past the catalog
+# minimum.
 workspace:
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 8192 }
-build:
-  dockerfile: Dockerfile
-  sizeMb: 8192
-start: /home/developer/.open-webui/start.sh
+# Freeze the whole Python 3.12 venv (torch-cpu + open-webui) into an image:
+# `rig deploy` runs `install:` once in a builder VM, snapshots the rootfs, and
+# later deploys with unchanged inputs boot from the cached image instead of
+# re-running pip. Bump APP_VERSION below to upgrade.
+# Footprint note: the builder VM boots with the platform default 3GB disk; the
+# torch wheel alone is most of a GB — see the README.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Open WebUI (https://docs.openwebui.com/) — a full-featured chat UI for
+  # OpenAI-compatible model endpoints. Pinned to a version that's known to boot
+  # clean on the Rigbox base; bump APP_VERSION and redeploy to upgrade.
+  #
+  # Open WebUI pins its torch wheel to cp312, so we use uv to materialize a
+  # Python 3.12 venv (the base ships Debian's 3.11) and install the CPU torch
+  # wheel + open-webui from PyPI into it. The script runs as `developer`, which
+  # owns $APP_HOME, so nothing here needs sudo.
+  APP_HOME=/home/developer/.open-webui
+  APP_VERSION=0.9.4
+  TORCH_CPU_WHEEL_URL=https://download.pytorch.org/whl/cpu/torch-2.9.1%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl
+
+  mkdir -p "$APP_HOME/data" "$APP_HOME/tmp"
+
+  # Keep uv's caches inside $APP_HOME so the cleanup below reclaims all of them
+  # — the builder VM's disk is the tight resource here.
+  export UV_CACHE_DIR="$APP_HOME/.uv-cache"
+  export UV_PYTHON_INSTALL_DIR="$HOME/.local/share/uv/python"
+  export TMPDIR="$APP_HOME/tmp"
+
+  /usr/local/bin/uv python install 3.12
+  # --clear makes the venv step idempotent: a re-run rebuilds it from scratch
+  # rather than layering onto a half-finished one.
+  /usr/local/bin/uv venv --clear --python 3.12 "$APP_HOME/venv"
+  /usr/local/bin/uv pip install --no-cache --python "$APP_HOME/venv/bin/python" \
+    "$TORCH_CPU_WHEEL_URL" "open-webui==${APP_VERSION}"
+  test -x "$APP_HOME/venv/bin/open-webui"
+
+  rm -rf "$APP_HOME/.uv-cache" "$APP_HOME/tmp" "$HOME/.cache/uv"
+  mkdir -p "$APP_HOME/tmp"
+# Exec the open-webui binary straight out of the frozen venv — no wrapper, no
+# shell rc files, no PATH munging at boot.
+start: >-
+  /home/developer/.open-webui/venv/bin/open-webui serve
+  --host 0.0.0.0 --port 8080
 health:
   path: /health
   timeoutSeconds: 600

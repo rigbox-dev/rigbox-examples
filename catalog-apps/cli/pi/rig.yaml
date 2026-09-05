@@ -5,8 +5,35 @@ kind: cli
 # 512MB RAM is plenty; bumping vCPU to 1 matches the catalog minimum.
 workspace:
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
-build:
-  dockerfile: Dockerfile
+# Freeze the CLI into an image: `rig deploy` runs `install:` once in a builder
+# VM and later deploys boot from the cached image instead of re-running
+# npm install. The script runs as `developer` with passwordless sudo.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Pi (https://www.npmjs.com/package/@mariozechner/pi-coding-agent) — an
+  # OpenRouter-native coding agent that runs interactively in your terminal.
+  # Pi has no web UI; the catalog item is CLI-shaped. We install the binary
+  # globally so it's on $PATH for both interactive SSH sessions and the
+  # `pi` wrapper symlink at /usr/local/bin/pi.
+  #
+  # Pi reads OPENROUTER_API_KEY directly — no profile.d env translation needed.
+  # The workspace env layer (managed proxy injection OR a real key set via
+  # `rig app secret set OPENROUTER_API_KEY=…`) carries it.
+  export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+  mkdir -p "$NPM_CONFIG_PREFIX/bin"
+  export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+  npm install -g --no-fund --silent @mariozechner/pi-coding-agent
+  pi --version >/dev/null 2>&1 || [ -x "$NPM_CONFIG_PREFIX/bin/pi" ]
+  # Persist PATH for interactive shells (grep-guarded so re-runs don't
+  # duplicate the block).
+  for RC in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
+    if [ -f "$RC" ] && ! grep -qF NPM_CONFIG_PREFIX "$RC"; then
+      printf '\n# Added by rigbox example (pi)\nexport NPM_CONFIG_PREFIX="$HOME/.npm-global"\nexport PATH="$NPM_CONFIG_PREFIX/bin:$PATH"\n' >> "$RC"
+    fi
+  done
+  sudo install -d -m 755 /usr/local/bin
+  sudo ln -sfn "$NPM_CONFIG_PREFIX/bin/pi" /usr/local/bin/pi
 # Opt into the Rigbox managed AI proxy. Pi reads OPENROUTER_API_KEY natively,
 # so the proxy-injected placeholder is enough — no code wiring, no .env.
 ai:

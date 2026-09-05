@@ -9,8 +9,8 @@ in order to drive a remote agent.
 
 The distinctive thing here is the **runtime config synthesis** in
 `gateway.js`. OpenClaw normally expects a hand-written `openclaw.json` and an
-`auth-profiles.json` on disk; for ephemeral VMs that's painful. This wrapper
-generates both at every boot:
+`auth-profiles.json` on disk; for ephemeral VMs that's painful. `start.sh` runs
+`gateway.js` first and generates both at every boot:
 
 - **Managed mode** (default): `AI_PROXY_URL` is injected by `ai: { managed:
   true }`. The wrapper writes a `rigbox-openrouter` provider entry pointed at
@@ -24,18 +24,40 @@ The `gateway_token` credential (`generate: true`) is minted once per deploy —
 the dashboard reads it via `rig app credentials get gateway_token` and uses it
 to authenticate the `wss://` handshake.
 
-## Docker build + the hybrid deploy
+## The install, frozen once
 
-```dockerfile
-FROM rigbox-base
-RUN npm install -g openclaw@2026.4.29
-COPY gateway.js rigbox-openclaw-gateway /home/developer/.openclaw/bin/
+Only one thing is heavy here — the global npm install of OpenClaw — so that's
+what gets frozen:
+
+```yaml
+reproducible: true
+install: |
+  set -euo pipefail
+  OPENCLAW_VERSION=2026.4.29
+  npm config set prefix "$HOME/.npm-global"
+  export PATH="$HOME/.npm-global/bin:$PATH"
+  export NODE_ENV=production
+  npm install -g --no-fund --no-audit --omit=dev "openclaw@${OPENCLAW_VERSION}"
+  openclaw --version >/dev/null
 ```
 
-- **First `rig deploy`**: builds the image (npm install OpenClaw), boots from
-  it.
-- **Later `rig deploy`**: cached image reused. Bump `OPENCLAW_VERSION` in the
-  Dockerfile to upgrade.
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, into a user-writable npm prefix so root is never required);
+`reproducible: true` is what makes `rig deploy` freeze its result.
+
+## Reproducible deploy + the hybrid model
+
+The deploy is **hybrid**, and the split matters for this app: the image carries
+the OpenClaw runtime, while `start.sh` and `gateway.js` — the per-boot config
+synthesis — **rsync in with the app**, so you can iterate on the wrapper without
+rebuilding anything.
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (`npm install -g openclaw`), snapshots the rootfs
+  as a content-addressed image, boots the workspace from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no re-install, fast. Bump
+  `OPENCLAW_VERSION` in `install:` to upgrade.
 
 ## Deploy
 

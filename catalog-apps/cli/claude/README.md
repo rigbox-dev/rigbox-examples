@@ -7,27 +7,28 @@ codebase from a single terminal session, with model routing through Rigbox's
 **managed AI proxy** — no API key to set, so deploying is never blocked on a
 local secret.
 
-## The single capability: a long-lived AI-agent workspace, baked into an image
+## The single capability: a long-lived AI-agent workspace, frozen into an image
 
 The whole point here is running an **AI coding CLI on a persistent VM** instead
 of locally — your repo, history, and `.claude/` config survive across sessions
-and across deploys. The `Dockerfile` is `FROM rigbox-base` (the required base —
-the platform asserts the rigbox agent + systemd are present and rejects any
-other base at build time) and bakes the upstream installer's binary into the
-image once:
-
-```dockerfile
-FROM rigbox-base
-RUN su - developer -s /bin/bash -c '...curl -fsSL https://claude.ai/install.sh | bash...'
-RUN ln -sfn /home/developer/.local/bin/claude /usr/local/bin/claude
-```
-
-`rig.yaml` points at it with a `build:` block (no `install:`):
+and across deploys. `rig.yaml` sets `reproducible: true`, so `rig deploy` runs
+the `install:` script once in a builder VM, freezes the result as an image, and
+later deploys boot from it instead of re-running the upstream installer:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  curl -fsSL https://claude.ai/install.sh | bash          # → ~/.local/bin/claude
+  sudo ln -sfn "$HOME/.local/bin/claude" /usr/local/bin/claude
+  sudo tee /etc/profile.d/claude-routing.sh <<'EOF'
+  …                                                       # managed-AI routing, below
+  EOF
 ```
+
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, with passwordless `sudo` for the system-path steps);
+`reproducible: true` is what makes `rig deploy` freeze its result.
 
 ## SSH-in to use it
 
@@ -40,7 +41,7 @@ ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ss
 claude
 ```
 
-The onboarding wizard is pre-accepted at image-build time
+The onboarding wizard is pre-accepted at install time
 (`~/.claude.json` + `~/.claude/settings.json`), so `claude` drops you straight
 into a session — no first-launch prompts.
 
@@ -54,11 +55,12 @@ ai:
 ```
 
 Claude Code reads `ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN`. The managed
-proxy serves the Anthropic `/v1/messages` shape, and the image's
-`/etc/profile.d/claude-routing.sh` points Claude at it on every shell start:
+proxy serves the Anthropic `/v1/messages` shape, and the
+`/etc/profile.d/claude-routing.sh` that `install:` writes points Claude at it on
+every shell start:
 
 ```sh
-# baked into the image, sourced by every login shell
+# written by install:, sourced by every login shell
 . ~/.rigbox/proxy.env                               # OPENAI_BASE_URL=<proxy>/v1, OPENAI_API_KEY=<placeholder>
 export ANTHROPIC_BASE_URL="${OPENAI_BASE_URL%/v1}"  # Claude appends /v1/messages itself
 export ANTHROPIC_AUTH_TOKEN="${OPENAI_API_KEY}"
@@ -87,4 +89,4 @@ default).
 - **No public UI.** `kind: cli` means there's no HTTP front door at all — the
   workspace is reachable only via SSH on the rigbox gateway.
 - **Onboarding bypass.** `hasCompletedOnboarding` + `bypassPermissionsModeAccepted`
-  are written at image-build time so `claude` is non-interactive on first launch.
+  are written by `install:` so `claude` is non-interactive on first launch.

@@ -5,27 +5,26 @@ upload, download, preview, edit, and share the files in a directory through a
 clean web UI. It ships as a single static Go binary. This example runs it on
 Rigbox unchanged, pointed at the workspace's persistent data dir.
 
-## The single capability: run File Browser reproducibly on Rigbox via a Docker build
+## The single capability: run File Browser reproducibly on Rigbox
 
 This isn't a toy app we wrote — it's a real off-the-shelf product running on the
-platform. The one thing it demonstrates is the **reproducible `FROM rigbox-base`
-Docker build**: the `Dockerfile` downloads a **pinned** File Browser binary
-(`v2.32.0`) onto the Rigbox base image once, and every deploy boots from that
-frozen image instead of re-downloading.
-
-```dockerfile
-FROM rigbox-base
-ARG FB_VERSION=v2.32.0
-RUN curl -fsSL ".../${FB_ARCH}-filebrowser.tar.gz" \
-      | tar -xz -C /usr/local/bin/ filebrowser
-```
-
-`rig.yaml` points at it with a `build:` block — no `install:`, no flag:
+platform. The one thing it demonstrates is the **reproducible deploy**: the
+`install:` script downloads a **pinned** File Browser binary (`v2.32.0`) onto
+the Rigbox base once, and every deploy boots from that frozen image instead of
+re-downloading.
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  FB_VERSION=v2.32.0
+  …                                                       # arch switch
+  curl -fsSL ".../${FB_ARCH}-filebrowser.tar.gz" \
+    | sudo tar -xz -C /usr/local/bin/ filebrowser
 ```
+
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
 ## Persistence (survives redeploys)
 

@@ -7,26 +7,25 @@ Rigbox, pointed at any Postgres you give it.
 
 ## The single capability: a browser-based Postgres admin, frozen into the image
 
-A pinned pgweb release (`0.16.2`, downloaded from GitHub releases) is baked
+A pinned pgweb release (`0.16.2`, downloaded from GitHub releases) is frozen
 into the image once; every deploy boots from that frozen image. The connection
 string is a **secret param** — set it once with `rig app param set`, and pgweb
 picks it up via `DATABASE_URL` on boot.
 
-```dockerfile
-FROM rigbox-base
-ARG PGWEB_VERSION=0.16.2
-RUN curl -fsSL "https://github.com/sosedoff/pgweb/releases/download/v${PGWEB_VERSION}/pgweb_linux_amd64.zip" \
-      -o /tmp/pgweb.zip \
- && unzip -o /tmp/pgweb.zip -d /tmp \
- && mv /tmp/pgweb_linux_amd64 /usr/local/bin/pgweb
-```
-
-`rig.yaml` points at it with a `build:` block — no `install:`, no flag:
-
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  PGWEB_VERSION=0.16.2
+  …                                                       # arch switch
+  curl -fsSL "https://github.com/sosedoff/pgweb/releases/download/v${PGWEB_VERSION}/pgweb_${PGWEB_ARCH}.zip" \
+    -o /tmp/pgweb.zip
+  unzip -o /tmp/pgweb.zip -d /tmp
+  sudo install -m 755 "/tmp/pgweb_${PGWEB_ARCH}" /usr/local/bin/pgweb
 ```
+
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
 ## External Postgres (the design choice)
 
@@ -47,12 +46,14 @@ params:
 into the connection — no config file. Leave the param blank to start without a
 connection and connect via the UI's `--sessions` mode instead.
 
-## Docker build + the hybrid deploy
+## Reproducible deploy + the hybrid model
 
-- **First `rig deploy`**: builds the image (pgweb binary pinned + downloaded
-  once), boots from it.
-- **Later `rig deploy`**: image cache reused — no re-download, fast. Bump
-  `PGWEB_VERSION` in the Dockerfile to upgrade.
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (pgweb binary pinned + downloaded once), snapshots
+  the rootfs as a content-addressed image, boots from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, the image cache is reused — no re-download, fast. Bump
+  `PGWEB_VERSION` in `rig.yaml`'s `install:` to upgrade.
 
 ## Deploy
 
@@ -73,4 +74,4 @@ boots — the UI lets you punch in a connection manually.)
   connection — pgweb has no dedicated `/health` endpoint).
 - **`--sessions`** lets users open additional Postgres connections through the
   UI instead of being pinned to the `DATABASE_URL` connection only.
-- Stack: pgweb single Go binary, pinned + frozen in the image.
+- Stack: pgweb single Go binary, pinned + frozen in the reproducible image.

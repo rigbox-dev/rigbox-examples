@@ -26,22 +26,43 @@ OpenRouter models (`rigbox/free`, Qwen Coder, Llama 3.3 70B), and
 `DEFAULT_MODEL_PARAMS` caps `max_tokens` at 4096 so a runaway chat can't burn
 the budget.
 
-## Docker build + the hybrid deploy
+## The heavy install, frozen once
 
-Open WebUI's install is heavy — it pins a `cp312` torch wheel, so we use **uv**
-to materialize a Python 3.12 venv in the image (the base ships 3.11), then
-install `torch-cpu` + `open-webui` from PyPI into it. Everything frozen once:
+Open WebUI pins a `cp312` torch wheel and the Rigbox base ships Debian's Python
+3.11, so `install:` uses **uv** to materialize a 3.12 venv and installs the CPU
+torch wheel + `open-webui` into it. That whole tree is frozen into the image:
 
-```dockerfile
-FROM rigbox-base
-RUN uv python install 3.12 \
- && uv venv --python 3.12 ~/.open-webui/venv \
- && uv pip install <torch-cpu wheel> open-webui==0.9.4
+```yaml
+reproducible: true
+install: |
+  set -euo pipefail
+  APP_HOME=/home/developer/.open-webui
+  APP_VERSION=0.9.4
+  uv python install 3.12
+  uv venv --clear --python 3.12 "$APP_HOME/venv"
+  uv pip install --no-cache --python "$APP_HOME/venv/bin/python" \
+    "$TORCH_CPU_WHEEL_URL" "open-webui==${APP_VERSION}"
 ```
 
-- **First `rig deploy`**: builds the image (multi-minute), boots from it.
-- **Later `rig deploy`**: cached image reused, no re-install. Bump
-  `APP_VERSION` in the Dockerfile to upgrade.
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, who owns `$APP_HOME`, so no `sudo` is needed here);
+`reproducible: true` is what makes `rig deploy` freeze its result. `start:`
+execs the binary straight out of the frozen venv — no wrapper, no PATH munging.
+
+## Reproducible deploy + the hybrid model
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (torch + open-webui — multi-minute), snapshots the
+  rootfs as a content-addressed image, boots the workspace from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no re-install, fast. Bump
+  `APP_VERSION` in `install:` to upgrade.
+
+> The builder VM currently boots with the platform default disk (3GB). This
+> install is the largest in the catalog subtree — the CPU torch wheel alone is
+> most of a gigabyte on top of a full CPython 3.12 — so if the build runs out of
+> space the platform needs to size the builder from `workspace.resources`
+> (`diskSizeMb: 8192` here); see the repo README.
 
 ## Deploy
 
@@ -59,5 +80,6 @@ admin because `ENABLE_SIGNUP: False` flips off after the first user), and chat.
 - **`ENABLE_SIGNUP=False`** keeps this single-tenant. Drop it for multi-user.
 - **Health probe**: `GET /health` once the SvelteKit bundle is built; the
   `timeoutSeconds: 600` covers the first-boot DB migration on a cold start.
-- **Stack**: Open WebUI (SvelteKit + FastAPI + SQLite) pointed at the Rigbox
-  managed proxy.
+- **Stack**: Open WebUI (SvelteKit + FastAPI + SQLite) on a uv-managed Python
+  3.12 venv, frozen into the reproducible image, pointed at the Rigbox managed
+  proxy.

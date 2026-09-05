@@ -2,14 +2,84 @@ name: excalidraw
 port: 5000
 # Excalidraw itself is a static React SPA — it serves fine on 256MB at runtime,
 # but the vite bundle is large and the catalog ships 1024MB to leave margin.
-# We bake the build at image-build time so the VM only runs `serve`.
+# We build the bundle at install time (frozen into the reproducible image) so
+# the VM only runs `serve`.
 workspace:
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
-build:
-  dockerfile: Dockerfile
-  # vite + react + @excalidraw + node_modules + the built bundle don't fit in
-  # the default rootfs at image-export time. Bump the frozen image's ext4.
-  sizeMb: 4096
+# Freeze the scaffold + `npm install` + `vite build` into an image: `rig deploy`
+# runs `install:` once in a builder VM, snapshots the rootfs, and later deploys
+# with unchanged inputs boot from the cached image. Bump EXCALIDRAW_VERSION
+# here to upgrade.
+# Footprint note: the builder VM boots with the platform default 3GB disk; vite +
+# react + @excalidraw + node_modules + the built bundle are a large install.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Excalidraw is a React app — the upstream repo is a monorepo, but the
+  # published `@excalidraw/excalidraw` npm package can be embedded into a
+  # tiny vite project and built to a static SPA. The catalog does this at
+  # install time on a live workspace; here the same build is frozen into the
+  # reproducible image so every deploy boots a prebuilt bundle.
+  EXCALIDRAW_VERSION=0.17.6
+
+  # Project lives at /opt/excalidraw (outside the rsync zone), owned by
+  # developer so npm/vite run unprivileged.
+  sudo mkdir -p /opt/excalidraw
+  sudo chown developer:developer /opt/excalidraw
+  cd /opt/excalidraw
+
+  # Minimal project scaffold (same shape as the catalog's install.sh).
+  mkdir -p src
+  cat > package.json <<'EOF'
+  {
+    "name": "rigbox-excalidraw",
+    "private": true,
+    "type": "module",
+    "scripts": { "build": "vite build" }
+  }
+  EOF
+  cat > vite.config.js <<'EOF'
+  import { defineConfig } from "vite";
+  import react from "@vitejs/plugin-react";
+  export default defineConfig({
+    plugins: [react()],
+    define: { "process.env.IS_PREACT": JSON.stringify("false") },
+    build: { outDir: "build" }
+  });
+  EOF
+  cat > index.html <<'EOF'
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excalidraw - Rigbox</title>
+    <style>html,body,#root{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}</style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+  </html>
+  EOF
+  cat > src/main.jsx <<'EOF'
+  import React from "react";
+  import { createRoot } from "react-dom/client";
+  import { Excalidraw } from "@excalidraw/excalidraw";
+  import "@excalidraw/excalidraw/index.css";
+  const root = createRoot(document.getElementById("root"));
+  root.render(<Excalidraw />);
+  EOF
+
+  # Install deps + build the static SPA. `serve` stays in node_modules so the
+  # start command can find it at /opt/excalidraw/node_modules/.bin/serve.
+  npm install --no-audit --no-fund \
+    react react-dom \
+    "@excalidraw/excalidraw@${EXCALIDRAW_VERSION}" \
+    vite @vitejs/plugin-react \
+    serve
+  npx vite build
+  npm cache clean --force
 # Serve the prebuilt SPA. --no-clipboard matches the catalog (the Rigbox proxy
 # isn't an HTTPS origin from the browser's POV for clipboard APIs).
 start: >-

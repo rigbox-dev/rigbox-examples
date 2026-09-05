@@ -25,19 +25,44 @@ managed AI proxy** (no key required, billed to workspace credits) via
 `ai: { managed: true }` in `rig.yaml`. Hermes reads the proxy-injected
 `OPENROUTER_API_KEY` / `OPENAI_API_KEY` natively, so no code wiring is needed.
 
-## Docker build + the hybrid deploy
+## The upstream installer, frozen once
 
-The upstream installer is heavy — uv, Python 3.11, Node 22, Playwright + a
-Chromium download, and a Vite SPA build — so it's frozen into the image once:
+The upstream installer is heavy — uv, Python 3.11, Node 22, Playwright, and a
+Vite SPA build — so `install:` runs it once and the result is frozen into the
+image. The SPA bundle is pre-built here on purpose: `hermes dashboard` would
+otherwise run `npm ci && npm run build` lazily on the first request and blow
+the readiness probe.
 
-```dockerfile
-FROM rigbox-base
-RUN curl -fsSL https://.../scripts/install.sh | bash -s -- --skip-setup
-# … then `npm ci && npm run build` to pre-bake hermes_cli/web_dist/ …
+```yaml
+reproducible: true
+install: |
+  set -euo pipefail
+  export HERMES_HOME=/home/developer/.hermes
+  curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
+    | bash -s -- --skip-setup
+  …                                       # npm ci && npm run build → hermes_cli/web_dist/
+  …                                       # trim install-only caches, ensure ~/.local/bin/hermes
 ```
 
-- **First `rig deploy`**: builds the image (multi-minute), boots from it.
-- **Later `rig deploy`**: cached image reused, no re-install.
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, exactly the user the upstream installer expects);
+`reproducible: true` is what makes `rig deploy` freeze its result. It's
+idempotent: the SPA build is skipped when `web_dist/index.html` is already
+there, and the launcher shim is only rewritten when the installer truncated it.
+
+## Reproducible deploy + the hybrid model
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (multi-minute — uv, Node 22, Playwright, the Vite
+  build), snapshots the rootfs as a content-addressed image, boots the
+  workspace from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no re-install, fast.
+
+> The builder VM currently boots with the platform default disk (3GB). This
+> install (uv-managed CPython, a Node 22 toolchain, and the SPA build tree) sits
+> close to that ceiling even after the cache trim, so it wants the builder sized
+> from `workspace.resources` (`diskSizeMb: 4096` here); see the repo README.
 
 ## Deploy
 
@@ -60,3 +85,7 @@ SSH in once and run `hermes gateway enable telegram && systemctl --user enable
   boundary. Don't drop it without auth-gating differently.
 - **Health probe**: `GET /api/status` is the only endpoint that doesn't require
   a session token, so it's what the readiness probe hits.
+- **Browser automation.** `install:` trims `~/.cache/ms-playwright` along with
+  the other installer caches (it's a build cache, not a runtime dependency of
+  the dashboard); Hermes re-fetches a browser on demand if you use a tool that
+  needs one.

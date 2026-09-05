@@ -4,8 +4,24 @@ port: 8888
 # bit of headroom; 1GB / 1vCPU is comfortable for an interactive notebook.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
-build:
-  dockerfile: Dockerfile
+# Freeze the heavy `pip install jupyterlab` into an image: `rig deploy` runs
+# `install:` once in a builder VM, snapshots the rootfs, and later deploys with
+# unchanged inputs boot from the cached image and only rsync code.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Install JupyterLab on top of the rigbox base. The base ships Debian's
+  # python3 (3.11 at /usr/bin/python3); PEP 668 requires --break-system-packages
+  # to install into the system site-packages (root-owned, hence sudo). The
+  # heavy pip install is frozen into the reproducible image so deploys don't
+  # re-run it.
+  if [ -x /usr/local/bin/uv ]; then
+    sudo /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
+      --break-system-packages jupyterlab
+  else
+    sudo /usr/bin/pip3 install --break-system-packages jupyterlab
+  fi
+  jupyter --version
 # Token-less auth: the app is private by default and the Rigbox gateway
 # auth-gates anonymous traffic, so Jupyter's own token gate is redundant —
 # the gateway is the front door. Don't set this app `public` without re-adding

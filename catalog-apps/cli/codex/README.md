@@ -7,27 +7,32 @@ small, fast, and natively speaks the OpenAI API, which makes it trivial to
 point at Rigbox's **managed AI proxy** (an OpenAI-compatible endpoint) — no API
 key to set, so deploying is never blocked on a local secret.
 
-## The single capability: an OpenAI-shaped AI agent baked into an image
+## The single capability: an OpenAI-shaped AI agent frozen into an image
 
 The whole point here is **running an OpenAI-API-compatible AI CLI on a
 persistent VM** — your repo, history, and `~/.codex/` config survive across
-sessions and across deploys. The `Dockerfile` is `FROM rigbox-base` (the
-required base — the platform asserts the rigbox agent + systemd are present and
-rejects any other base at build time) and bakes the npm-published binary into
-the image once:
-
-```dockerfile
-FROM rigbox-base
-RUN su - developer -s /bin/bash -c 'npm install -g --no-fund --silent @openai/codex'
-RUN ln -sfn /home/developer/.npm-global/bin/codex /usr/local/bin/codex
-```
-
-`rig.yaml` points at it with a `build:` block (no `install:`):
+sessions and across deploys. `rig.yaml` sets `reproducible: true`, so
+`rig deploy` runs the `install:` script once in a builder VM, freezes the
+result as an image, and later deploys boot from it instead of re-running
+`npm install`:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  npm install -g --no-fund --silent @openai/codex          # → ~/.npm-global/bin/codex
+  sudo ln -sfn "$HOME/.npm-global/bin/codex" /usr/local/bin/codex
+  sudo tee /etc/profile.d/codex-routing.sh <<'EOF'
+  …                                                       # supplies $OPENAI_API_KEY, below
+  EOF
+  cat > "$HOME/.codex/config.toml" <<'EOF'
+  …                                                       # managed-AI provider, below
+  EOF
 ```
+
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, with passwordless `sudo` for the system-path steps);
+`reproducible: true` is what makes `rig deploy` freeze its result.
 
 ## SSH-in to use it
 
@@ -50,7 +55,7 @@ ai:
 ```
 
 Codex 0.137+ reads its provider from `~/.codex/config.toml`, not env vars, and
-only speaks the Responses wire. The image bakes a config that declares the
+only speaks the Responses wire. `install:` writes a config that declares the
 managed proxy as a custom provider (plain HTTP, no websocket):
 
 ```toml
@@ -63,9 +68,9 @@ env_key = "OPENAI_API_KEY"
 wire_api = "responses"
 ```
 
-The API key comes from `$OPENAI_API_KEY`; `/etc/profile.d/codex-routing.sh`
-sources the managed proxy's `~/.rigbox/proxy.env` to supply the placeholder. An
-SSH session just works — no key, no `export` dance.
+The API key comes from `$OPENAI_API_KEY`; the `/etc/profile.d/codex-routing.sh`
+that `install:` writes sources the managed proxy's `~/.rigbox/proxy.env` to
+supply the placeholder. An SSH session just works — no key, no `export` dance.
 
 ## Deploy
 

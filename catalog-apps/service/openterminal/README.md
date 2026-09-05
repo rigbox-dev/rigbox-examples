@@ -8,16 +8,27 @@ raw SSH. This example runs the upstream Python package on Rigbox unchanged.
 ## The single capability: run Open Terminal reproducibly with a generated API key
 
 This isn't a toy app we wrote — it's a real off-the-shelf product running on
-the platform. What it demonstrates is the **reproducible Docker build plus
-Rigbox-managed credentials**: the `Dockerfile` pip-installs `open-terminal` into
-a venv at `/opt/openterminal` once, frozen into the image, and `rig.yaml` asks
-Rigbox to generate an API key on first deploy:
+the platform. What it demonstrates is the **reproducible deploy plus
+Rigbox-managed credentials**: `install:` pip-installs `open-terminal` into a
+venv at `/opt/openterminal` once, frozen into the reproducible image, and
+`rig.yaml` asks Rigbox to generate an API key on first deploy:
 
 ```yaml
+reproducible: true
+install: |
+  set -euo pipefail
+  sudo python3 -m venv /opt/openterminal
+  sudo /opt/openterminal/bin/pip install --no-cache-dir open-terminal
+  sudo ln -sf /opt/openterminal/bin/open-terminal /usr/local/bin/open-terminal
 credentials:
   api_key:
     generate: true   # → injected as CRED_API_KEY
 ```
+
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result. Later
+deploys with an unchanged `install:` script + base image reuse the cached
+image and only rsync `start.sh`.
 
 On boot, `start.sh` writes `$CRED_API_KEY` into `~/.config/open-terminal/config.toml`
 and exec's `open-terminal run`. The key is stable across redeploys and shown

@@ -6,38 +6,43 @@ with that distinctive hand-drawn feel, all in a React SPA. This example runs it
 on Rigbox unchanged, embedded as a tiny vite project around the published
 `@excalidraw/excalidraw` package.
 
-## The single capability: run Excalidraw reproducibly on Rigbox via a Docker build
+## The single capability: run Excalidraw reproducibly on Rigbox
 
 This isn't a toy app we wrote — it's a real off-the-shelf product running on the
-platform. The one thing it demonstrates is the **reproducible `FROM rigbox-base`
-Docker build**: the `Dockerfile` scaffolds a minimal vite project, `npm install`s
-a **pinned** `@excalidraw/excalidraw@0.17.6`, runs `vite build`, and freezes the
-resulting static `build/` directory into the image. Every deploy boots from that
-frozen image and just runs `serve`.
-
-```dockerfile
-FROM rigbox-base
-ARG EXCALIDRAW_VERSION=0.17.6
-# scaffold + npm install + vite build, baked once at image-build time
-```
-
-`rig.yaml` points at it with a `build:` block — no `install:`, no flag — and
-bumps the frozen image's ext4 because vite's `node_modules` plus the bundle
-overflows the default rootfs:
+platform. The one thing it demonstrates is the **reproducible deploy**: the
+`install:` script scaffolds a minimal vite project under `/opt/excalidraw`,
+`npm install`s a **pinned** `@excalidraw/excalidraw@0.17.6`, runs `vite build`,
+and the resulting static `build/` directory is frozen into the image. Every
+deploy boots from that frozen image and just runs `serve`.
 
 ```yaml
-build:
-  dockerfile: Dockerfile
-  sizeMb: 4096
+reproducible: true
+install: |
+  set -euo pipefail
+  EXCALIDRAW_VERSION=0.17.6
+  sudo mkdir -p /opt/excalidraw && sudo chown developer:developer /opt/excalidraw
+  cd /opt/excalidraw
+  …                                                       # scaffold package.json / vite.config.js / index.html / src/main.jsx
+  npm install --no-audit --no-fund react react-dom "@excalidraw/excalidraw@${EXCALIDRAW_VERSION}" vite @vitejs/plugin-react serve
+  npx vite build
 ```
 
-## Docker build + the hybrid deploy
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
-- **First `rig deploy`**: builds the image from the local `Dockerfile`
-  (`vite build` runs once — heavy, expect a few minutes), boots the workspace
-  from that frozen image, then starts `serve -s build`.
-- **Later `rig deploy`**: if the build inputs are unchanged, it **reuses the
-  cached image** — no rebuild, fast.
+## Reproducible deploy + the hybrid model
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (`vite build` runs once — heavy, expect a few
+  minutes), snapshots the rootfs as a content-addressed image, boots the
+  workspace from it, then starts `serve -s build`.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no rebuild, fast.
+
+> The builder VM currently boots with the platform default disk (3GB).
+> Excalidraw's install footprint (vite + `node_modules` + the built bundle) is
+> larger; if the build runs out of space the platform needs to size the builder
+> from `workspace.resources` — see the repo README.
 
 ## No persistence
 

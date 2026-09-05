@@ -2,32 +2,38 @@
 
 Runs [**OpenCode**](https://opencode.ai) — the open-source, terminal-first AI
 coding agent — on Rigbox. It's a single static Go binary, ships as a TUI, and
-routes through Rigbox's **managed AI proxy** via a baked provider config — no
-API key to set. You SSH in and run `opencode`.
+routes through Rigbox's **managed AI proxy** via a provider config written at
+install time — no API key to set. You SSH in and run `opencode`.
 
 ## The single capability: a single-binary OSS agent, zero-key managed AI
 
 The whole point here is **running the OSS terminal agent on a persistent VM**
-with no glue code. The image bakes an `opencode.json` that registers a custom
+with no glue code. `install:` writes an `opencode.json` that registers a custom
 OpenAI-compatible provider pointed at the workspace's managed AI proxy, so
 `opencode` works on first SSH — nothing to set, no key to forward.
 
-The `Dockerfile` is `FROM rigbox-base` (the required base — the platform asserts
-the rigbox agent + systemd are present and rejects any other base at build
-time) and bakes the upstream Go binary into the image once:
-
-```dockerfile
-FROM rigbox-base
-RUN su - developer -s /bin/bash -c 'curl -fsSL https://opencode.ai/install | bash'
-RUN ln -sfn /home/developer/.opencode/bin/opencode /usr/local/bin/opencode
-```
-
-`rig.yaml` points at it with a `build:` block (no `install:`):
+`rig.yaml` sets `reproducible: true`, so `rig deploy` runs the `install:`
+script once in a builder VM, freezes the upstream Go binary (and that config)
+as an image, and later deploys boot from it instead of re-running the
+installer:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  curl -fsSL https://opencode.ai/install | bash            # → ~/.opencode/bin/opencode
+  sudo ln -sfn "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
+  sudo tee /etc/profile.d/opencode-routing.sh <<'EOF'
+  …                                                       # PATH for login shells, below
+  EOF
+  cat > "$HOME/.config/opencode/opencode.json" <<'EOF'
+  …                                                       # managed-AI provider, below
+  EOF
 ```
+
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, with passwordless `sudo` for the system-path steps);
+`reproducible: true` is what makes `rig deploy` freeze its result.
 
 ## SSH-in to use it
 
@@ -40,10 +46,10 @@ ssh "$(rig workspace ssh-info --workspace <name-or-id> --output json | jq -r .ss
 opencode
 ```
 
-## Managed AI via a baked provider config
+## Managed AI via a provider config
 
 OpenCode's provider, base URL, key, and model live in a config file, not env
-vars. The image bakes `~/.config/opencode/opencode.json` with a custom
+vars. `install:` writes `~/.config/opencode/opencode.json` with a custom
 `@ai-sdk/openai-compatible` provider pointed at the managed proxy:
 
 ```jsonc
@@ -58,8 +64,9 @@ vars. The image bakes `~/.config/opencode/opencode.json` with a custom
 }
 ```
 
-`/etc/profile.d/opencode-routing.sh` only puts `~/.opencode/bin` on `PATH` for
-non-interactive login shells — the AI wiring is entirely in the config file.
+The `/etc/profile.d/opencode-routing.sh` that `install:` writes only puts
+`~/.opencode/bin` on `PATH` for non-interactive login shells — the AI wiring is
+entirely in the config file.
 
 ## Deploy
 

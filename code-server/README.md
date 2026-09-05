@@ -5,36 +5,34 @@ on Rigbox. Open the app and you get the full VS Code UI: file tree, editor,
 integrated terminal, extensions. This is an established off-the-shelf product, not
 hand-written app code.
 
-## The single capability: an established product via a reproducible Docker build
+## The single capability: an established product, installed reproducibly
 
 The whole point here is running a real, third-party product **as-is** through a
-reproducible Dockerfile build. The `Dockerfile` is `FROM rigbox-base` (the
-required base — the platform asserts the rigbox agent + systemd are present and
-rejects any other base at build time) and installs code-server on top with its
-official installer:
-
-```dockerfile
-FROM rigbox-base
-# Install code-server (VS Code in the browser) on top of the rigbox base.
-RUN curl -fsSL https://code-server.dev/install.sh | sh
-```
-
-`rig.yaml` points at it with a `build:` block (no `install:`):
+reproducible deploy. `rig.yaml`'s `install:` script puts code-server onto the
+Rigbox base with its official installer, and `reproducible: true` freezes the
+result so it only ever runs once:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  # Install code-server (VS Code in the browser) on top of the rigbox base.
+  curl -fsSL https://code-server.dev/install.sh | sudo sh
 ```
 
-## Docker build + the hybrid deploy
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
+
+## Reproducible deploy + the hybrid model
 
 The deploy is **hybrid** — the image carries the environment, rsync carries the
 code:
 
-- **First `rig deploy`**: builds the image from the local `Dockerfile`
-  (code-server installed once), boots the workspace from that frozen image.
-- **Later `rig deploy`**: if the build inputs (Dockerfile, base image) are
-  unchanged, it **reuses the cached image** — no re-install, fast.
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (code-server installed once), snapshots the rootfs
+  as a content-addressed image, boots the workspace from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no re-install, fast.
 
 ## Deploy
 

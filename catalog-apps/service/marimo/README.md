@@ -8,28 +8,28 @@ example runs the real, unmodified Marimo on Rigbox.
 ## The single capability: a reactive notebook server frozen into the image
 
 `pip install marimo` happens **once**, frozen into the image, and every later
-deploy reuses it. The `Dockerfile` is `FROM rigbox-base` and bakes Marimo into
-the system site-packages:
-
-```dockerfile
-FROM rigbox-base
-RUN /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
-      --break-system-packages marimo
-```
-
-`rig.yaml` points at it with a `build:` block — no `install:`, no flag:
+deploy reuses it. `rig.yaml`'s `install:` script puts Marimo into the system
+site-packages on the Rigbox base, and `reproducible: true` freezes the result:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  sudo /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
+    --break-system-packages marimo
 ```
 
-## Docker build + the hybrid deploy
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
-- **First `rig deploy`**: builds the image (Marimo installed once), boots the
-  workspace from it, then starts `marimo edit` on `0.0.0.0:2718`.
-- **Later `rig deploy`**: if the build inputs are unchanged, it **reuses the
-  cached image** — no pip re-run, fast.
+## Reproducible deploy + the hybrid model
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (Marimo installed once), snapshots the rootfs as a
+  content-addressed image, boots the workspace from it, then starts
+  `marimo edit` on `0.0.0.0:2718`.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no pip re-run, fast.
 
 ## Persistence (survives redeploys)
 
@@ -56,4 +56,5 @@ No required env — everything is set in `rig.yaml`.
 - **`--no-token` is intentional.** The app is private by default and the
   Rigbox gateway auth-gates anonymous traffic, so Marimo's own token gate is
   redundant. Don't set this app `public` without dropping `--no-token`.
-- Stack: Marimo on Debian's `python3` (3.11), baked into the image.
+- Stack: Marimo on Debian's `python3` (3.11), frozen into the reproducible
+  image.

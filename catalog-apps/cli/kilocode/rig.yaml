@@ -4,11 +4,74 @@ kind: cli
 # declares that explicitly: no HTTP port, no health probe, no start command.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
+# Freeze the CLI into an image: `rig deploy` runs `install:` once in a builder
+# VM and later deploys boot from the cached image instead of re-running
+# npm install. The script runs as `developer` with passwordless sudo.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Kilo Code's CLI. @kilocode/cli is a multi-provider AI coding agent — 100+
+  # providers behind one binary, OpenRouter included. The base image already
+  # points npm's global prefix at ~/.npm-global, so the install lands at
+  # ~/.npm-global/bin/kilocode (older releases used `kilo`). We symlink
+  # whichever exists to /usr/local/bin so it's on the standard SSH PATH.
+  #
+  # The install mirrors the catalog's kilocode/install.sh so this image and the
+  # catalog-installed shape stay byte-compatible.
+
+  # 1. Install the CLI as the developer user.
+  npm install -g --no-fund --silent @kilocode/cli
+  command -v kilocode >/dev/null 2>&1 || command -v kilo >/dev/null 2>&1
+  if [ -x "$HOME/.npm-global/bin/kilocode" ]; then
+    sudo ln -sfn "$HOME/.npm-global/bin/kilocode" /usr/local/bin/kilocode
+  else
+    sudo ln -sfn "$HOME/.npm-global/bin/kilo" /usr/local/bin/kilocode
+  fi
+
+  # 2. Force the configured provider active at every shell start (KILO_PROVIDER=
+  #    openai-compatible). The provider's base URL, key, and model live in the
+  #    config written in step 3 — Kilo CLI 1.0 (an OpenCode fork) configures
+  #    providers in a file, not via the pre-1.0 KILO_* env vars.
+  sudo tee /etc/profile.d/kilocode-routing.sh >/dev/null <<'EOF'
+  # Managed by rigbox-examples (kilocode). Kilo CLI 1.0 is an OpenCode fork: the
+  # provider, base URL, key, and model all live in
+  # ~/.config/kilo/opencode.json (an openai-compatible provider pointed at the
+  # workspace's managed AI proxy). The pre-1.0 KILO_PROVIDER_TYPE /
+  # KILO_OPEN_ROUTER_API_KEY env vars no longer exist. We force the configured
+  # provider active so a stray interactive selection can't shadow it.
+  export KILO_PROVIDER="openai-compatible"
+  EOF
+  sudo chmod 644 /etc/profile.d/kilocode-routing.sh
+
+  # 3. Write the managed-AI provider config (Kilo CLI 1.0 = OpenCode fork): an
+  #    openai-compatible provider pointed at the managed AI proxy, so `kilocode`
+  #    works on first SSH with no key to set. Owned by developer so the CLI can
+  #    read it (and cache beside it).
+  mkdir -p "$HOME/.config/kilo"
+  cat > "$HOME/.config/kilo/opencode.json" <<'EOF'
+  {
+    "$schema": "https://app.kilo.ai/config.json",
+    "model": "openai-compatible/anthropic/claude-sonnet-4.5",
+    "provider": {
+      "openai-compatible": {
+        "options": {
+          "apiKey": "managed-by-rigbox",
+          "baseURL": "http://172.16.0.1:9090/v1"
+        },
+        "models": {
+          "anthropic/claude-sonnet-4.5": {
+            "name": "Claude Sonnet 4.5 (Rigbox managed AI)",
+            "tool_call": true,
+            "limit": { "context": 200000, "output": 16384 }
+          }
+        }
+      }
+    }
+  }
+  EOF
 # Opt into the Rigbox managed AI proxy — no OpenRouter key to set, so deploying
 # this example is never blocked on a local secret. Kilo CLI 1.0 is an OpenCode
-# fork; the image bakes an ~/.config/kilo/opencode.json that registers an
+# fork; `install:` writes an ~/.config/kilo/opencode.json that registers an
 # openai-compatible provider pointed at the managed proxy, so `kilocode` works
 # on first SSH.
 ai:

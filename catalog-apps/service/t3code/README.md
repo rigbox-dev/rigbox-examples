@@ -10,10 +10,10 @@ conversation to the right backend, and you never leave the browser tab.
 Most CLI coding agents (Claude Code, Codex, OpenCode, Pi, …) want their own
 terminal + their own provider env shape. T3 collapses that into a single web
 UI: each agent gets a tab, T3 owns the LLM connection, and a small **provider
-shim** in the start wrapper translates whatever the workspace gives it into
-the env vars each agent reads natively.
+shim** in `start.sh` translates whatever the workspace gives it into the env
+vars each agent reads natively.
 
-The shim runs at boot in `rigbox-t3code-start`:
+The shim runs at boot:
 
 - Sources `~/.rigbox/.env` so the managed-proxy injection (or any user secret)
   is in scope.
@@ -24,24 +24,40 @@ The shim runs at boot in `rigbox-t3code-start`:
 
 Then it execs the absolute `t3` binary on `0.0.0.0:3773`.
 
-## Why a Dockerfile patch
+## Why `install:` patches the entrypoint
 
 `t3@0.0.23` ships a Node shebang but guards its entrypoint behind
 `if (import.meta.main)` — a Bun convention that is **unset under Node**. Left
 unpatched, `systemd` execs `t3`, the CLI exits 0 silently with no output, and
-nothing ever listens on `:3773`. The Dockerfile rewrites that single line to
-`if (true)` so the server actually starts.
+nothing ever listens on `:3773`. The install script rewrites that single line to
+`if (true)` so the server actually starts:
 
-## Docker build + the hybrid deploy
-
-```dockerfile
-FROM rigbox-base
-RUN npm install -g t3 && <patch import.meta.main>
-COPY <wrapper> /home/developer/.local/bin/rigbox-t3code-start
+```yaml
+reproducible: true
+install: |
+  set -euo pipefail
+  export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+  npm install -g --no-fund --silent t3
+  T3_DIST="$NPM_CONFIG_PREFIX/lib/node_modules/t3/dist/bin.mjs"
+  node -e '…'  "$T3_DIST"                # if (import.meta.main) → if (true)
+  t3 --version >/dev/null
 ```
 
-- **First `rig deploy`**: builds the image (npm install + patch), boots from it.
-- **Later `rig deploy`**: cached image reused, no re-install.
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM (as `developer`, with passwordless `sudo` for any system-path step);
+`reproducible: true` is what makes `rig deploy` freeze its result.
+
+## Reproducible deploy + the hybrid model
+
+The deploy is **hybrid** — the image carries the environment, rsync carries the
+boot wrapper next to `rig.yaml`:
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (`npm install -g t3` + the patch), snapshots the
+  rootfs as a content-addressed image, boots the workspace from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no re-install, fast. Editing
+  `start.sh` only rsyncs; it doesn't rebuild.
 
 ## Deploy
 

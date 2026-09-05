@@ -4,10 +4,81 @@ kind: cli
 # declares that explicitly: no HTTP port, no health probe, no start command.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
+# Freeze the CLI into an image: `rig deploy` runs `install:` once in a builder
+# VM and later deploys boot from the cached image instead of re-running the
+# upstream installer. The script runs as `developer` with passwordless sudo.
+reproducible: true
+install: |
+  set -euo pipefail
+  # OpenCode (https://opencode.ai) is a Go-based TUI agent — the installer
+  # drops a single static binary at $HOME/.opencode/bin/opencode (earlier
+  # releases used $HOME/.local/bin). We accept either, then symlink whichever
+  # exists to /usr/local/bin so it's on the standard SSH PATH.
+  #
+  # The install mirrors the catalog's opencode/install.sh so this image and the
+  # catalog-installed shape stay byte-compatible.
+
+  # 1. Install the CLI as the developer user.
+  curl -fsSL https://opencode.ai/install | bash
+  [ -x "$HOME/.opencode/bin/opencode" ] || [ -x "$HOME/.local/bin/opencode" ]
+  if [ -x "$HOME/.opencode/bin/opencode" ]; then
+    sudo ln -sfn "$HOME/.opencode/bin/opencode" /usr/local/bin/opencode
+  else
+    sudo ln -sfn "$HOME/.local/bin/opencode" /usr/local/bin/opencode
+  fi
+
+  # 2. Make ~/.opencode/bin and ~/.local/bin reachable from non-interactive
+  #    login shells too (catalog scripts, sshd ForceCommand, ...) so a fresh SSH
+  #    session sees `opencode` on PATH without depending on per-user rc state.
+  #    The AI backend is configured in the config written in step 3, not via env.
+  sudo tee /etc/profile.d/opencode-routing.sh >/dev/null <<'EOF'
+  # Managed by rigbox-examples (opencode). The AI backend is configured in
+  # ~/.config/opencode/opencode.json (a custom OpenAI-compatible provider
+  # pointed at the workspace's managed AI proxy), so no env translation is needed
+  # here. This script only ensures the opencode binary is on PATH for
+  # non-interactive login shells (catalog scripts, sshd ForceCommand, ...): the
+  # upstream installer drops it at ~/.opencode/bin (or, on older releases,
+  # ~/.local/bin) and only patches per-user rc files.
+  for _rb_bin in "${HOME:-/home/developer}/.opencode/bin" "${HOME:-/home/developer}/.local/bin"; do
+    if [ -d "$_rb_bin" ]; then
+      case ":${PATH}:" in
+        *":$_rb_bin:"*) ;;
+        *) PATH="$_rb_bin:$PATH" ;;
+      esac
+    fi
+  done
+  unset _rb_bin
+  export PATH
+  EOF
+  sudo chmod 644 /etc/profile.d/opencode-routing.sh
+
+  # 3. Write the managed-AI provider config so `opencode` works on first SSH with
+  #    no key to set: a custom OpenAI-compatible provider pointed at the managed
+  #    AI proxy. Owned by developer so the CLI can read it (and cache beside it).
+  mkdir -p "$HOME/.config/opencode"
+  cat > "$HOME/.config/opencode/opencode.json" <<'EOF'
+  {
+    "$schema": "https://opencode.ai/config.json",
+    "model": "rigbox/anthropic/claude-sonnet-4.5",
+    "provider": {
+      "rigbox": {
+        "npm": "@ai-sdk/openai-compatible",
+        "name": "Rigbox Managed AI",
+        "options": {
+          "baseURL": "http://172.16.0.1:9090/v1",
+          "apiKey": "managed-by-rigbox"
+        },
+        "models": {
+          "anthropic/claude-sonnet-4.5": {
+            "name": "Claude Sonnet 4.5 (Rigbox managed AI)"
+          }
+        }
+      }
+    }
+  }
+  EOF
 # Opt into the Rigbox managed AI proxy — no OpenRouter key to set, so deploying
-# this example is never blocked on a local secret. The image bakes an
+# this example is never blocked on a local secret. `install:` writes an
 # ~/.config/opencode/opencode.json that registers a custom OpenAI-compatible
 # provider pointed at the managed proxy, so `opencode` works on first SSH.
 ai:

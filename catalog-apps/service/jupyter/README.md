@@ -7,31 +7,31 @@ markdown. This example runs the real, unmodified JupyterLab on Rigbox.
 ## The single capability: a reproducible interactive notebook server
 
 The heavy `pip install jupyterlab` happens **once**, frozen into the image, and
-every later deploy reuses it. The `Dockerfile` is `FROM rigbox-base` and bakes
-JupyterLab into the system site-packages:
-
-```dockerfile
-FROM rigbox-base
-RUN /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
-      --break-system-packages jupyterlab
-```
-
-`rig.yaml` points at it with a `build:` block — no `install:`, no flag:
+every later deploy reuses it. `rig.yaml`'s `install:` script puts JupyterLab
+into the system site-packages on the Rigbox base, and `reproducible: true`
+freezes the result:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  sudo /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
+    --break-system-packages jupyterlab
 ```
 
-## Docker build + the hybrid deploy
+No Dockerfile — `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
+
+## Reproducible deploy + the hybrid model
 
 The deploy is **hybrid** — the image carries the environment, rsync carries
 notebooks you put next to `rig.yaml`:
 
-- **First `rig deploy`**: builds the image from the local `Dockerfile`
-  (JupyterLab installed once — this build is slow), boots the workspace from it.
-- **Later `rig deploy`**: if the build inputs are unchanged, it **reuses the
-  cached image** — no pip re-run, fast.
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (JupyterLab installed once — this build is slow),
+  snapshots the rootfs as a content-addressed image, boots the workspace from it.
+- **Later `rig deploy`**: if the build inputs (`install:` script, base image)
+  are unchanged, it **reuses the cached image** — no pip re-run, fast.
 
 ## Persistence (survives redeploys)
 
@@ -58,4 +58,5 @@ No required env — everything is set in `rig.yaml`.
 - **`--IdentityProvider.token=''` is intentional.** The app is private by
   default and the Rigbox gateway auth-gates anonymous traffic, so Jupyter's own
   token gate is redundant. Don't set this app `public` without re-adding a token.
-- Stack: JupyterLab on Debian's `python3` (3.11), baked into the image.
+- Stack: JupyterLab on Debian's `python3` (3.11), frozen into the reproducible
+  image.

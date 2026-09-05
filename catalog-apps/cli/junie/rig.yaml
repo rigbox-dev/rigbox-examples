@@ -6,11 +6,62 @@ kind: cli
 # npm CLIs) — leaves comfortable headroom for project repos on top.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
-build:
-  dockerfile: Dockerfile
+# Freeze the CLI (and its chunky postinstall JetBrains-bundle download) into an
+# image: `rig deploy` runs `install:` once in a builder VM and later deploys
+# boot from the cached image instead of re-running npm install. The script
+# runs as `developer` with passwordless sudo.
+reproducible: true
+install: |
+  set -euo pipefail
+  # JetBrains' Junie CLI. The base image already points npm's global prefix at
+  # ~/.npm-global, so the install lands at ~/.npm-global/bin/junie. We symlink
+  # to /usr/local/bin so it's on the standard SSH PATH.
+  #
+  # The install mirrors the catalog's junie/install.sh so this image and the
+  # catalog-installed shape stay byte-compatible.
+
+  # 1. Install the CLI as the developer user.  --silent suppresses npm's
+  #    postinstall download progress so the install log stays readable.
+  export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+  mkdir -p "$NPM_CONFIG_PREFIX/bin"
+  export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+  npm install -g --no-fund --silent @jetbrains/junie-cli
+  "$NPM_CONFIG_PREFIX/bin/junie" --version >/dev/null
+  sudo ln -sfn "$NPM_CONFIG_PREFIX/bin/junie" /usr/local/bin/junie
+
+  # 2. Select the managed-AI profile at every shell start
+  #    (JUNIE_MODEL=custom:rigbox) and keep the npm-global bin on PATH. Junie
+  #    ignores the generic OPENAI_* env, so the actual backend is the custom LLM
+  #    profile written in step 3.
+  sudo tee /etc/profile.d/junie-routing.sh >/dev/null <<'EOF'
+  # Managed by rigbox-examples (junie). Junie ignores the generic OPENAI_* env, so
+  # the AI backend is a custom LLM profile at ~/.junie/models/rigbox.json
+  # (OpenAI-compatible, pointed at the workspace's managed AI proxy). Select it at
+  # every login and keep the npm-global bin on PATH for non-interactive shells.
+  case ":${PATH}:" in
+    *":${HOME:-/home/developer}/.npm-global/bin:"*) ;;
+    *) export PATH="${HOME:-/home/developer}/.npm-global/bin:${PATH}" ;;
+  esac
+  export JUNIE_MODEL="custom:rigbox"
+  EOF
+  sudo chmod 644 /etc/profile.d/junie-routing.sh
+
+  # 3. Write the managed-AI custom LLM profile so `junie` works on first SSH with
+  #    no key to set: an OpenAI-compatible profile pointed at the managed AI
+  #    proxy. junie-routing.sh selects it via JUNIE_MODEL=custom:rigbox. The
+  #    filename (minus .json) is the profile id. Owned by developer to read.
+  mkdir -p "$HOME/.junie/models"
+  cat > "$HOME/.junie/models/rigbox.json" <<'EOF'
+  {
+    "id": "anthropic/claude-sonnet-4.5",
+    "baseUrl": "http://172.16.0.1:9090/v1/chat/completions",
+    "apiType": "OpenAICompletion",
+    "apiKey": "managed-by-rigbox"
+  }
+  EOF
 # Opt into the Rigbox managed AI proxy — no OpenRouter key to set, so deploying
 # this example is never blocked on a local secret. Junie ignores the generic
-# OPENAI_* env, so the image bakes a custom LLM profile at
+# OPENAI_* env, so `install:` writes a custom LLM profile at
 # ~/.junie/models/rigbox.json (OpenAI-compatible, pointed at the managed proxy)
 # and /etc/profile.d/junie-routing.sh selects it via JUNIE_MODEL=custom:rigbox.
 ai:

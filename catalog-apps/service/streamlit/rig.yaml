@@ -3,8 +3,23 @@ port: 8501
 # Streamlit + pandas/altair pulled by typical apps want some headroom.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
+# Freeze `pip install streamlit` into an image: `rig deploy` runs `install:`
+# once in a builder VM, snapshots the rootfs, and later deploys with unchanged
+# inputs boot from the cached image and only rsync app.py.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Install Streamlit on top of the rigbox base. The base ships Debian's
+  # python3 (3.11 at /usr/bin/python3); PEP 668 requires --break-system-packages
+  # to install into the system site-packages (root-owned, hence sudo). The
+  # install is frozen into the reproducible image so deploys don't re-run pip.
+  if [ -x /usr/local/bin/uv ]; then
+    sudo /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
+      --break-system-packages streamlit
+  else
+    sudo /usr/bin/pip3 install --break-system-packages streamlit
+  fi
+  streamlit --version
 # Streamlit runs the rsynced app.py (CWD is the synced app dir, like other
 # single-app examples). --server.headless skips the "open browser" prompt and
 # the "send anonymous stats" first-run question; we're behind the gateway.

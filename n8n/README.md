@@ -10,37 +10,37 @@ shared example design language.
 
 n8n is a big Node app, and `npm install -g n8n` is heavy. The point of this
 example is that the heavy install happens **once**, frozen into an image, and
-every later deploy reuses it. The `Dockerfile` is `FROM rigbox-base` (the
-Debian-12 base with node22 + the rigbox agent/systemd) and bakes n8n into the
-image's global npm packages:
-
-```dockerfile
-FROM rigbox-base
-RUN npm install -g n8n
-```
-
-`rig.yaml` points at it with a `build:` block (no `install:`), which makes
-`rig deploy` reproducible automatically — no flag:
+every later deploy reuses it. `rig.yaml` declares the install as a plain
+`install:` script and flips on `reproducible: true`:
 
 ```yaml
-build:
-  dockerfile: Dockerfile
+reproducible: true
+install: |
+  set -euo pipefail
+  sudo npm install -g n8n
 ```
 
-## Docker build + the hybrid deploy
+No Dockerfile. `install:` is the same script a plain deploy would run on the
+VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
-The deploy is **hybrid** — the image carries the environment, rsync carries the
-code:
+## Reproducible deploy + the hybrid model
 
-- **First `rig deploy`**: builds the image from the local `Dockerfile`
-  (`npm install -g n8n` runs once — this build is **slow**, expect a few
-  minutes), boots the workspace from that frozen image, then starts
-  `n8n start`.
-- **Later `rig deploy`**: if the build inputs (the Dockerfile, base image) are
-  unchanged, it **reuses the cached image** — no npm re-run, fast.
+The deploy is **hybrid** — the frozen image carries the environment, rsync
+carries the code:
+
+- **First `rig deploy`**: boots a throwaway builder VM from the `base` image,
+  runs `install:` inside it (`npm install -g n8n` runs once — this build is
+  **slow**, expect a few minutes), snapshots the rootfs as a content-addressed
+  image, boots the workspace from that image, then starts `n8n start`.
+- **Later `rig deploy`**: if the build inputs (the `install:` script, base
+  image) are unchanged, it **reuses the cached image** — no npm re-run, fast.
 
 Because n8n lives in the image at a system path (global npm), `n8n start` finds
 it at runtime.
+
+> The builder VM currently boots with the platform default disk (3GB). n8n's
+> `node_modules` is large; if the build runs out of space the platform needs to
+> size the builder from `workspace.resources` — see the repo README.
 
 ## Persistence (survives redeploys)
 
@@ -87,4 +87,4 @@ No required env — everything is set in `rig.yaml`. The first deploy is slow
 - `N8N_SECURE_COOKIE=false` because the app is served behind the Rigbox gateway
   over the workspace subdomain; n8n would otherwise refuse to load the editor
   over the proxied connection.
-- Stack: n8n on Node 22, baked into the image.
+- Stack: n8n on Node 22, frozen into the reproducible image.

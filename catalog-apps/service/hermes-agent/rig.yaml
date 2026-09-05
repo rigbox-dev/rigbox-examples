@@ -2,14 +2,65 @@ name: hermes-agent
 # Hermes' dashboard binds 0.0.0.0:9119 and refuses non-loopback without
 # `--insecure`. The trust boundary is the rigbox subdomain layer.
 port: 9119
-# Playwright + Chromium baseline plus uv-managed Python 3.11 and a pre-built
-# Vite SPA bundle — the install footprint is heavier than the catalog minimum,
-# so bump the ext4 image so the docker→ext4 export fits.
+# Playwright plus uv-managed Python 3.11, Node 22, and a pre-built Vite SPA
+# bundle — the install footprint is heavier than the catalog minimum, so bump
+# the workspace disk.
 workspace:
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 4096 }
-build:
-  dockerfile: Dockerfile
-  sizeMb: 6144
+# Freeze the whole upstream install into an image: `rig deploy` runs `install:`
+# once in a builder VM, snapshots the rootfs, and later deploys with unchanged
+# inputs boot from the cached image instead of re-running the installer.
+# Footprint note: the builder VM boots with the platform default 3GB disk and
+# this install is close to it — see the README.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Hermes Agent (NousResearch/hermes-agent) — a self-improving AI agent with a
+  # web dashboard and a separate multi-platform messaging gateway (Telegram,
+  # Discord, Slack, WhatsApp, Signal). The upstream installer pulls uv, Python
+  # 3.11, Node 22, Playwright, and a fairly large npm tree to pre-build the Vite
+  # SPA bundle; this script freezes it all into the image once so deploys don't
+  # re-run it.
+  #
+  # `--skip-setup` keeps the installer non-interactive; the curl|bash pipe is
+  # non-tty so the upstream script also auto-detects non-interactive mode. The
+  # script runs as `developer`, which is what the upstream installer expects.
+  export HERMES_HOME=/home/developer/.hermes
+  mkdir -p "$HERMES_HOME"
+  curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
+    | bash -s -- --skip-setup
+
+  # Pre-build the dashboard SPA — `hermes dashboard` would otherwise run
+  # `npm ci && npm run build` lazily on the first request, blowing the
+  # readiness probe. Skipped when the bundle is already there (idempotent).
+  WEB_DIR="$HERMES_HOME/hermes-agent/web"
+  DIST_DIR="$HERMES_HOME/hermes-agent/hermes_cli/web_dist"
+  if [ -d "$WEB_DIR" ] && [ ! -f "$DIST_DIR/index.html" ]; then
+    (cd "$WEB_DIR" \
+      && { npm ci --silent || npm install --silent; } \
+      && npm run build --silent)
+    rm -rf "$WEB_DIR/node_modules" "$HOME/.npm/_cacache"
+  fi
+  test -f "$DIST_DIR/index.html"
+
+  # Trim install-only caches that the upstream installer leaves behind.
+  rm -rf "$HOME/.cache/ms-playwright" "$HOME/.cache/camoufox" \
+         "$HOME/.cache/huggingface" "$HOME/.cache/pip" "$HOME/.cache/uv" \
+         "$HOME/.npm/_cacache" /tmp/camoufox-* /tmp/playwright-* 2>/dev/null || true
+
+  # Ensure ~/.local/bin/hermes is the canonical launcher (the upstream installer
+  # occasionally truncates it after dirty-exiting on slow disks).
+  VENV_HERMES="$HERMES_HOME/hermes-agent/venv/bin/hermes"
+  if [ ! -s "$HOME/.local/bin/hermes" ] && [ -x "$VENV_HERMES" ]; then
+    mkdir -p "$HOME/.local/bin"
+    printf "%s\n" "#!/usr/bin/env bash" "unset PYTHONPATH" "unset PYTHONHOME" \
+      "exec $VENV_HERMES \"\$@\"" > "$HOME/.local/bin/hermes"
+    chmod +x "$HOME/.local/bin/hermes"
+  fi
+  test -x "$HOME/.local/bin/hermes"
+
+  touch "$HERMES_HOME/.env"
+  chmod 600 "$HERMES_HOME/.env"
 start: >-
   /home/developer/.local/bin/hermes dashboard
   --host 0.0.0.0 --port 9119 --no-open --insecure

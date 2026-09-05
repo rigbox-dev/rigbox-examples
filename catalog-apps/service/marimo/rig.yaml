@@ -3,8 +3,24 @@ port: 2718
 # Marimo is lighter than Jupyter — pure Python + a small web bundle.
 workspace:
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 2048 }
-build:
-  dockerfile: Dockerfile
+# Freeze `pip install marimo` into an image: `rig deploy` runs `install:` once
+# in a builder VM, snapshots the rootfs, and later deploys with unchanged
+# inputs boot from the cached image and only rsync code.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Install Marimo (reactive Python notebook) on top of the rigbox base. The
+  # base ships Debian's python3 (3.11 at /usr/bin/python3); PEP 668 requires
+  # --break-system-packages to install into the system site-packages
+  # (root-owned, hence sudo). The install is frozen into the reproducible
+  # image so deploys don't re-run pip.
+  if [ -x /usr/local/bin/uv ]; then
+    sudo /usr/local/bin/uv pip install --system --python /usr/bin/python3 \
+      --break-system-packages marimo
+  else
+    sudo /usr/bin/pip3 install --break-system-packages marimo
+  fi
+  marimo --version
 # Token-less auth: the app is private by default and the Rigbox gateway
 # auth-gates anonymous traffic, so Marimo's own token gate is redundant — the
 # gateway is the front door. Don't set this app `public` without dropping

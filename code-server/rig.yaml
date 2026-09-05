@@ -3,8 +3,17 @@ port: 8080
 # A browser IDE needs headroom for language servers, extensions, and terminals.
 workspace:
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
+# Freeze the code-server install into an image: `rig deploy` runs `install:`
+# once in a builder VM, snapshots the rootfs, and later deploys with unchanged
+# inputs boot from the cached image instead of re-running the installer.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Install code-server (VS Code in the browser) on top of the rigbox base. The
+  # upstream installer lays down the .deb at the system path (/usr/bin), so it
+  # runs as root and `code-server` resolves on the unit's PATH.
+  curl -fsSL https://code-server.dev/install.sh | sudo sh
+  code-server --version
 start: >-
   code-server --bind-addr 0.0.0.0:8080 --auth none
   --user-data-dir /home/developer/data/code-server

@@ -93,40 +93,35 @@ apps:
 app name) into the dependent's env, pointing at the sibling over loopback. Boot
 order follows the dependency graph.
 
-## Reproducible builds — Dockerfile + the hybrid deploy
+## Reproducible builds — `reproducible: true` + the hybrid deploy
 
-Most examples install their runtime with `install:`, which runs on the booted VM
-on every deploy. An example can instead **freeze its environment into an image**
-with a Dockerfile and deploy reproducibly:
+Every example installs its runtime with `install:`. By default that script runs
+on the booted workspace VM on every deploy. An example can instead **freeze the
+result of `install:` into an image** by adding one app-level flag:
 
 ```yaml
 name: my-app
 port: 8080
-build:
-  dockerfile: Dockerfile        # local path; no source: block needed
+reproducible: true              # freeze install: into an image; no Dockerfile
+install: |
+  set -euo pipefail
+  pip install --break-system-packages --no-cache-dir flask gunicorn
 start: <command that binds 0.0.0.0:8080>
 health: { path: /healthz, timeoutSeconds: 30 }
 ```
 
-```dockerfile
-# Dockerfile — MUST be FROM rigbox-base. The platform asserts the rigbox agent
-# + systemd are present and rejects any other base at build time, so you keep
-# the platform's opinions while adding your own dependencies on top.
-FROM rigbox-base
-RUN pip install --break-system-packages --no-cache-dir flask gunicorn
-```
+`reproducible: true` (bool, default `false`) is the **only** signal needed — the
+same `install:` script, the same `rig deploy`. There is no Dockerfile and no
+`build: { dockerfile | image }` map; `rig` rejects those with a hint to set the
+flag and move `RUN` steps into `install:`.
 
-Declaring a `build.dockerfile` (or `build.image`) is the **only** signal needed —
-`rig deploy` then takes the reproducible path automatically (no flag). Plain
-`rig deploy`:
-
-- **First deploy** builds the image from the local `Dockerfile` — the CLI uploads
-  the project directory as the build context, so **no git repo is required** —
-  boots the workspace from that frozen image, then rsyncs the app code.
-- **Later deploys** reuse the cached image when the build inputs (the Dockerfile,
-  declared deps/lockfiles, base image) are unchanged and **only rsync the changed
-  code**: no rebuild, no re-install. Edit the Dockerfile or a lockfile and the
-  next deploy rebuilds the image.
+- **First deploy** boots a throwaway builder VM from the `base` image, runs
+  `install:` inside it, snapshots the rootfs as a content-addressed image, boots
+  the workspace from that frozen image, then rsyncs the app code.
+- **Later deploys** reuse the cached image when the build inputs (the `install:`
+  script, declared deps/lockfiles, base image) are unchanged and **only rsync
+  the changed code**: no rebuild, no re-install. Edit `install:` or a lockfile
+  and the next deploy rebuilds the image.
 
 That's the **hybrid model**: the slow, stable environment is built once and
 frozen; fast-changing app code rides over it via rsync. It fits interpreted
@@ -134,14 +129,29 @@ runtimes — deps install to **system paths** (e.g. pip `--break-system-packages
 so the rsynced code finds them. Keep your app's own source **out** of the image;
 it arrives by rsync.
 
+Rules for a reproducible `install:`:
+
+- It runs as **`developer`** (login shell, passwordless `sudo`) with the deploy
+  dir as CWD. In the builder that dir is **empty** — none of your project files
+  are there — so anything the script needs must be inline (config files and
+  `/etc/profile.d` snippets via quoted heredocs) or fetched from the network.
+  `sudo` only the steps that need a system path (`/usr/local`, `/etc`, `/opt`, apt).
+- It must be **idempotent**: with `reproducible` off the identical script runs on
+  the workspace VM after rsync, and re-runs whenever it changes.
+- Runtime wrappers stay in the repo and rsync in with the code —
+  `start: bash start.sh` (a relative `./start.sh` is rejected by systemd; a bare
+  command resolves via PATH).
+- The builder VM currently boots with the platform defaults (1GB / 1 vCPU / 3GB
+  disk) — there's no per-app builder sizing knob yet.
+
 When to use which:
 
-- `install:` (no Dockerfile) — simple apps with fast installs. The default.
-- `build: { dockerfile }` — heavier or slower environments you want frozen and
+- `install:` alone — simple apps with fast installs. The default.
+- `reproducible: true` — heavier or slower environments you want frozen and
   byte-identical across deploys; `rig deploy` builds + mounts the image for you.
 
-Examples on the Dockerfile path: **`ai-chat`** and **`markdown-notes`**. The rest
-use `install:`.
+Examples on the reproducible path: **`code-server`**, **`gitea`**, **`n8n`**, and
+every example under **`catalog-apps/`**. The rest use plain `install:`.
 
 ## Resources
 

@@ -4,11 +4,27 @@ port: 8000
 # minimum, but a touch more disk lets pip cache the install on first boot.
 workspace:
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
-build:
-  dockerfile: Dockerfile
-# start.sh writes the api-key config from $CRED_API_KEY on first boot, then
-# exec's `open-terminal run`. The catalog uses a wrapper at the same path.
-start: /usr/local/bin/openterminal-start.sh
+# Freeze the pip install into an image: `rig deploy` runs `install:` once in a
+# builder VM, snapshots the rootfs, and later deploys with unchanged inputs
+# boot from the cached image instead of re-running pip.
+reproducible: true
+install: |
+  set -euo pipefail
+  # Open Terminal is published as a Python package; the catalog installs it via
+  # pipx into an isolated venv. We do the same here at install time so the
+  # package is frozen into the reproducible image and every deploy boots from it.
+  #
+  # Debian python3 enforces PEP 668 (externally-managed-environment), so we
+  # install into a dedicated venv at /opt/openterminal rather than fight pip.
+  sudo python3 -m venv /opt/openterminal
+  sudo /opt/openterminal/bin/pip install --no-cache-dir --upgrade pip
+  sudo /opt/openterminal/bin/pip install --no-cache-dir open-terminal
+  sudo ln -sf /opt/openterminal/bin/open-terminal /usr/local/bin/open-terminal
+  /usr/local/bin/open-terminal --help >/dev/null
+# start.sh rsyncs in with the app, writes the api-key config from $CRED_API_KEY
+# on first boot, then exec's `open-terminal run`. The catalog's wrapper has the
+# same body.
+start: bash start.sh
 health:
   path: /health
   timeoutSeconds: 60

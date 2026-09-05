@@ -4,12 +4,46 @@ port: 3773
 # the per-agent UIs stay responsive.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-build:
-  dockerfile: Dockerfile
-# rigbox-t3code-start sources $HOME/.rigbox/.env, translates managed-proxy /
-# OPENROUTER_API_KEY into the ANTHROPIC_*/OPENAI_* shapes T3 reads, then exec's
-# the absolute t3 binary on 0.0.0.0:3773.
-start: /home/developer/.local/bin/rigbox-t3code-start
+# Freeze `npm install -g t3` + the entrypoint patch into an image: `rig deploy`
+# runs `install:` once in a builder VM, snapshots the rootfs, and later deploys
+# with unchanged inputs boot from the cached image instead of re-installing.
+reproducible: true
+install: |
+  set -euo pipefail
+  # T3 Code — a browser-based AI workspace that hosts Claude Code, Codex, and
+  # other coding agents behind a single web UI
+  # (https://github.com/OpenRouterTeam/spawn). Installed with `npm install -g t3`
+  # into the base image's user-writable npm prefix, so root is never required.
+  #
+  # The script runs as `developer` — the same user the systemd unit runs as —
+  # so there's no `su -` dance here.
+  export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+  mkdir -p "$NPM_CONFIG_PREFIX/bin"
+  export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+  npm install -g --no-fund --silent t3
+  command -v t3 >/dev/null
+
+  # t3@0.0.23 ships a Node shebang but gates its entrypoint behind
+  # `import.meta.main` — a Bun-only convention that is *unset* under Node. Left
+  # alone, systemd execs `t3`, the CLI exits 0 silently, and nothing ever listens
+  # on :3773. Rewrite that one line. Idempotent: a re-run finds nothing to match.
+  T3_DIST="$NPM_CONFIG_PREFIX/lib/node_modules/t3/dist/bin.mjs"
+  test -f "$T3_DIST"
+  node -e '
+  const fs = require("fs");
+  const file = process.argv[1];
+  const body = fs.readFileSync(file, "utf8");
+  const guarded = "if (import.meta.main) Command.run(cli, { version })";
+  if (body.includes(guarded)) {
+    fs.writeFileSync(file, body.replace(guarded, "if (true) Command.run(cli, { version })"));
+  }
+  ' "$T3_DIST"
+  t3 --version >/dev/null
+# start.sh rsyncs in with the app. systemd does not run a login shell, so the
+# wrapper sources the workspace env file, translates the managed-proxy /
+# OPENROUTER_API_KEY injection into the ANTHROPIC_*/OPENAI_* shapes T3 reads,
+# then exec's the absolute t3 binary on 0.0.0.0:3773.
+start: bash start.sh
 health:
   # T3 doesn't expose a dedicated probe; the app root returns the SPA shell
   # once the Node server is listening.
