@@ -59,10 +59,10 @@ there, and the launcher shim is only rewritten when the installer truncated it.
 - **Later `rig deploy`**: if the build inputs (`install:` script, base image)
   are unchanged, it **reuses the cached image** — no re-install, fast.
 
-> The builder VM currently boots with the platform default disk (3GB). This
-> install (uv-managed CPython, a Node 22 toolchain, and the SPA build tree) sits
-> close to that ceiling even after the cache trim, so it wants the builder sized
-> from `workspace.resources` (`diskSizeMb: 4096` here); see the repo README.
+> This install (uv-managed CPython, a Node 22 toolchain, and the SPA build tree)
+> outgrows the 3GB default even after the cache trim. The builder takes its disk
+> from `workspace.resources.diskSizeMb`, which is `4096` here; see the repo
+> README.
 
 ## Deploy
 

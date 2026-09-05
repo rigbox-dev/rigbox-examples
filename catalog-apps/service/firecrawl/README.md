@@ -50,11 +50,9 @@ The deploy is **hybrid** — the image carries the whole stack, rsync carries
   are unchanged, it **reuses the cached image** — no rebuild, fast. Editing
   `start.sh` only rsyncs.
 
-> The builder VM currently boots with the platform default disk (3GB). This
-> install lands around **6GB** (node_modules for two apps + Chromium + the apt
-> stack), so it needs the builder sized from `workspace.resources`
-> (`diskSizeMb: 8192` here) before a cold build can succeed; see the repo
-> README. Nothing about the app changed — only the builder's disk is the gate.
+> This install lands around **6GB** (node_modules for two apps + Chromium + the
+> apt stack). The builder takes its disk from `workspace.resources.diskSizeMb`,
+> which is `8192` here to leave headroom for it; see the repo README.
 
 ## Credentials + first-boot database init
 

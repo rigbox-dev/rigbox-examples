@@ -58,11 +58,10 @@ execs the binary straight out of the frozen venv — no wrapper, no PATH munging
   are unchanged, it **reuses the cached image** — no re-install, fast. Bump
   `APP_VERSION` in `install:` to upgrade.
 
-> The builder VM currently boots with the platform default disk (3GB). This
-> install is the largest in the catalog subtree — the CPU torch wheel alone is
-> most of a gigabyte on top of a full CPython 3.12 — so if the build runs out of
-> space the platform needs to size the builder from `workspace.resources`
-> (`diskSizeMb: 8192` here); see the repo README.
+> This install is the largest in the catalog subtree — the CPU torch wheel alone
+> is most of a gigabyte on top of a full CPython 3.12. The builder takes its disk
+> from `workspace.resources.diskSizeMb`, which is `8192` here for exactly that
+> reason; see the repo README.
 
 ## Deploy
 

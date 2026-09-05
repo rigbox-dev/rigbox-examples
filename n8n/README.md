@@ -38,9 +38,9 @@ carries the code:
 Because n8n lives in the image at a system path (global npm), `n8n start` finds
 it at runtime.
 
-> The builder VM currently boots with the platform default disk (3GB). n8n's
-> `node_modules` is large; if the build runs out of space the platform needs to
-> size the builder from `workspace.resources` — see the repo README.
+> n8n's `node_modules` is large. The builder takes its disk from
+> `workspace.resources.diskSizeMb`, so keep that value comfortably above the
+> installed footprint — see the repo README.
 
 ## Persistence (survives redeploys)
 

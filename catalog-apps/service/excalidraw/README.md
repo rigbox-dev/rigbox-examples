@@ -39,10 +39,10 @@ VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 - **Later `rig deploy`**: if the build inputs (`install:` script, base image)
   are unchanged, it **reuses the cached image** — no rebuild, fast.
 
-> The builder VM currently boots with the platform default disk (3GB).
 > Excalidraw's install footprint (vite + `node_modules` + the built bundle) is
-> larger; if the build runs out of space the platform needs to size the builder
-> from `workspace.resources` — see the repo README.
+> larger than the 3GB default. The builder takes its disk from
+> `workspace.resources.diskSizeMb`, so keep that value above the footprint — see
+> the repo README.
 
 ## No persistence
 

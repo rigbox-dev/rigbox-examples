@@ -141,8 +141,9 @@ Rules for a reproducible `install:`:
 - Runtime wrappers stay in the repo and rsync in with the code —
   `start: bash start.sh` (a relative `./start.sh` is rejected by systemd; a bare
   command resolves via PATH).
-- The builder VM currently boots with the platform defaults (1GB / 1 vCPU / 3GB
-  disk) — there's no per-app builder sizing knob yet.
+- The builder VM boots with 1GB RAM / 1 vCPU and takes its disk from the app's
+  `workspace.resources.diskSizeMb` (3GB default, 16GB ceiling): the frozen image
+  boots into that workspace, so it is sized to hold what `install:` wrote.
 
 When to use which:
 

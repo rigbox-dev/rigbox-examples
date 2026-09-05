@@ -7,6 +7,9 @@ workspace:
   resources:
     ramMb: 2048
     vcpuCount: 2
+    # Holds the frozen `npm install -g n8n` tree and sizes the builder VM
+    # that produces it.
+    diskSizeMb: 8192
 # Freeze the heavy `npm install -g n8n` into an image: `rig deploy` runs
 # `install:` once in a builder VM, snapshots the rootfs, and later deploys with
 # unchanged inputs boot from the cached image and only rsync code.

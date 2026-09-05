@@ -109,11 +109,11 @@ self-contained (inline any config it needs via heredocs) and idempotent, since
 the exact same script runs on the workspace VM when `reproducible` is off.
 Runtime wrappers (`start.sh`) still rsync in with the code: `start: bash start.sh`.
 
-> **Builder sizing.** The builder VM currently boots with the platform defaults
-> (1GB RAM / 1 vCPU / 3GB disk); there's no per-app knob yet. The heavier
-> examples (`n8n`, `firecrawl`, `open-webui`, `hermes-agent`, `excalidraw`) note
-> their footprint in their README — sizing the builder from
-> `workspace.resources` is a platform follow-up.
+> **Builder sizing.** The builder VM boots with 1GB RAM / 1 vCPU and inherits
+> the app's `workspace.resources.diskSizeMb` (3GB default, 16GB ceiling), so a
+> heavy install just needs that value set high enough to hold it. The heavier
+> examples (`n8n`, `firecrawl`, `open-webui`, `hermes-agent`, `excalidraw`) size
+> themselves in `rig.yaml` and note their footprint in their README.
 
 See [`design/CONTRACT.md`](./design/CONTRACT.md) → *Reproducible builds* for the
 full rules and when to pick which.

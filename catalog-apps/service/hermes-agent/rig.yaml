@@ -6,7 +6,9 @@ port: 9119
 # bundle — the install footprint is heavier than the catalog minimum, so bump
 # the workspace disk.
 workspace:
-  resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 4096 }
+  # diskSizeMb holds the frozen install (uv CPython, Node 22, SPA build) and
+  # sizes the builder VM that produces it.
+  resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 6144 }
 # Freeze the whole upstream install into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged
 # inputs boot from the cached image instead of re-running the installer.
