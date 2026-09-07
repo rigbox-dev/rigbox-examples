@@ -23,7 +23,7 @@ install: |
   export NPM_CONFIG_PREFIX="$HOME/.npm-global"
   mkdir -p "$NPM_CONFIG_PREFIX/bin"
   export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
-  npm install -g --no-fund --silent @mariozechner/pi-coding-agent
+  npm install -g --no-fund @mariozechner/pi-coding-agent
   pi --version >/dev/null 2>&1 || [ -x "$NPM_CONFIG_PREFIX/bin/pi" ]
   # Persist PATH for interactive shells (grep-guarded so re-runs don't
   # duplicate the block).
