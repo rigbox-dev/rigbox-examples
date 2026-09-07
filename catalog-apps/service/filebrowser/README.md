@@ -1,5 +1,7 @@
 # File Browser — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Ffilebrowser%2Frig.yaml)
+
 [File Browser](https://filebrowser.org/) is a tiny self-hosted file manager —
 upload, download, preview, edit, and share the files in a directory through a
 clean web UI. It ships as a single static Go binary. This example runs it on

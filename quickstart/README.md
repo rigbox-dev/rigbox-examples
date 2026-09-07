@@ -1,5 +1,7 @@
 # Quickstart — the hello-world Rigbox app
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=quickstart%2Frig.yaml)
+
 The smallest example in the repo: a live **status page** on Node 22 + TypeScript
 (Hono via `tsx`, no build step). It exists to show the *shape* of a single-app
 Rigbox deploy — a process bound to `0.0.0.0:8080`, a `/healthz` the platform gates

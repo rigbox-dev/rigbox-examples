@@ -147,3 +147,43 @@ Latest CLI:
 curl -fsSL https://rigbox.dev/install.sh | bash
 rig --version
 ```
+
+## Deploy from your browser
+
+Fork an example, connect your Rigbox account, and choose a new or existing workspace. Configure it or deploy with defaults. Each target uses a dedicated deployment branch; pushing to that branch redeploys only its workspace. Existing-workspace deployment requires explicit root-filesystem replacement confirmation and retains persistent volumes.
+
+| Example | Deploy |
+| --- | --- |
+| [ai-chat](./ai-chat/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=ai-chat%2Frig.yaml) |
+| [bluegreen-blog](./bluegreen-blog/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=bluegreen-blog%2Frig.yaml) |
+| [catalog-apps/cli/claude](./catalog-apps/cli/claude/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fclaude%2Frig.yaml) |
+| [catalog-apps/cli/codex](./catalog-apps/cli/codex/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fcodex%2Frig.yaml) |
+| [catalog-apps/cli/junie](./catalog-apps/cli/junie/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fjunie%2Frig.yaml) |
+| [catalog-apps/cli/kilocode](./catalog-apps/cli/kilocode/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fkilocode%2Frig.yaml) |
+| [catalog-apps/cli/opencode](./catalog-apps/cli/opencode/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fopencode%2Frig.yaml) |
+| [catalog-apps/cli/pi](./catalog-apps/cli/pi/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fpi%2Frig.yaml) |
+| [catalog-apps/service/excalidraw](./catalog-apps/service/excalidraw/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fexcalidraw%2Frig.yaml) |
+| [catalog-apps/service/filebrowser](./catalog-apps/service/filebrowser/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Ffilebrowser%2Frig.yaml) |
+| [catalog-apps/service/firecrawl](./catalog-apps/service/firecrawl/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Ffirecrawl%2Frig.yaml) |
+| [catalog-apps/service/hermes-agent](./catalog-apps/service/hermes-agent/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fhermes-agent%2Frig.yaml) |
+| [catalog-apps/service/jupyter](./catalog-apps/service/jupyter/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fjupyter%2Frig.yaml) |
+| [catalog-apps/service/marimo](./catalog-apps/service/marimo/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fmarimo%2Frig.yaml) |
+| [catalog-apps/service/open-webui](./catalog-apps/service/open-webui/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fopen-webui%2Frig.yaml) |
+| [catalog-apps/service/openclaw-gateway](./catalog-apps/service/openclaw-gateway/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fopenclaw-gateway%2Frig.yaml) |
+| [catalog-apps/service/openterminal](./catalog-apps/service/openterminal/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fopenterminal%2Frig.yaml) |
+| [catalog-apps/service/pgweb](./catalog-apps/service/pgweb/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fpgweb%2Frig.yaml) |
+| [catalog-apps/service/streamlit](./catalog-apps/service/streamlit/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fstreamlit%2Frig.yaml) |
+| [catalog-apps/service/t3code](./catalog-apps/service/t3code/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Ft3code%2Frig.yaml) |
+| [code-server](./code-server/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=code-server%2Frig.yaml) |
+| [gitea](./gitea/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=gitea%2Frig.yaml) |
+| [markdown-notes](./markdown-notes/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=markdown-notes%2Frig.yaml) |
+| [mixed-app](./mixed-app/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=mixed-app%2Frig.yaml) |
+| [multi-app](./multi-app/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=multi-app%2Frig.yaml) |
+| [n8n](./n8n/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=n8n%2Frig.yaml) |
+| [quickstart](./quickstart/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=quickstart%2Frig.yaml) |
+| [scheduled-digest](./scheduled-digest/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=scheduled-digest%2Frig.yaml) |
+| [todo-app](./todo-app/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=todo-app%2Frig.yaml) |
+| [url-shortener](./url-shortener/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=url-shortener%2Frig.yaml) |
+| [webhook-receiver](./webhook-receiver/) | [Deploy to Rigbox](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=webhook-receiver%2Frig.yaml) |
+
+See the [deploy-button guide](https://docs.rigbox.dev/guides/deploy-button) for forks, runtime secrets, configuration, and retries.

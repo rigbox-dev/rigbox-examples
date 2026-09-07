@@ -1,5 +1,7 @@
 # Streamlit — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fstreamlit%2Frig.yaml)
+
 [Streamlit](https://streamlit.io/) is the well-established Python data-app
 framework: write a plain `app.py` and Streamlit turns it into a shareable web
 app with widgets, charts, and live updates. This example runs an unmodified

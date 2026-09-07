@@ -1,5 +1,7 @@
 # Firecrawl — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Ffirecrawl%2Frig.yaml)
+
 [Firecrawl](https://www.firecrawl.dev/) is the self-hosted web-scraping API:
 crawl a site, render JS with a real browser, extract structured data, or convert
 pages to markdown. This example runs the unmodified upstream stack — Firecrawl

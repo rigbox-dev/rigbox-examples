@@ -1,5 +1,7 @@
 # Scheduled Digest
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=scheduled-digest%2Frig.yaml)
+
 A scheduled job runner built as a **single TypeScript process on Node 22** (run via
 `tsx`). One process does two jobs at once: it runs a background interval loop and
 serves an HTTP status page plus `/healthz` on `0.0.0.0:8080`.

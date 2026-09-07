@@ -1,5 +1,7 @@
 # Marimo — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fmarimo%2Frig.yaml)
+
 [Marimo](https://marimo.io/) is the next-generation **reactive** Python
 notebook: cells re-run automatically when their inputs change, the file format
 is plain `.py` (git-friendly), and the UI ships interactive widgets. This

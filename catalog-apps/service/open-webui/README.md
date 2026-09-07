@@ -1,5 +1,7 @@
 # Open WebUI — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fopen-webui%2Frig.yaml)
+
 Runs [Open WebUI](https://docs.openwebui.com/) on Rigbox — the well-known
 self-hosted chat front-end (Python + SvelteKit) — pointed at the **Rigbox
 managed AI proxy** so you get a full-featured chat UI without holding any

@@ -1,5 +1,7 @@
 # todo-app — multi-app loopback + public/private visibility
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=todo-app%2Frig.yaml)
+
 A two-app to-do list. **todo-web** (Next.js, App Router) is the public SPA + API
 front door; **todo-api** (Hono + `better-sqlite3`) is a private service that stores
 todos in SQLite. The browser only ever talks to its own origin — todo-web reaches

@@ -1,5 +1,7 @@
 # Jupyter Lab — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fjupyter%2Frig.yaml)
+
 [JupyterLab](https://jupyter.org/) is the well-established interactive notebook
 environment for Python (and Julia, R, …) — browser editor, kernels, plots,
 markdown. This example runs the real, unmodified JupyterLab on Rigbox.

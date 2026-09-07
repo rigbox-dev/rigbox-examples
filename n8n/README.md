@@ -1,5 +1,7 @@
 # n8n — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=n8n%2Frig.yaml)
+
 [n8n](https://n8n.io) is the well-known self-hosted **workflow-automation**
 product: a visual editor where you wire up triggers, app integrations, and
 code nodes into automations that run on a schedule or webhook. This example

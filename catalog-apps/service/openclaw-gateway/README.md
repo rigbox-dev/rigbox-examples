@@ -1,5 +1,7 @@
 # OpenClaw Gateway — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fopenclaw-gateway%2Frig.yaml)
+
 Runs [OpenClaw](https://www.npmjs.com/package/openclaw)'s gateway on Rigbox —
 the **WebSocket control plane** that the Clawd browser dashboard talks to.
 This isn't a user-facing chat app; it's the relay your browser UI connects to

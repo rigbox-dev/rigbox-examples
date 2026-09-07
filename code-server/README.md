@@ -1,5 +1,7 @@
 # code-server — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=code-server%2Frig.yaml)
+
 Runs **code-server** — VS Code in the browser, the well-known self-hosted editor —
 on Rigbox. Open the app and you get the full VS Code UI: file tree, editor,
 integrated terminal, extensions. This is an established off-the-shelf product, not

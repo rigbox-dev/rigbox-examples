@@ -1,5 +1,7 @@
 # Gitea — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=gitea%2Frig.yaml)
+
 [Gitea](https://about.gitea.com/) is a well-established, self-hosted Git service —
 a lightweight GitHub-in-a-box with repos, issues, pull requests, and a web UI,
 shipped as a single static Go binary. This example runs it on Rigbox unchanged.

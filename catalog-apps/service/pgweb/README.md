@@ -1,5 +1,7 @@
 # pgweb — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fpgweb%2Frig.yaml)
+
 [pgweb](https://sosedoff.github.io/pgweb/) is the well-established **web UI for
 PostgreSQL**: schema browser, query editor, table viewer, CSV/JSON export, all
 in a single static Go binary. This example runs the real, unmodified pgweb on

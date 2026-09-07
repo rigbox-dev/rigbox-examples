@@ -1,5 +1,7 @@
 # Junie — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fjunie%2Frig.yaml)
+
 Runs [**Junie**](https://www.jetbrains.com/junie/) — JetBrains' AI coding agent
 — on Rigbox. You SSH in and run `junie`. Junie distinguishes itself with a
 JetBrains-bundled binary that ships with the npm package, so the install pulls

@@ -1,5 +1,7 @@
 # T3 Code — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Ft3code%2Frig.yaml)
+
 Runs [T3 Code](https://github.com/OpenRouterTeam/spawn) on Rigbox — a
 browser-based AI workspace that hosts **Claude Code, Codex, and other coding
 agents behind one web UI**. You pick the agent in the sidebar, T3 routes the

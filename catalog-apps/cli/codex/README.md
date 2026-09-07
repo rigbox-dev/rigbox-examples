@@ -1,5 +1,7 @@
 # Codex CLI — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fcodex%2Frig.yaml)
+
 Runs [**Codex CLI**](https://github.com/openai/codex) — OpenAI's lightweight
 coding agent for the terminal — on Rigbox. The CLI lives inside the workspace;
 you SSH in and run `codex`. It's the OpenAI-shaped counterpart to Claude Code:

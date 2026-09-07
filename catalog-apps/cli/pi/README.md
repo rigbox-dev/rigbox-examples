@@ -1,5 +1,7 @@
 # Pi — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fpi%2Frig.yaml)
+
 Runs [Pi](https://www.npmjs.com/package/@mariozechner/pi-coding-agent) on
 Rigbox — an OpenRouter-native CLI coding agent from pi.dev. Pi is **terminal
 only**: there's no chat panel, no web dashboard. You SSH into the workspace

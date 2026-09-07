@@ -1,5 +1,7 @@
 # AI Chat — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=ai-chat%2Frig.yaml)
+
 A clean single-page AI chatbot built on **Python · FastAPI** (uvicorn). Type a
 message, it POSTs to `/chat`, the server calls an OpenAI-compatible
 chat-completions endpoint and returns the reply.

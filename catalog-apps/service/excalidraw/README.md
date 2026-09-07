@@ -1,5 +1,7 @@
 # Excalidraw — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fexcalidraw%2Frig.yaml)
+
 [Excalidraw](https://excalidraw.com/) is the well-known browser-based
 **virtual whiteboard** — sketch diagrams, wireframes, and architecture drawings
 with that distinctive hand-drawn feel, all in a React SPA. This example runs it

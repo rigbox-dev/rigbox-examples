@@ -1,5 +1,7 @@
 # url-shortener — Python · Django
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=url-shortener%2Frig.yaml)
+
 A tiny link shortener: paste a long URL, get a short code, follow `/<code>` for a
 302 redirect that bumps a click counter. Built on Django + gunicorn with the link
 table in SQLite.

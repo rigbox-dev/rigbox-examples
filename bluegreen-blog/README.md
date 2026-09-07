@@ -1,5 +1,7 @@
 # Bluegreen Blog — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=bluegreen-blog%2Frig.yaml)
+
 A tiny markdown blog on **Ruby (Sinatra)** — SQLite, Kramdown for rendering. It
 exists to demonstrate **one** thing:
 

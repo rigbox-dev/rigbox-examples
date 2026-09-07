@@ -1,5 +1,7 @@
 # OpenCode — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fopencode%2Frig.yaml)
+
 Runs [**OpenCode**](https://opencode.ai) — the open-source, terminal-first AI
 coding agent — on Rigbox. It's a single static Go binary, ships as a TUI, and
 routes through Rigbox's **managed AI proxy** via a provider config written at

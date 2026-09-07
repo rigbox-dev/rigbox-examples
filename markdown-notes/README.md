@@ -1,5 +1,7 @@
 # Markdown Notes — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=markdown-notes%2Frig.yaml)
+
 A tiny note-taking app on **Python · Flask**. Write a note in Markdown, hit save,
 and it's rendered to HTML on the page — headings, lists, tables, blockquotes, and
 fenced code blocks with Pygments syntax highlighting. Newest notes first. Notes

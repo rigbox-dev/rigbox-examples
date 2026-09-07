@@ -1,5 +1,7 @@
 # Claude Code — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fclaude%2Frig.yaml)
+
 Runs [**Claude Code**](https://docs.anthropic.com/en/docs/claude-code/overview) —
 Anthropic's AI coding agent — on Rigbox. The CLI lives inside the workspace; you
 SSH in and run `claude`. It can plan, read, edit, and ship across an entire

@@ -1,5 +1,7 @@
 # Webhook Receiver
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=webhook-receiver%2Frig.yaml)
+
 An HMAC webhook validator/inspector. POST a payload to `/webhook` with an
 `X-Signature` header and the server recomputes the HMAC of the **raw body** using
 a shared signing key and the selected digest algorithm, then reports the request

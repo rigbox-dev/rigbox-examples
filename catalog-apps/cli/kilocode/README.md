@@ -1,5 +1,7 @@
 # Kilo Code — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fcli%2Fkilocode%2Frig.yaml)
+
 Runs [**Kilo Code**](https://kilocode.ai) — an all-in-one AI coding CLI that
 fronts 100+ providers behind one binary — on Rigbox. You SSH in and run
 `kilocode`. Kilo CLI 1.0 is an [OpenCode](https://opencode.ai) fork, so its

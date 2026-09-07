@@ -1,5 +1,7 @@
 # Hermes Agent — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fhermes-agent%2Frig.yaml)
+
 Runs [Hermes Agent](https://github.com/NousResearch/hermes-agent) on Rigbox —
 NousResearch's self-improving AI agent fronted by a web dashboard, with a
 separate multi-platform messaging gateway (Telegram, Discord, Slack, WhatsApp,

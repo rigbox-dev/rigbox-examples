@@ -1,5 +1,7 @@
 # Open Terminal — Rigbox example
 
+[![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=catalog-apps%2Fservice%2Fopenterminal%2Frig.yaml)
+
 [Open Terminal](https://pypi.org/project/open-terminal/) is a sandboxed REST API
 for running shell commands and managing files inside a Linux workspace — built
 for AI agents and remote tooling that need a safe `/execute` endpoint instead of
