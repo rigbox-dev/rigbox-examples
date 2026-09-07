@@ -1,0 +1,28 @@
+workspace:
+  image: base
+  resources: {vcpuCount: 2, ramMb: 2048, diskSizeMb: 8192}
+apps:
+  web:
+    path: ./web
+    kind: service
+    reproducible: true
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: main
+    port: 8080
+    start: python3 server.py
+    env:
+      PORT: "8080"
+      APP_NAME: web
+    health:
+      path: /healthz
+  tools:
+    path: ./tools
+    kind: cli
+    reproducible: true
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: main
+    install: sudo install -m 755 workspace-info /usr/local/bin/workspace-info

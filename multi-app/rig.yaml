@@ -1,0 +1,34 @@
+workspace:
+  image: base
+  resources: {vcpuCount: 2, ramMb: 2048, diskSizeMb: 8192}
+apps:
+  frontend:
+    path: ./frontend
+    kind: service
+    reproducible: true
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: main
+    port: 8080
+    start: python3 server.py
+    env:
+      PORT: "8080"
+      APP_NAME: frontend
+    health:
+      path: /healthz
+  api:
+    path: ./api
+    kind: service
+    reproducible: true
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: main
+    port: 8081
+    start: python3 server.py
+    env:
+      PORT: "8081"
+      APP_NAME: api
+    health:
+      path: /healthz

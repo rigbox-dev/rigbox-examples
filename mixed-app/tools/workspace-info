@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+import json, platform
+print(json.dumps({"status": "ok", "hostname": platform.node(), "python": platform.python_version()}))
