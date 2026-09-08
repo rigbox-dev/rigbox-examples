@@ -34,7 +34,7 @@ The `install:` block runs once per deploy from the app's synced directory. The
 The synced app directory is **wiped and re-rsynced on every deploy** — never store
 data there. Durable state belongs on an explicit workspace volume. Declare it once
 under `workspace.volumes`, opt each app into the mount with `volumes: [data]`, and
-set `DATA_DIR=/home/developer/data` via `env:`. SQLite DBs, uploaded files, logs →
+use `RIGBOX_APP_DATA_DIR` for incremental releases; legacy image examples declare their own `DATA_DIR` and volume paths. SQLite DBs, uploaded files, logs →
 under `$DATA_DIR`. Create the dir at startup (`mkdir -p`) since it may not exist on
 a fresh workspace.
 
@@ -93,66 +93,17 @@ apps:
 app name) into the dependent's env, pointing at the sibling over loopback. Boot
 order follows the dependency graph.
 
-## Reproducible builds — `reproducible: true` + the hybrid deploy
+## Deployment strategy
 
-Every example installs its runtime with `install:`. By default that script runs
-on the booted workspace VM on every deploy. An example can instead **freeze the
-result of `install:` into an image** by adding one app-level flag:
+Declare `workspace.deployment.strategy: incremental` for app-local releases or `image` for the advanced full-image path. This explicit strategy takes precedence over legacy image-build defaults; `reproducible` alone is not permission to replace a workspace.
 
-```yaml
-name: my-app
-port: 8080
-reproducible: true              # freeze install: into an image; no Dockerfile
-install: |
-  set -euo pipefail
-  pip install --break-system-packages --no-cache-dir flask gunicorn
-start: <command that binds 0.0.0.0:8080>
-health: { path: /healthz, timeoutSeconds: 30 }
-```
+Incremental install/build scripts execute in a managed release directory under an unprivileged app identity. They cannot use sudo, edit `/etc`, install global system packages, or assume write access to the developer's home. Python uses release-local virtual environments; Node dependencies use local `node_modules`. Declare source-dependent `build` separately from `install`.
 
-`reproducible: true` (bool, default `false`) is the **only** signal needed — the
-same `install:` script, the same `rig deploy`. There is no Dockerfile and no
-`build: { dockerfile | image }` map; `rig` rejects those with a hint to set the
-flag and move `RUN` steps into `install:`.
+Services run under their managed identity. `RIGBOX_APP_DATA_DIR` names persistent app data outside the release. Use `executables` to export named CLI commands from release-relative files; Rigbox owns the launcher registration and preserves the SSH user's invoking directory and arguments. Do not install custom symlinks in `/usr/local/bin` from repository scripts.
 
-- **First deploy** boots a throwaway builder VM from the `base` image, runs
-  `install:` inside it, snapshots the rootfs as a content-addressed image, boots
-  the workspace from that frozen image, then rsyncs the app code.
-- **Later deploys** reuse the cached image when the build inputs (the `install:`
-  script, declared deps/lockfiles, base image) are unchanged and **only rsync
-  the changed code**: no rebuild, no re-install. Edit `install:` or a lockfile
-  and the next deploy rebuilds the image.
+Image examples retain their existing reviewed installer contract and root-filesystem replacement consent. Keep an explicit image strategy until global installation assumptions have been migrated and tested. Both paths run repository scripts inside isolated guests, never on the control-plane host.
 
-That's the **hybrid model**: the slow, stable environment is built once and
-frozen; fast-changing app code rides over it via rsync. It fits interpreted
-runtimes — deps install to **system paths** (e.g. pip `--break-system-packages`),
-so the rsynced code finds them. Keep your app's own source **out** of the image;
-it arrives by rsync.
-
-Rules for a reproducible `install:`:
-
-- It runs as **`developer`** (login shell, passwordless `sudo`) with the deploy
-  dir as CWD. In the builder that dir is **empty** — none of your project files
-  are there — so anything the script needs must be inline (config files and
-  `/etc/profile.d` snippets via quoted heredocs) or fetched from the network.
-  `sudo` only the steps that need a system path (`/usr/local`, `/etc`, `/opt`, apt).
-- It must be **idempotent**: with `reproducible` off the identical script runs on
-  the workspace VM after rsync, and re-runs whenever it changes.
-- Runtime wrappers stay in the repo and rsync in with the code —
-  `start: bash start.sh` (a relative `./start.sh` is rejected by systemd; a bare
-  command resolves via PATH).
-- The builder VM boots with 1GB RAM / 1 vCPU and takes its disk from the app's
-  `workspace.resources.diskSizeMb` (3GB default, 16GB ceiling): the frozen image
-  boots into that workspace, so it is sized to hold what `install:` wrote.
-
-When to use which:
-
-- `install:` alone — simple apps with fast installs. The default.
-- `reproducible: true` — heavier or slower environments you want frozen and
-  byte-identical across deploys; `rig deploy` builds + mounts the image for you.
-
-Examples on the reproducible path: **`code-server`**, **`gitea`**, **`n8n`**, and
-every example under **`catalog-apps/`**. The rest use plain `install:`.
+App releases preserve workspace identity and SSH sessions. Activation briefly restarts affected services; app rollback restores code/configuration, not databases or external state. Blue-green and workspace promotion are separate advanced operations.
 
 ## Resources
 

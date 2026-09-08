@@ -4,6 +4,8 @@ port: 8888
 # bit of headroom; 1GB / 1vCPU is comfortable for an interactive notebook.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
+  deployment:
+    strategy: image
 # Freeze the heavy `pip install jupyterlab` into an image: `rig deploy` runs
 # `install:` once in a builder VM, snapshots the rootfs, and later deploys with
 # unchanged inputs boot from the cached image and only rsync code.
@@ -27,13 +29,7 @@ install: |
 # the gateway is the front door. Don't set this app `public` without re-adding
 # a token (drop --IdentityProvider.token='').
 start: >-
-  /usr/local/bin/jupyter lab
-  --ip=0.0.0.0 --port=8888 --no-browser
-  --notebook-dir=/home/developer/data
-  --IdentityProvider.token=''
-  --ServerApp.allow_origin='*'
-  --ServerApp.trust_xheaders=True
-  --ServerApp.disable_check_xsrf=True
+  /usr/local/bin/jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=/home/developer/data --IdentityProvider.token='' --ServerApp.allow_origin='*' --ServerApp.trust_xheaders=True --ServerApp.disable_check_xsrf=True
 health:
   # JupyterLab's built-in liveness endpoint.
   path: /api/status

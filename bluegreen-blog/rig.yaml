@@ -12,6 +12,8 @@
 workspace:
   image: base
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+  deployment:
+    strategy: image
 
 apps:
   blog:
@@ -51,4 +53,4 @@ apps:
         envVar: BUILD_FLAVOR
         options:
           - { value: classic, label: "Classic" }
-          - { value: aurora,  label: "Aurora" }
+          - { value: aurora, label: "Aurora" }

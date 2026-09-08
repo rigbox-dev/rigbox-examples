@@ -80,3 +80,7 @@ via `OPENROUTER_API_KEY` if you want to bypass managed credits.
   the front door here, not Electron.
 - **Auth**: T3 has no built-in auth on `:3773`. The rigbox subdomain layer is
   the front door; don't make this app `public` without re-adding auth.
+
+## Deployment strategy
+
+This example explicitly uses `workspace.deployment.strategy: image` because its installer changes system packages, global executable paths, or shared tool configuration. The badge review shows image replacement and requires permission before replacing an existing workspace root filesystem. It is not an incremental app release. Use a dedicated workspace and back up root-filesystem development files; persistent volumes are retained. Migrating this installer to app-local releases remains separate work.

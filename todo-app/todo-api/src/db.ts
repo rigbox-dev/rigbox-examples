@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-const DATA_DIR = process.env.DATA_DIR || "/home/developer/data";
+const DATA_DIR = process.env.RIGBOX_APP_DATA_DIR || process.env.DATA_DIR || "./data";
 mkdirSync(DATA_DIR, { recursive: true });
 
 const db = new Database(join(DATA_DIR, "todos.db"));

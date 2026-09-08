@@ -1,11 +1,12 @@
 workspace:
   image: base
-  resources: {vcpuCount: 2, ramMb: 2048, diskSizeMb: 8192}
+  resources: { vcpuCount: 2, ramMb: 2048, diskSizeMb: 8192 }
+  deployment:
+    strategy: incremental
 apps:
   web:
     path: ./web
     kind: service
-    reproducible: true
     source:
       kind: git
       repo: https://github.com/rigbox-dev/rigbox-examples.git
@@ -20,9 +21,9 @@ apps:
   tools:
     path: ./tools
     kind: cli
-    reproducible: true
     source:
       kind: git
       repo: https://github.com/rigbox-dev/rigbox-examples.git
       branch: main
-    install: sudo install -m 755 workspace-info /usr/local/bin/workspace-info
+    executables:
+      workspace-info: workspace-info

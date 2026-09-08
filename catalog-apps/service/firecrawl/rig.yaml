@@ -7,6 +7,8 @@ workspace:
   # diskSizeMb holds the frozen install (~6GB: two node_modules trees,
   # Chromium, the apt stack) and sizes the builder VM that produces it.
   resources: { ramMb: 4608, vcpuCount: 2, diskSizeMb: 12288 }
+  deployment:
+    strategy: image
 # Freeze the whole stack into an image: `rig deploy` runs `install:` once in a
 # builder VM (apt services, firecrawl@v2.9.0 + node_modules, chromium under
 # /opt/pw-browsers, the playwright sidecar unit), snapshots the rootfs, and
@@ -196,8 +198,8 @@ params:
     envVar: AI_PROXY_MODE
     options:
       - { value: managed, label: "Managed (Rigbox Credits)" }
-      - { value: byok,    label: "Bring Your Own Key" }
-      - { value: "off",   label: "Off" }
+      - { value: byok, label: "Bring Your Own Key" }
+      - { value: "off", label: "Off" }
   - key: proxy_server
     type: string
     label: Proxy Server
@@ -219,8 +221,8 @@ credentials:
   # All three are generated on first deploy and shown once. They land in
   # /home/developer/.firecrawl/.env on every boot via start.sh.
   api_key:
-    generate: true              # → CRED_API_KEY (the bearer for /v2/scrape etc.)
+    generate: true # → CRED_API_KEY (the bearer for /v2/scrape etc.)
   postgres_password:
-    generate: true              # → CRED_POSTGRES_PASSWORD
+    generate: true # → CRED_POSTGRES_PASSWORD
   bull_auth_key:
-    generate: true              # → CRED_BULL_AUTH_KEY
+    generate: true # → CRED_BULL_AUTH_KEY

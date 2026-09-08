@@ -4,6 +4,8 @@ workspace:
     ramMb: 1536
     vcpuCount: 1
     diskSizeMb: 3072
+  deployment:
+    strategy: incremental
 
 apps:
   web:
@@ -11,15 +13,13 @@ apps:
     port: 5100
     visibility: public
     env:
-      DATA_DIR: /home/developer/data
       DJANGO_SETTINGS_MODULE: config.settings
     install: |
-      pip install --break-system-packages "django>=5,<6" gunicorn whitenoise
-      python3 manage.py migrate --noinput
-      python3 manage.py collectstatic --noinput
+      python3 -m venv --copies .venv
+      .venv/bin/python -m pip install -r requirements.txt
     # Single-line plain scalar: a folded (>) or block (|) scalar appends a
     # trailing newline, and the server rejects an exec_start containing newlines.
-    start: gunicorn config.wsgi:application --bind 0.0.0.0:5100 --workers 2
+    start: bash start.sh
     health:
       path: /healthz
       timeoutSeconds: 60
@@ -93,3 +93,5 @@ apps:
         group: Display
         default: "Paste a long URL and get a short code. Links persist across redeploys."
         envVar: WELCOME_MESSAGE
+    dependencyInputs:
+      - requirements.txt

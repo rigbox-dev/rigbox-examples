@@ -1,11 +1,12 @@
 workspace:
   image: base
-  resources: {vcpuCount: 2, ramMb: 2048, diskSizeMb: 8192}
+  resources: { vcpuCount: 2, ramMb: 2048, diskSizeMb: 8192 }
+  deployment:
+    strategy: incremental
 apps:
   frontend:
     path: ./frontend
     kind: service
-    reproducible: true
     source:
       kind: git
       repo: https://github.com/rigbox-dev/rigbox-examples.git
@@ -20,7 +21,6 @@ apps:
   api:
     path: ./api
     kind: service
-    reproducible: true
     source:
       kind: git
       repo: https://github.com/rigbox-dev/rigbox-examples.git

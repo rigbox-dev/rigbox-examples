@@ -83,3 +83,7 @@ credits — no per-provider key required.
 - **Persistence**: OpenClaw's runtime state lives under `~/.openclaw`. The
   `openclaw.json` / `auth-profiles.json` are regenerated on every boot, so
   changing a param + redeploying picks up the new config immediately.
+
+## Deployment strategy
+
+This example explicitly uses `workspace.deployment.strategy: image` because its installer changes system packages, global executable paths, or shared tool configuration. The badge review shows image replacement and requires permission before replacing an existing workspace root filesystem. It is not an incremental app release. Use a dedicated workspace and back up root-filesystem development files; persistent volumes are retained. Migrating this installer to app-local releases remains separate work.

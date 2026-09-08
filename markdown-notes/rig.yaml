@@ -7,11 +7,16 @@ workspace:
     - name: data
       mountPath: /home/developer/data
       sizeMb: 1024
-install: pip install --break-system-packages flask markdown pygments gunicorn
-start: gunicorn --bind 0.0.0.0:8080 app:app
+  deployment:
+    strategy: incremental
+install: |
+  python3 -m venv --copies .venv
+  .venv/bin/python -m pip install -r requirements.txt
+start: .venv/bin/gunicorn --bind 0.0.0.0:8080 app:app
 health:
   path: /healthz
   timeoutSeconds: 30
-volumes: [data]
-env:
-  DATA_DIR: /home/developer/data
+volumes: [ data ]
+env: {}
+dependencyInputs:
+  - requirements.txt

@@ -3,11 +3,16 @@ port: 8080
 # Minimal TypeScript app — 1GB is plenty.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+  deployment:
+    strategy: incremental
 install: npm ci
 start: npm start
 health:
   path: /healthz
   timeoutSeconds: 30
+dependencyInputs:
+  - package.json
+  - package-lock.json
 
 # This default config deploys the LOCAL working copy (rsync). To deploy straight
 # from git instead, uncomment the block below — that one change is the whole

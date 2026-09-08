@@ -1,3 +1,6 @@
+# n8n dependencies stay inside each managed app release. Persistent user data
+# stays in RIGBOX_APP_DATA_DIR. Code rollback does not reverse n8n migrations.
+
 name: n8n
 port: 8080
 # n8n is memory-hungry — it OOMs (V8 "heap out of memory") in the default 1GB
@@ -7,26 +10,22 @@ workspace:
   resources:
     ramMb: 2048
     vcpuCount: 2
-    # Holds the frozen `npm install -g n8n` tree and sizes the builder VM
-    # that produces it.
+    # Allows room for dependencies and a retained previous release.
     diskSizeMb: 8192
-# Freeze the heavy `npm install -g n8n` into an image: `rig deploy` runs
-# `install:` once in a builder VM, snapshots the rootfs, and later deploys with
-# unchanged inputs boot from the cached image and only rsync code.
-reproducible: true
-install: |
-  set -euo pipefail
-  # Global install to a system path so `n8n start` resolves on the unit's PATH.
-  sudo npm install -g n8n
-start: n8n start
+  deployment:
+    strategy: incremental
+install: |-
+  npm ci --omit=dev --no-audit --no-fund
+start: bash start.sh
 health:
   path: /healthz
   timeoutSeconds: 120
 env:
-  DATA_DIR: /home/developer/data
-  N8N_USER_FOLDER: /home/developer/data
   N8N_PORT: "8080"
   N8N_LISTEN_ADDRESS: 0.0.0.0
   N8N_SECURE_COOKIE: "false"
   N8N_RUNNERS_ENABLED: "true"
   NODE_OPTIONS: --max-old-space-size=1536
+dependencyInputs:
+  - package.json
+  - package-lock.json
