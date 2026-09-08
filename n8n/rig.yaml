@@ -9,8 +9,8 @@ workspace:
   resources:
     ramMb: 3072
     vcpuCount: 2
-    # Allows three retained artifacts plus a staged update, caches, and app data.
-    diskSizeMb: 16384
+    # Allows three retained artifacts plus an update, including their inode usage.
+    diskSizeMb: 24576
   deployment:
     strategy: incremental
 install: |-
