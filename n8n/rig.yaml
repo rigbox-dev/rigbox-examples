@@ -17,7 +17,7 @@ install: |-
   npm ci --omit=dev --no-audit --no-fund
 start: bash start.sh
 health:
-  path: /healthz
+  path: /healthz/readiness
   timeoutSeconds: 120
 env:
   N8N_PORT: "8080"

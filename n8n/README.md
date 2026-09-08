@@ -20,4 +20,4 @@ This manifest uses `workspace.deployment.strategy: incremental`. n8n 2.22.6 is p
 cd n8n && rig deploy
 ```
 
-Open the n8n app URL, create the owner account, and add a workflow. Deploy again and verify the workflow remains available. n8n listens on port 8080; Rigbox checks `/healthz` with a 120-second startup timeout. Its SQLite database and encryption key live under the persistent user folder, so preserve that folder when performing any separate workspace migration.
+Open the n8n app URL, create the owner account, and add a workflow. Deploy again and verify the workflow remains available. n8n listens on port 8080; Rigbox checks `/healthz/readiness` with a 120-second startup timeout so the database is connected and migrations have finished before deployment succeeds. Its SQLite database and encryption key live under the persistent user folder, so preserve that folder when performing any separate workspace migration.
