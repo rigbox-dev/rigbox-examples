@@ -75,3 +75,11 @@ runs in `install:` to create the DB/schema.
 - Binds `0.0.0.0:5100` via gunicorn; `GET /healthz` returns 200.
 - `ALLOWED_HOSTS=['*']`, `DEBUG=False` — it runs behind the Rigbox gateway.
 - Static `tokens.css` is served by WhiteNoise at `/static/shortener/tokens.css`.
+
+## Persistent app releases
+
+The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.
+
+Persistent application data now uses `RIGBOX_APP_DATA_DIR`, managed separately from release files. Existing data at `/home/developer/data` requires an explicit migration; it is not automatically moved or overwritten.
+
+`start.sh` applies Django migrations before starting Gunicorn. Review schema compatibility before deployment or rollback; code rollback does not reverse migrations.

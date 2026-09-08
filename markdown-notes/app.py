@@ -9,7 +9,7 @@ from pygments.formatters import HtmlFormatter
 
 PORT = int(os.environ.get("PORT", "8080"))
 # DATA_DIR lives outside the rsync zone, so the SQLite DB survives every redeploy.
-DATA_DIR = os.environ.get("DATA_DIR", "/home/developer/data")
+DATA_DIR = os.environ.get("RIGBOX_APP_DATA_DIR", os.environ.get("DATA_DIR", "./data"))
 DB_PATH = os.path.join(DATA_DIR, "markdown-notes.db")
 
 # codehilite + fenced_code turn ```lang blocks into Pygments-classed HTML; we ship

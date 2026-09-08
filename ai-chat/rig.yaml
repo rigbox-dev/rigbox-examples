@@ -3,8 +3,12 @@ port: 8080
 # Light FastAPI app behind the managed AI proxy — 1GB is plenty.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
-install: pip install --break-system-packages fastapi uvicorn pydantic httpx
-start: uvicorn chat:app --host 0.0.0.0 --port 8080
+  deployment:
+    strategy: incremental
+install: |
+  python3 -m venv --copies .venv
+  .venv/bin/python -m pip install -r requirements.txt
+start: .venv/bin/uvicorn chat:app --host 0.0.0.0 --port 8080
 health:
   path: /healthz
   timeoutSeconds: 30
@@ -22,3 +26,5 @@ params:
       - { value: rigbox/default, label: "Default" }
       - { value: rigbox/fast, label: "Fast" }
       - { value: rigbox/free, label: "Free" }
+dependencyInputs:
+  - requirements.txt

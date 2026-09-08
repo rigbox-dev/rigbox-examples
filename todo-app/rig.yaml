@@ -5,6 +5,8 @@ workspace:
     - name: data
       mountPath: /home/developer/data
       sizeMb: 1024
+  deployment:
+    strategy: incremental
 
 apps:
   todo-api:
@@ -16,9 +18,8 @@ apps:
     start: npm start
     # No visibility key → private. Reachable only by siblings over loopback.
     health: { path: /healthz, timeoutSeconds: 30 }
-    volumes: [data]
+    volumes: [ data ]
     env:
-      DATA_DIR: /home/developer/data
       PORT: "5100"
     params:
       - key: list_limit
@@ -32,12 +33,19 @@ apps:
           - { value: "20", label: "20 items" }
           - { value: "50", label: "50 items" }
           - { value: "100", label: "100 items" }
+    dependencyInputs:
+      - package.json
+      - package-lock.json
 
   todo-web:
     path: ./todo-web
     port: 5101
-    install: npm ci && npm run build
+    install: npm ci
     start: npx next start -H 0.0.0.0 -p 5101
-    dependsOn: [todo-api]   # injects RIGBOX_TODO_API_URL=http://127.0.0.1:5100
-    visibility: public      # only the front door is public
+    dependsOn: [ todo-api ] # injects RIGBOX_TODO_API_URL=http://127.0.0.1:5100
+    visibility: public # only the front door is public
     health: { path: /healthz, timeoutSeconds: 90 }
+    build: npm run build
+    dependencyInputs:
+      - package.json
+      - package-lock.json

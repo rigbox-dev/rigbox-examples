@@ -4,6 +4,8 @@ kind: cli
 # declares that explicitly: no HTTP port, no health probe, no start command.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+  deployment:
+    strategy: image
 # Freeze the CLI into an image: `rig deploy` runs `install:` once in a builder
 # VM and later deploys boot from the cached image instead of re-running
 # npm install. The script runs as `developer` with passwordless sudo.

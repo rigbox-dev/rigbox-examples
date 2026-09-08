@@ -10,7 +10,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # DATA_DIR lives outside the synced app dir, so the SQLite DB survives redeploys.
-DATA_DIR = Path(os.environ.get("DATA_DIR", "/home/developer/data"))
+DATA_DIR = Path(os.environ.get("RIGBOX_APP_DATA_DIR", os.environ.get("DATA_DIR", "./data")))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Runs behind the Rigbox gateway; the host header is the public domain, not ours.

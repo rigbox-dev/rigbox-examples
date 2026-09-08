@@ -1,0 +1,8 @@
+{
+  "name": "rigbox-n8n",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "n8n": "2.22.6"
+  }
+}

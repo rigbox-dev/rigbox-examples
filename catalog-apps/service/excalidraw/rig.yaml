@@ -8,6 +8,8 @@ workspace:
   # diskSizeMb holds the frozen install (vite + node_modules + bundle) and
   # sizes the builder VM that produces it.
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 4096 }
+  deployment:
+    strategy: image
 # Freeze the scaffold + `npm install` + `vite build` into an image: `rig deploy`
 # runs `install:` once in a builder VM, snapshots the rootfs, and later deploys
 # with unchanged inputs boot from the cached image. Bump EXCALIDRAW_VERSION
@@ -85,9 +87,7 @@ install: |
 # Serve the prebuilt SPA. --no-clipboard matches the catalog (the Rigbox proxy
 # isn't an HTTPS origin from the browser's POV for clipboard APIs).
 start: >-
-  /opt/excalidraw/node_modules/.bin/serve
-  -s /opt/excalidraw/build
-  -l 5000 --no-clipboard
+  /opt/excalidraw/node_modules/.bin/serve -s /opt/excalidraw/build -l 5000 --no-clipboard
 health:
   path: /
   timeoutSeconds: 60

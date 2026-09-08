@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const PORT = Number(process.env.PORT ?? 8080);
-const DATA_DIR = process.env.DATA_DIR ?? "/home/developer/data";
+const DATA_DIR = process.env.RIGBOX_APP_DATA_DIR ?? process.env.DATA_DIR ?? "./data";
 const INTERVAL_MINUTES = Math.max(1, Number(process.env.INTERVAL_MINUTES ?? 5));
 const INTERVAL_MS = INTERVAL_MINUTES * 60_000;
 

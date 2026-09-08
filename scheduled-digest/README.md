@@ -46,3 +46,9 @@ dependencies), so the build is fast.
 - `static/tokens.css` — byte-for-byte copy of the shared design tokens, served at
   `/tokens.css`.
 - `rig.yaml` — single-app manifest with the `interval_minutes` number param.
+
+## Persistent app releases
+
+The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.
+
+Persistent application data now uses `RIGBOX_APP_DATA_DIR`, managed separately from release files. Existing data at `/home/developer/data` requires an explicit migration; it is not automatically moved or overwritten.

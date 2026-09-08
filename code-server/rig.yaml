@@ -3,6 +3,8 @@ port: 8080
 # A browser IDE needs headroom for language servers, extensions, and terminals.
 workspace:
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 3072 }
+  deployment:
+    strategy: image
 # Freeze the code-server install into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged
 # inputs boot from the cached image instead of re-running the installer.
@@ -15,10 +17,7 @@ install: |
   curl -fsSL https://code-server.dev/install.sh | sudo sh
   code-server --version
 start: >-
-  code-server --bind-addr 0.0.0.0:8080 --auth none
-  --user-data-dir /home/developer/data/code-server
-  --extensions-dir /home/developer/data/code-server/extensions
-  /home/developer/data
+  code-server --bind-addr 0.0.0.0:8080 --auth none --user-data-dir /home/developer/data/code-server --extensions-dir /home/developer/data/code-server/extensions /home/developer/data
 health:
   path: /healthz
   timeoutSeconds: 90
