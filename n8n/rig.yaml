@@ -28,3 +28,5 @@ env:
 dependencyInputs:
   - package.json
   - package-lock.json
+dependencyOutputs:
+  - node_modules

@@ -184,3 +184,7 @@ Each example's `README.md`: one-paragraph "what this is", the **single capabilit
 it demonstrates, `cd <dir> && rig deploy`, what to look at after deploy (the URL /
 the pill / the param to flip), and any required env (e.g. `export WEBHOOK_HMAC_KEY=…`
 before deploy). Keep it tight.
+
+### Optional immutable dependency outputs
+
+An incremental app can declare `dependencyOutputs: [node_modules]` alongside `dependencyInputs` and a nonempty `install`. The declared generated directories remain read-only and are shared by releases with matching installation inputs. Keep runtime data outside them. This mode currently excludes `build`, `configure`, and `reconfigure` hooks; output directories must not overlap one another, source files, or dependency inputs. Examples with those hooks retain release-local dependency copying. Keep enough disk space and inodes for distinct dependency versions, not just a single cached installation.
