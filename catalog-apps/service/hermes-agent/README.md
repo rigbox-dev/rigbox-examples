@@ -73,7 +73,7 @@ cd hermes-agent && rig deploy
 ```
 
 Then open the dashboard at the app's Rigbox subdomain. To bring up Telegram:
-set the `telegram_bot_token` param (`rig app param set telegram_bot_token=…`),
+set the `telegram_bot_token` param (`rig app param set --app APP_ID telegram_bot_token=…`),
 SSH in once and run `hermes gateway enable telegram && systemctl --user enable
 --now hermes-gateway.service`.
 

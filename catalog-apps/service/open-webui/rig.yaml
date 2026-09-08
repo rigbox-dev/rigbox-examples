@@ -4,6 +4,8 @@ port: 8080
 # footprint is sizeable, so the workspace disk is bumped well past the catalog
 # minimum.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 8192 }
 # Freeze the whole Python 3.12 venv (torch-cpu + open-webui) into an image:
 # `rig deploy` runs `install:` once in a builder VM, snapshots the rootfs, and

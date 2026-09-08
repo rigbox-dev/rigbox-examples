@@ -1,4 +1,10 @@
 workspace:
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
+  deployment:
+    strategy: incremental
   image: base
   resources:
     ramMb: 1536
@@ -7,6 +13,7 @@ workspace:
 
 apps:
   web:
+    volumes: [data]
     path: .
     port: 5100
     visibility: public

@@ -3,6 +3,8 @@ port: 8080
 # File Browser is a tiny single Go binary — the catalog item declares 128MB/64MB,
 # but the VM floors push to a usable minimum and leave headroom for uploads.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
 # Freeze the pinned File Browser binary into an image: `rig deploy` runs
 # `install:` once in a builder VM and later deploys reuse the cached image

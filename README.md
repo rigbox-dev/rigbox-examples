@@ -22,11 +22,21 @@ cd <example> && rig deploy
 | [`url-shortener/`](./url-shortener/) | Python · Django | the **full validated param set** (url/string/number/boolean/select/email/secret/textarea) + SQLite migrations |
 | [`markdown-notes/`](./markdown-notes/) | Python · Flask | **workspace volume-backed SQLite persistence** + Markdown rendering |
 
-Every example deploys with the same command — `rig deploy`. All of them rsync
-code and describe their environment with `install:`. Several also set
-`reproducible: true`, which makes `rig deploy` **freeze the result of `install:`
-into an image** and boot from it (see **Reproducible deploys & the hybrid model**
-below). No Dockerfile anywhere — the flag is the signal.
+## v0.13 deployment strategies
+
+These manifests explicitly select `workspace.deployment.strategy`. Ordinary application
+examples use `incremental`: deploy prepares a managed app release, runs install/build,
+checks health, and activates it while retaining the workspace identity. Files outside
+the managed app release are not replaced. An app rollback does not restore database data.
+
+Self-hosted products, catalog examples, and the blue-green tutorial select `image`.
+Image deployment can replace the workspace root filesystem; back up data and inspect
+persistent volumes before consenting to `--reimage`. A data path alone is not a volume.
+Use the declared volume mounts for persistent data and verify recovery separately.
+
+This documentation targets CLI v0.13. Reviewed against examples revision
+`7a53798` and the v0.13 CLI parser. Local parser checks are distinct from successful
+live deployment tests; see the docs preview verification report for completed tests.
 
 ### Established products, run reproducibly
 
@@ -78,45 +88,21 @@ The point of the suite is to model the *right* primitive for each job:
 
 - **Validated config** is a `param` with a fixed option set (`type: select`), not a
   free-form env var — the server validates it and it's live-editable with
-  `rig app param set <key>=<value>`. Fixed infra (paths, base URLs) stays in `env:`.
+  `rig app param set --app APP_ID <key>=<value>`. Fixed infra (paths, base URLs) stays in `env:`.
 - **Persistence** uses a `workspace.volumes` declaration plus explicit app
   `volumes: [data]` opt-in. Apps write durable data under
-  `DATA_DIR=/home/developer/data`, so SQLite DBs and files survive every redeploy
-  and bluegreen cut-over.
+  `DATA_DIR=/home/developer/data`, so SQLite DBs and files survive application code redeploys on the same mounted volume.
 - **Visibility** is declared in `rig.yaml` (`visibility: public` / `private` /
   `{ emails: [...] }`) so a redeploy keeps it — only an app's front door is public;
   siblings reach private apps over loopback via `dependsOn`.
 
 ## Reproducible deploys & the hybrid model
 
-Every example installs its runtime with `install:`. By default that script runs
-on the workspace VM on each deploy. The established products —
-**`code-server`**, **`gitea`**, **`n8n`**, and every [`catalog-apps/`](./catalog-apps/)
-example — add one line, `reproducible: true`, which makes the same `install:`
-**freeze into an image** instead. The command is the same — `rig deploy`:
-
-- the **first** deploy boots a throwaway builder VM from the `base` image, runs
-  `install:` inside it, snapshots the rootfs as a content-addressed image, boots
-  the workspace from that frozen image, and rsyncs the code;
-- **later** deploys reuse the cached image when the build inputs (`install:`
-  script, base image, lockfiles) are unchanged and **only rsync the changed
-  code** — no rebuild, no re-install.
-
-That's the hybrid: build the slow, stable environment once; ride fast-changing
-code over it with rsync. `install:` runs as `developer` (with passwordless
-`sudo`) in an **empty** deploy dir inside the builder — so it must be
-self-contained (inline any config it needs via heredocs) and idempotent, since
-the exact same script runs on the workspace VM when `reproducible` is off.
-Runtime wrappers (`start.sh`) still rsync in with the code: `start: bash start.sh`.
-
-> **Builder sizing.** The builder VM boots with 1GB RAM / 1 vCPU and inherits
-> the app's `workspace.resources.diskSizeMb` (3GB default, 16GB ceiling), so a
-> heavy install just needs that value set high enough to hold it. The heavier
-> examples (`n8n`, `firecrawl`, `open-webui`, `hermes-agent`, `excalidraw`) size
-> themselves in `rig.yaml` and note their footprint in their README.
-
-See [`design/CONTRACT.md`](./design/CONTRACT.md) → *Reproducible builds* for the
-full rules and when to pick which.
+`reproducible: true` selects a frozen environment, and these examples also set
+`workspace.deployment.strategy: image` explicitly. Review build logs when installation
+fails. Incremental app releases are a separate workflow; they cannot use blue-green
+flags. See the [deployment strategy reference](https://docs.rigbox.dev/reference/rig-yaml/deployment)
+for source constraints, image replacement, and cache behavior.
 
 ## Layout convention
 

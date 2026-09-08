@@ -5,6 +5,8 @@ kind: cli
 # 1.5GB disk for the JetBrains postinstall binary archive (heavier than pure
 # npm CLIs) — leaves comfortable headroom for project repos on top.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
 # Freeze the CLI (and its chunky postinstall JetBrains-bundle download) into an
 # image: `rig deploy` runs `install:` once in a builder VM and later deploys

@@ -4,6 +4,12 @@ port: 8080
 # workspace. Give it the free-tier ceiling (2GB/2vCPU); NODE_OPTIONS raises the
 # V8 old-space heap so the Node process has real headroom inside the VM.
 workspace:
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
+  deployment:
+    strategy: image
   resources:
     ramMb: 2048
     vcpuCount: 2
@@ -30,3 +36,5 @@ env:
   N8N_SECURE_COOKIE: "false"
   N8N_RUNNERS_ENABLED: "true"
   NODE_OPTIONS: --max-old-space-size=1536
+
+volumes: [data]

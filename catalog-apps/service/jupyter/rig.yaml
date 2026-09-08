@@ -3,6 +3,8 @@ port: 8888
 # JupyterLab + the python deps it pulls (tornado, ipykernel, jedi, etc.) need a
 # bit of headroom; 1GB / 1vCPU is comfortable for an interactive notebook.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
 # Freeze the heavy `pip install jupyterlab` into an image: `rig deploy` runs
 # `install:` once in a builder VM, snapshots the rootfs, and later deploys with

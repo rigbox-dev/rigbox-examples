@@ -2,6 +2,8 @@ name: pgweb
 port: 8081
 # pgweb is a tiny single Go binary. 256MB / 0.5GB disk is plenty.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
 # Freeze the pinned pgweb binary into an image: `rig deploy` runs `install:`
 # once in a builder VM and later deploys reuse the cached image instead of

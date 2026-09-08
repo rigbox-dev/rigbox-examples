@@ -2,6 +2,8 @@ name: quickstart
 port: 8080
 # Minimal TypeScript app — 1GB is plenty.
 workspace:
+  deployment:
+    strategy: incremental
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 install: npm ci
 start: npm start

@@ -2,6 +2,8 @@ name: webhook-receiver
 port: 8080
 # Light Flask app — 1GB is plenty.
 workspace:
+  deployment:
+    strategy: incremental
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 install: |
   pip install --break-system-packages flask

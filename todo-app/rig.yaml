@@ -1,4 +1,6 @@
 workspace:
+  deployment:
+    strategy: incremental
   image: base
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 10240 }
   volumes:
@@ -38,6 +40,8 @@ apps:
     port: 5101
     install: npm ci && npm run build
     start: npx next start -H 0.0.0.0 -p 5101
-    dependsOn: [todo-api]   # injects RIGBOX_TODO_API_URL=http://127.0.0.1:5100
+    dependsOn: [todo-api]   # startup ordering
+    env:
+      RIGBOX_TODO_API_URL: http://127.0.0.1:5100
     visibility: public      # only the front door is public
     health: { path: /healthz, timeoutSeconds: 90 }

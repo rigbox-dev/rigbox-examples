@@ -1,4 +1,6 @@
 workspace:
+  deployment:
+    strategy: image
   image: base
   resources: {vcpuCount: 2, ramMb: 2048, diskSizeMb: 8192}
 apps:

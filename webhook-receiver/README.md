@@ -21,7 +21,7 @@ Secrets + a server-minted credential + a validated `select` param, working toget
   and shown in the UI so callers can identify this endpoint.
 - **Param** `signing_algorithm` — a `select` (sha256 / sha1 / sha512, default
   sha256) injected as `SIGNING_ALGORITHM`. Flip it live with
-  `rig app param set signing_algorithm=sha512`.
+  `rig app param set --app APP_ID signing_algorithm=sha512`.
 
 ## Deploy
 
@@ -54,15 +54,14 @@ ignored. Copy `.env.example` to make your own; put real secrets in `.env.local`
   `CRED_ENDPOINT_TOKEN`.
 - Click **Send test webhook** to see a green `valid` row appear in "Recent
   webhooks".
-- Flip the algorithm with `rig app param set signing_algorithm=sha512` and
+- Flip the algorithm with `rig app param set --app APP_ID signing_algorithm=sha512` and
   redeploy/reload to watch the pill change.
 
 ## Required env
 
 - `WEBHOOK_HMAC_KEY` (secret) — supply via `--stage production` (loads
-  `.env.production`) or `export` before `rig deploy`. Without it the app still
-  boots and health-checks fine, but `/webhook` returns `503` and the UI shows the
-  key as missing.
+  `.env.production`) or `export` before `rig deploy`. The required-secret declaration makes a missing value a deployment configuration
+  error. If the process is started manually without the key, `/webhook` returns `503`.
 
 ## Files
 

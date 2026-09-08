@@ -65,3 +65,9 @@ rig app param set list_limit=20 --app todo-api
   once in `app/layout.tsx`.
 
 Expected first deploy: a few minutes (the Next.js production build dominates).
+
+## v0.13 incremental service address
+
+`dependsOn` controls startup ordering. The frontend explicitly sets
+`RIGBOX_TODO_API_URL=http://127.0.0.1:5100`; the incremental deployment payload
+does not inject that URL automatically. Keep it aligned with the API port.

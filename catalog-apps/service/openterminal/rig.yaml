@@ -3,6 +3,8 @@ port: 8000
 # Open Terminal is a small FastAPI/uvicorn app — 256MB matches the catalog
 # minimum, but a touch more disk lets pip cache the install on first boot.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
 # Freeze the pip install into an image: `rig deploy` runs `install:` once in a
 # builder VM, snapshots the rootfs, and later deploys with unchanged inputs

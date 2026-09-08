@@ -4,6 +4,8 @@ port: 3002
 # headless chromium in one VM. The dropped template hinted 4GB; we give it
 # 4.5GB + 8GB disk to leave headroom for crawls and the playwright cache.
 workspace:
+  deployment:
+    strategy: image
   # diskSizeMb holds the frozen install (~6GB: two node_modules trees,
   # Chromium, the apt stack) and sizes the builder VM that produces it.
   resources: { ramMb: 4608, vcpuCount: 2, diskSizeMb: 12288 }

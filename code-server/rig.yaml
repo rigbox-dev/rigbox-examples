@@ -2,6 +2,12 @@ name: code-server
 port: 8080
 # A browser IDE needs headroom for language servers, extensions, and terminals.
 workspace:
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
+  deployment:
+    strategy: image
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 3072 }
 # Freeze the code-server install into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged
@@ -24,3 +30,5 @@ health:
   timeoutSeconds: 90
 env:
   DATA_DIR: /home/developer/data
+
+volumes: [data]

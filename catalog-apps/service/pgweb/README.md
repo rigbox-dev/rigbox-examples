@@ -62,7 +62,7 @@ connection and connect via the UI's `--sessions` mode instead.
 ```bash
 cd pgweb
 rig deploy
-rig app param set database_url='postgres://user:pass@host:5432/dbname?sslmode=require'
+rig app param set --app APP_ID database_url='postgres://user:pass@host:5432/dbname?sslmode=require'
 ```
 
 (The param can also be set in the UI after deploy. Without it, pgweb still

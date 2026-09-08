@@ -7,14 +7,21 @@
 # Ruby isn't in the base image (Python/Node are), so install apt-installs a
 # lean Ruby + pure-Ruby gems — fast enough to stay well under the deploy cap.
 # Posts live in a JSON file under DATA_DIR (outside the rsync zone), so content
-# survives every redeploy and every bluegreen cut-over.
+# is stored on the declared data volume. Validate data handling before promotion.
 
 workspace:
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
+  deployment:
+    strategy: image
   image: base
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 
 apps:
   blog:
+    volumes: [data]
     path: ./app
     port: 5100
     visibility: public

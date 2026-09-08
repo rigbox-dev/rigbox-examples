@@ -2,6 +2,8 @@ name: marimo
 port: 2718
 # Marimo is lighter than Jupyter — pure Python + a small web bundle.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 2048 }
 # Freeze `pip install marimo` into an image: `rig deploy` runs `install:` once
 # in a builder VM, snapshots the rootfs, and later deploys with unchanged

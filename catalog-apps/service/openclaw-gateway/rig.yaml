@@ -3,6 +3,8 @@ name: openclaw-gateway
 # subdomain layer routes wss:// → 18789 inside the VM.
 port: 18789
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 # Freeze `npm install -g openclaw` into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged

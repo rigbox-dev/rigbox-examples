@@ -2,6 +2,8 @@ name: streamlit
 port: 8501
 # Streamlit + pandas/altair pulled by typical apps want some headroom.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 # Freeze `pip install streamlit` into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged

@@ -3,6 +3,8 @@ kind: cli
 # Kilo Code is a TUI agent — the workspace is for SSH-CLI use. `kind: cli`
 # declares that explicitly: no HTTP port, no health probe, no start command.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 # Freeze the CLI into an image: `rig deploy` runs `install:` once in a builder
 # VM and later deploys boot from the cached image instead of re-running

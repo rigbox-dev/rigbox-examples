@@ -5,6 +5,8 @@ port: 5000
 # We build the bundle at install time (frozen into the reproducible image) so
 # the VM only runs `serve`.
 workspace:
+  deployment:
+    strategy: image
   # diskSizeMb holds the frozen install (vite + node_modules + bundle) and
   # sizes the builder VM that produces it.
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 4096 }

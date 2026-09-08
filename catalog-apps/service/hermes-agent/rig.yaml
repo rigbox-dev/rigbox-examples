@@ -6,6 +6,8 @@ port: 9119
 # bundle — the install footprint is heavier than the catalog minimum, so bump
 # the workspace disk.
 workspace:
+  deployment:
+    strategy: image
   # diskSizeMb holds the frozen install (uv CPython, Node 22, SPA build) and
   # sizes the builder VM that produces it.
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 6144 }

@@ -3,6 +3,8 @@ port: 3773
 # Web GUI + Node.js process — give it real headroom so the model picker and
 # the per-agent UIs stay responsive.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 # Freeze `npm install -g t3` + the entrypoint patch into an image: `rig deploy`
 # runs `install:` once in a builder VM, snapshots the rootfs, and later deploys

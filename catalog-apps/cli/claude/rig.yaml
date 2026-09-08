@@ -5,6 +5,8 @@ kind: cli
 # Bump RAM and disk a touch over the CLI catalog item's hint (256MB/512MB) so
 # the agent has comfortable headroom for repo-wide edits and node_modules.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 # Bake the CLI into an image: `rig deploy` runs `install:` once in a builder VM
 # and later deploys boot from the cached image instead of re-running the

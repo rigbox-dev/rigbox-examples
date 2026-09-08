@@ -2,6 +2,12 @@ name: scheduled-digest
 port: 8080
 # Tiny TypeScript worker — 1GB is plenty.
 workspace:
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
+  deployment:
+    strategy: incremental
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 install: |
   npm install
@@ -20,3 +26,5 @@ params:
     default: "5"
     envVar: INTERVAL_MINUTES
     validationPattern: "^[0-9]+$"
+
+volumes: [data]

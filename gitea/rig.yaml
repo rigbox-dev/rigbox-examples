@@ -2,6 +2,12 @@ name: gitea
 port: 8080
 # Gitea is a single lightweight Go binary — 1GB is comfortable.
 workspace:
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
+  deployment:
+    strategy: image
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
 # Freeze the pinned, checksum-verified Gitea binary into an image: `rig deploy`
 # runs `install:` once in a builder VM and later deploys reuse the cached image
@@ -29,3 +35,5 @@ env:
   # Gitea's working dir — its custom/conf/app.ini, SQLite DB, repos, and runtime
   # state live under $DATA_DIR, so they survive the rsync wipe on every redeploy.
   GITEA_WORK_DIR: /home/developer/data/gitea
+
+volumes: [data]

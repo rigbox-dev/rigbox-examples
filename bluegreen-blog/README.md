@@ -2,7 +2,7 @@
 
 [![Deploy to Rigbox](https://rigbox.dev/deploy.svg)](https://rigbox.dev/deploy?repo=rigbox-dev%2Frigbox-examples&ref=main&path=bluegreen-blog%2Frig.yaml)
 
-A tiny markdown blog on **Ruby (Sinatra)** — SQLite, Kramdown for rendering. It
+A tiny markdown blog on **Ruby (Sinatra)** — a JSON file store, Kramdown for rendering. It
 exists to demonstrate **one** thing:
 
 > **A validated `select` param replaces a raw env var for theme selection** — and
@@ -23,8 +23,7 @@ at a glance.
 - Single app, expressed in the **multi-app `workspace:`/`apps:`** rig.yaml shape so we
   can declare `visibility: public` and `workspace.resources`.
 - Port **5100**, binds `0.0.0.0`, health at `/healthz`.
-- Durable posts at `$DATA_DIR/posts.json` — outside the rsync zone, so they survive
-  every redeploy and bluegreen cut-over. (SQLite is shown by `todo-app` /
+- Durable posts at `$DATA_DIR/posts.json` — outside the rsync zone, so they survive application code redeploys on the same mounted volume. (SQLite is shown by `todo-app` /
   `url-shortener`; here a JSON file keeps the install dependency-free.)
 
 ## Deploy
@@ -71,11 +70,11 @@ committed demo files.
 
 ```bash
 # Valid — server accepts it, injects BUILD_FLAVOR=aurora, app re-themes to teal.
-rig app param set build_flavor=aurora
+rig app param set --app APP_ID build_flavor=aurora
 
 # Bogus — REJECTED server-side. The validated option set wins; you cannot set a
 # theme the app doesn't know about (this is what the old raw env var couldn't do).
-rig app param set build_flavor=bogus      # → error: not an allowed value
+rig app param set --app APP_ID build_flavor=bogus      # → error: not an allowed value
 ```
 
 After the `aurora` set, reload — the accent re-tints and the pill reads
@@ -91,14 +90,14 @@ rig deploy --stage staging --bluegreen v2
 
 # Try the staging URL, set its theme there, publish a test post using the
 # staging admin token from .env.staging.
-rig app param set build_flavor=aurora --app blog   # on the staging app
+rig app param set --app STAGING_APP_ID build_flavor=aurora
 
 # When it looks right, promote staging in place (stable app_id + unit).
 rig app promote <staging-app>
 ```
 
-Posts live under `$DATA_DIR`, outside the rsynced app dir, so the promote/redeploy
-keeps your content.
+Posts live under `$DATA_DIR`, outside the rsynced app dir, and use the declared volume for application redeploy persistence. Verify staged
+data and backups before promotion; workspace replacement is a separate lifecycle.
 
 ## Files
 

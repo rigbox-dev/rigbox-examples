@@ -4,6 +4,8 @@ kind: cli
 # declares that explicitly: no HTTP port, no health probe, no start command.
 # 512MB RAM is plenty; bumping vCPU to 1 matches the catalog minimum.
 workspace:
+  deployment:
+    strategy: image
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
 # Freeze the CLI into an image: `rig deploy` runs `install:` once in a builder
 # VM and later deploys boot from the cached image instead of re-running

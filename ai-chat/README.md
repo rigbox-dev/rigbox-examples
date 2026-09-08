@@ -55,7 +55,7 @@ No required env — the AI credentials are injected by the managed proxy.
 - The **model alias pill** in the header (top right of the card), e.g.
   `rigbox/default`.
 - Flip the model live without redeploying:
-  `rig app param set model=rigbox/fast` (options: `rigbox/default`,
+  `rig app param set --app APP_ID model=rigbox/fast` (options: `rigbox/default`,
   `rigbox/fast`, `rigbox/free`).
 
 ## Notes

@@ -34,7 +34,7 @@ dependencies), so the build is fast.
 - Flip the schedule live without redeploying:
 
   ```bash
-  rig app param set interval_minutes=1
+  rig app param set --app APP_ID interval_minutes=1
   ```
 
   After the worker restarts it appends a new entry every minute; older entries from

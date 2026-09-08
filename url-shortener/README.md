@@ -47,9 +47,9 @@ then `migrate` + `collectstatic`).
   click count increments on the list.
 - Flip a param and watch the UI change:
   ```bash
-  rig app param set site_name="My Links"
-  rig app param set id_strategy=sequential
-  rig app param set require_https=true
+  rig app param set --app APP_ID site_name="My Links"
+  rig app param set --app APP_ID id_strategy=sequential
+  rig app param set --app APP_ID require_https=true
   ```
 
 ## Server-side param rejection (the point of this example)
@@ -58,10 +58,10 @@ The platform validates params **before** they reach the app. Bad values are
 rejected at `param set` time, not silently accepted:
 
 ```bash
-rig app param set admin_email=not-an-email     # rejected: invalid email
-rig app param set default_redirect_url=ftp://x # rejected: invalid url
-rig app param set site_name="!!"               # rejected: fails ^[A-Za-z0-9 ]{2,32}$
-rig app param set max_links=lots               # rejected: fails ^[0-9]+$
+rig app param set --app APP_ID admin_email=not-an-email     # rejected: invalid email
+rig app param set --app APP_ID default_redirect_url=ftp://x # rejected: invalid url
+rig app param set --app APP_ID site_name="!!"               # rejected: fails ^[A-Za-z0-9 ]{2,32}$
+rig app param set --app APP_ID max_links=lots               # rejected: fails ^[0-9]+$
 ```
 
 ## Persistence
