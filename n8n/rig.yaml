@@ -3,15 +3,14 @@
 
 name: n8n
 port: 8080
-# n8n is memory-hungry — it OOMs (V8 "heap out of memory") in the default 1GB
-# workspace. Give it the free-tier ceiling (2GB/2vCPU); NODE_OPTIONS raises the
-# V8 old-space heap so the Node process has real headroom inside the VM.
+# Cold dependency installation and native module compilation need headroom.
+# Keep runtime data outside the retained release directories.
 workspace:
   resources:
-    ramMb: 2048
+    ramMb: 3072
     vcpuCount: 2
-    # Allows room for dependencies and a retained previous release.
-    diskSizeMb: 8192
+    # Allows three retained artifacts plus a staged update, caches, and app data.
+    diskSizeMb: 16384
   deployment:
     strategy: incremental
 install: |-

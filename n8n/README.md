@@ -12,7 +12,7 @@ shared example design language.
 
 This manifest uses `workspace.deployment.strategy: incremental`. n8n 2.22.6 is pinned in `package.json` and its lockfile. Dependencies install inside the managed release, without sudo or a global npm install. The workspace and SSH sessions remain in place when the app updates.
 
-`start.sh` puts n8n user data in Rigbox's persistent `RIGBOX_APP_DATA_DIR`, outside the release directory. Keep at least the declared 2GiB RAM and 8GiB disk; the first dependency installation can still take several minutes. App rollback does not reverse n8n database migrations. Existing image-based deployments need a separate reviewed migration and data handoff; this manifest does not automatically import `/home/developer/data`.
+`start.sh` puts n8n user data in Rigbox's persistent `RIGBOX_APP_DATA_DIR`, outside the release directory. The default allocation is 3GiB RAM, 2 vCPUs, and 16GiB disk. A measured Linux installation occupies about 2.9GiB of disk per release, plus roughly 0.7GiB for installation caches. The disk allowance covers three retained artifacts, a staged update, the base system, and room for runtime data. Monitor free space as workflows and execution history grow. Cold dependency installation can take several minutes, including native module compilation; unchanged dependencies are reused on subsequent code updates. App rollback does not reverse n8n database migrations. Existing image-based deployments need a separate reviewed migration and data handoff; this manifest does not automatically import `/home/developer/data`.
 
 ## Deploy and verify
 
