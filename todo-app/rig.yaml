@@ -20,6 +20,7 @@ apps:
     health: { path: /healthz, timeoutSeconds: 30 }
     volumes: [ data ]
     env:
+      DATA_DIR: /home/developer/data
       PORT: "5100"
     params:
       - key: list_limit

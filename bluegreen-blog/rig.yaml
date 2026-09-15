@@ -20,6 +20,7 @@ apps:
     path: ./app
     port: 5100
     visibility: public
+    reproducible: true
     install: |
       set -e
       sudo apt-get update -y

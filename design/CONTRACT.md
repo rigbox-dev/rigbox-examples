@@ -188,3 +188,11 @@ before deploy). Keep it tight.
 ### Optional immutable dependency outputs
 
 An incremental app can declare `dependencyOutputs: [node_modules]` alongside `dependencyInputs` and a nonempty `install`. The declared generated directories remain read-only and are shared by releases with matching installation inputs. Keep runtime data outside them. This mode currently excludes `build`, `configure`, and `reconfigure` hooks; output directories must not overlap one another, source files, or dependency inputs. Examples with those hooks retain release-local dependency copying. Keep enough disk space and inodes for distinct dependency versions, not just a single cached installation.
+
+## Validate changes
+
+Run `python3 scripts/validate_deployments.py` from the repository root (requires
+PyYAML). It checks every advertised manifest's explicit strategy, shell syntax,
+dependency inputs, and managed CLI entrypoints. Incremental examples must not use
+sudo or system pip installs. This check supplements the Rigbox importer and live
+health/redeployment tests; it does not execute installers or provision workspaces.

@@ -17,6 +17,7 @@ health:
   path: /healthz
   timeoutSeconds: 30
 volumes: [ data ]
-env: {}
+env:
+  DATA_DIR: /home/developer/data
 dependencyInputs:
   - requirements.txt
