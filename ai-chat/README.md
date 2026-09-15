@@ -27,19 +27,18 @@ backend the proxy resolves.
 
 ## Deploy: a recipe `install:` step
 
-The Python deps are declared in `rig.yaml` as a recipe `install:` step — no
-Dockerfile — so they install onto the workspace's shared base rootfs:
+Dependencies are pinned in `requirements.txt` and installed inside the app release:
 
 ```yaml
-install: pip install --break-system-packages fastapi uvicorn pydantic httpx
-start: uvicorn chat:app --host 0.0.0.0 --port 8080
+install: |
+  python3 -m venv --copies .venv
+  .venv/bin/python -m pip install -r requirements.txt
+start: .venv/bin/uvicorn chat:app --host 0.0.0.0 --port 8080
 ```
 
-On `rig deploy`, Rigbox rsyncs `chat.py` + `static/` to the workspace and runs
-the `install:` step on the VM, layered on the base image — fast, with no
-per-deploy image build. The deps land in the system site-packages, so the synced
-code imports `fastapi` / `uvicorn` / `httpx` at runtime. A later `rig deploy`
-with unchanged deps takes the code-only fast path and skips the reinstall.
+Rigbox stages the code in the existing workspace and reuses dependencies when
+`requirements.txt` and the installation environment are unchanged. No sudo or
+image build is required.
 
 ## Deploy
 
@@ -63,3 +62,7 @@ No required env — the AI credentials are injected by the managed proxy.
 - Persistence: none — chat is in-memory per browser session.
 - Install: deps install on deploy via the recipe `install:` step (layered on the base); unchanged redeploys skip it.
 - Health: `GET /healthz` → `{"ok": true}`; the process binds `0.0.0.0:8080`.
+
+## Persistent app releases
+
+The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.

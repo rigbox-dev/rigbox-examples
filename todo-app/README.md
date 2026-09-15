@@ -65,3 +65,9 @@ rig app param set list_limit=20 --app todo-api
   once in `app/layout.tsx`.
 
 Expected first deploy: a few minutes (the Next.js production build dominates).
+
+## Persistent app releases
+
+The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.
+
+The explicit `DATA_DIR=/home/developer/data` uses the declared volume. Rigbox mounts a private app subdirectory there during installation and runtime. Existing legacy data at the volume root needs a reviewed migration into that subdirectory; deployment does not move or overwrite it.

@@ -11,7 +11,7 @@ serves an HTTP status page plus `/healthz` on `0.0.0.0:8080`.
 **A long-lived background worker whose `/healthz` stays green, configured by a
 validated number param.** Every `INTERVAL_MINUTES` the worker appends a digest entry
 (timestamp + a computed summary) to a log file at `$DATA_DIR/digest.log`. That log
-lives under `DATA_DIR=/home/developer/data`, so the digest history **survives
+lives under the managed `RIGBOX_APP_DATA_DIR`, so the digest history **survives
 redeploys** even though the synced app directory is wiped each time. The interval is
 set through a server-validated `number` param, live-editable without a code change.
 
@@ -46,3 +46,9 @@ dependencies), so the build is fast.
 - `static/tokens.css` — byte-for-byte copy of the shared design tokens, served at
   `/tokens.css`.
 - `rig.yaml` — single-app manifest with the `interval_minutes` number param.
+
+## Persistent app releases
+
+The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.
+
+Persistent application data now uses `RIGBOX_APP_DATA_DIR`, managed separately from release files. Existing data at `/home/developer/data` requires an explicit migration; it is not automatically moved or overwritten.

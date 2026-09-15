@@ -3,9 +3,12 @@ port: 8080
 # Light Flask app — 1GB is plenty.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+  deployment:
+    strategy: incremental
 install: |
-  pip install --break-system-packages flask
-start: python3 app.py
+  python3 -m venv --copies .venv
+  .venv/bin/python -m pip install -r requirements.txt
+start: .venv/bin/python app.py
 health:
   path: /healthz
   timeoutSeconds: 30
@@ -19,10 +22,12 @@ params:
     envVar: SIGNING_ALGORITHM
     options:
       - { value: sha256, label: "SHA-256" }
-      - { value: sha1,   label: "SHA-1" }
+      - { value: sha1, label: "SHA-1" }
       - { value: sha512, label: "SHA-512" }
 secrets:
   - name: WEBHOOK_HMAC_KEY
 credentials:
   endpoint_token:
-    generate: true   # → injected as CRED_ENDPOINT_TOKEN
+    generate: true # → injected as CRED_ENDPOINT_TOKEN
+dependencyInputs:
+  - requirements.txt

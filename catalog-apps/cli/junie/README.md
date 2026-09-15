@@ -82,3 +82,7 @@ default).
   workspace is reachable only via SSH on the rigbox gateway.
 - **Disk: 4096MB.** Sized to comfortably hold the JetBrains-bundled archive
   Junie downloads on top of any project repo you check out.
+
+## Deployment strategy
+
+This example explicitly uses `workspace.deployment.strategy: image` because its installer changes system packages, global executable paths, or shared tool configuration. The badge review shows image replacement and requires permission before replacing an existing workspace root filesystem. It is not an incremental app release. Use a dedicated workspace and back up root-filesystem development files; persistent volumes are retained. Migrating this installer to app-local releases remains separate work.

@@ -77,3 +77,7 @@ boots — the UI lets you punch in a connection manually.)
 - **`--sessions`** lets users open additional Postgres connections through the
   UI instead of being pinned to the `DATABASE_URL` connection only.
 - Stack: pgweb single Go binary, pinned + frozen in the reproducible image.
+
+## Deployment strategy
+
+This example explicitly uses `workspace.deployment.strategy: image` because its installer changes system packages, global executable paths, or shared tool configuration. The badge review shows image replacement and requires permission before replacing an existing workspace root filesystem. It is not an incremental app release. Use a dedicated workspace and back up root-filesystem development files; persistent volumes are retained. Migrating this installer to app-local releases remains separate work.

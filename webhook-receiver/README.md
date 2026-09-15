@@ -76,3 +76,7 @@ ignored. Copy `.env.example` to make your own; put real secrets in `.env.local`
   inspector, not a store.
 - Stack: Python · Flask. Built-in dev server, bound to `0.0.0.0:8080` with the
   reloader off.
+
+## Persistent app releases
+
+The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.

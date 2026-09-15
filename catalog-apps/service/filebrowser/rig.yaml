@@ -4,6 +4,8 @@ port: 8080
 # but the VM floors push to a usable minimum and leave headroom for uploads.
 workspace:
   resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
+  deployment:
+    strategy: image
 # Freeze the pinned File Browser binary into an image: `rig deploy` runs
 # `install:` once in a builder VM and later deploys reuse the cached image
 # instead of re-downloading. Bump FB_VERSION here to upgrade.
@@ -28,10 +30,7 @@ install: |
 # filebrowser's default admin/admin login take effect so you can see its
 # own auth UI. Flip to --noauth if you prefer relying on the gateway only.
 start: >-
-  /usr/local/bin/filebrowser
-  --address 0.0.0.0 --port 8080
-  --root /home/developer/data
-  --database /home/developer/data/filebrowser/filebrowser.db
+  /usr/local/bin/filebrowser --address 0.0.0.0 --port 8080 --root /home/developer/data --database /home/developer/data/filebrowser/filebrowser.db
 health:
   path: /health
   timeoutSeconds: 30

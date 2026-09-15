@@ -91,3 +91,7 @@ SSH in once and run `hermes gateway enable telegram && systemctl --user enable
   the other installer caches (it's a build cache, not a runtime dependency of
   the dashboard); Hermes re-fetches a browser on demand if you use a tool that
   needs one.
+
+## Deployment strategy
+
+This example explicitly uses `workspace.deployment.strategy: image` because its installer changes system packages, global executable paths, or shared tool configuration. The badge review shows image replacement and requires permission before replacing an existing workspace root filesystem. It is not an incremental app release. Use a dedicated workspace and back up root-filesystem development files; persistent volumes are retained. Migrating this installer to app-local releases remains separate work.

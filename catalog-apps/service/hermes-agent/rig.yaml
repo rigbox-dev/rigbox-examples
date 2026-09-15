@@ -9,6 +9,8 @@ workspace:
   # diskSizeMb holds the frozen install (uv CPython, Node 22, SPA build) and
   # sizes the builder VM that produces it.
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 6144 }
+  deployment:
+    strategy: image
 # Freeze the whole upstream install into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged
 # inputs boot from the cached image instead of re-running the installer.
@@ -64,8 +66,7 @@ install: |
   touch "$HERMES_HOME/.env"
   chmod 600 "$HERMES_HOME/.env"
 start: >-
-  /home/developer/.local/bin/hermes dashboard
-  --host 0.0.0.0 --port 9119 --no-open --insecure
+  /home/developer/.local/bin/hermes dashboard --host 0.0.0.0 --port 9119 --no-open --insecure
 health:
   # The only public (no-session-token) endpoint on the dashboard.
   path: /api/status
@@ -87,9 +88,9 @@ params:
     envVar: HERMES_DEFAULT_PROVIDER
     options:
       - { value: openrouter, label: "OpenRouter (200+ models)" }
-      - { value: google,     label: "Google (Gemini)" }
-      - { value: anthropic,  label: "Anthropic" }
-      - { value: openai,     label: "OpenAI" }
+      - { value: google, label: "Google (Gemini)" }
+      - { value: anthropic, label: "Anthropic" }
+      - { value: openai, label: "OpenAI" }
   - key: ai_model
     type: string
     label: Default model

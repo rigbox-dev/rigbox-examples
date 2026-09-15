@@ -68,3 +68,7 @@ rig workspace ssh    # then run `pi` interactively
   That matches the catalog's internal `AppKind::Cli` shape exactly.
 - **Persistence**: Pi keeps no state of its own; conversations are
   ephemeral per terminal session.
+
+## Deployment strategy
+
+This example explicitly uses `workspace.deployment.strategy: image` because its installer changes system packages, global executable paths, or shared tool configuration. The badge review shows image replacement and requires permission before replacing an existing workspace root filesystem. It is not an incremental app release. Use a dedicated workspace and back up root-filesystem development files; persistent volumes are retained. Migrating this installer to app-local releases remains separate work.

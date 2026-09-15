@@ -4,6 +4,8 @@ port: 8000
 # minimum, but a touch more disk lets pip cache the install on first boot.
 workspace:
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 1024 }
+  deployment:
+    strategy: image
 # Freeze the pip install into an image: `rig deploy` runs `install:` once in a
 # builder VM, snapshots the rootfs, and later deploys with unchanged inputs
 # boot from the cached image instead of re-running pip.
@@ -38,4 +40,4 @@ params:
     envVar: OPENTERMINAL_WORKING_DIRECTORY
 credentials:
   api_key:
-    generate: true   # → injected as CRED_API_KEY, written into config.toml on boot
+    generate: true # → injected as CRED_API_KEY, written into config.toml on boot
