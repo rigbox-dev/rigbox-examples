@@ -16,6 +16,8 @@ This manifest uses `workspace.deployment.strategy: incremental`. n8n 2.22.6 is p
 
 ## Deploy and verify
 
+Use the badge above, or use a CLI from the 0.13 release line (see the root requirements).
+
 ```bash
 cd n8n && rig deploy
 ```

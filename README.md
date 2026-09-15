@@ -108,12 +108,19 @@ demonstrates, the deploy command, what to look at afterward, and any required en
 
 ## Requirements
 
-Latest CLI:
+The browser deploy button uses Rigbox's managed deployment client. Local incremental
+deployments require the 0.13 release line; 0.12 does not understand the app-release
+strategy. Until 0.13 is promoted to stable, select the published release candidate:
 
 ```bash
-curl -fsSL https://rigbox.dev/install.sh | bash
+rig update --version v0.13.0-rc.3
 rig --version
 ```
+
+Existing forks and deployment branches keep their current manifests. Merge these
+example changes into the branch you deploy when ready. Switching an existing
+image deployment to app releases requires reviewing ownership and persistent data;
+changing the example does not automatically migrate an existing workspace.
 
 ## Deploy from your browser
 
