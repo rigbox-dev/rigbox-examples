@@ -1,8 +1,31 @@
-name: n8n
-port: 8080
-# n8n is memory-hungry — it OOMs (V8 "heap out of memory") in the default 1GB
-# workspace. Give it the free-tier ceiling (2GB/2vCPU); NODE_OPTIONS raises the
-# V8 old-space heap so the Node process has real headroom inside the VM.
+apps:
+  n8n:
+    port: 8080
+    # Freeze the heavy `npm install -g n8n` into an image: `rig deploy` runs
+    # `install:` once in a builder VM, snapshots the rootfs, and later deploys with
+    # unchanged inputs boot from the cached image and only rsync code.
+    reproducible: true
+    install: |
+      set -euo pipefail
+      # Global install to a system path so `n8n start` resolves on the unit's PATH.
+      sudo npm install -g n8n
+    start: n8n start
+    health:
+      path: /healthz
+      timeoutSeconds: 120
+    env:
+      DATA_DIR: /home/developer/data
+      N8N_USER_FOLDER: /home/developer/data
+      N8N_PORT: "8080"
+      N8N_LISTEN_ADDRESS: 0.0.0.0
+      N8N_SECURE_COOKIE: "false"
+      N8N_RUNNERS_ENABLED: "true"
+      NODE_OPTIONS: --max-old-space-size=1536
+    path: .
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: rigbox/deploy/ws-gfyk9dhl
 workspace:
   resources:
     ramMb: 2048
@@ -10,23 +33,6 @@ workspace:
     # Holds the frozen `npm install -g n8n` tree and sizes the builder VM
     # that produces it.
     diskSizeMb: 8192
-# Freeze the heavy `npm install -g n8n` into an image: `rig deploy` runs
-# `install:` once in a builder VM, snapshots the rootfs, and later deploys with
-# unchanged inputs boot from the cached image and only rsync code.
-reproducible: true
-install: |
-  set -euo pipefail
-  # Global install to a system path so `n8n start` resolves on the unit's PATH.
-  sudo npm install -g n8n
-start: n8n start
-health:
-  path: /healthz
-  timeoutSeconds: 120
-env:
-  DATA_DIR: /home/developer/data
-  N8N_USER_FOLDER: /home/developer/data
-  N8N_PORT: "8080"
-  N8N_LISTEN_ADDRESS: 0.0.0.0
-  N8N_SECURE_COOKIE: "false"
-  N8N_RUNNERS_ENABLED: "true"
-  NODE_OPTIONS: --max-old-space-size=1536
+  image: base
+  deployment:
+    strategy: image
