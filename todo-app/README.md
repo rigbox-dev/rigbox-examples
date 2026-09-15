@@ -70,4 +70,4 @@ Expected first deploy: a few minutes (the Next.js production build dominates).
 
 The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.
 
-Persistent application data now uses `RIGBOX_APP_DATA_DIR`, managed separately from release files. Existing data at `/home/developer/data` requires an explicit migration; it is not automatically moved or overwritten.
+The explicit `DATA_DIR=/home/developer/data` uses the declared volume. Rigbox mounts a private app subdirectory there during installation and runtime. Existing legacy data at the volume root needs a reviewed migration into that subdirectory; deployment does not move or overwrite it.

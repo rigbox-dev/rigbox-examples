@@ -11,12 +11,9 @@ are stored in SQLite and survive redeploys.
 
 Two things work together here:
 
-1. **A recipe `install:` step.** The Python deps are declared in `rig.yaml`
-   (no Dockerfile), so they install onto the workspace's shared base rootfs:
-
-   ```yaml
-   install: pip install --break-system-packages flask markdown pygments gunicorn
-   ```
+1. **App-local dependencies.** `install:` creates `.venv` with
+   `python3 -m venv --copies .venv`, then installs the pinned `requirements.txt`.
+   The service runs `.venv/bin/gunicorn`, without sudo or system pip changes.
 
 2. **Workspace volume-backed persistence.** `rig.yaml` declares a `data` volume at
    `/home/developer/data` and opts the app into it with `volumes: [data]`. The
@@ -27,13 +24,9 @@ Two things work together here:
 
 ## How the deploy works
 
-On `rig deploy`, Rigbox rsyncs `app.py` + `templates/` + `static/` to the
-workspace and runs the `install:` step on the VM, layered on the shared base
-image — fast, with no per-deploy image build. The deps land in the system
-site-packages, so the synced `app.py` finds `flask` / `markdown` / `pygments` /
-`gunicorn` at runtime, and `gunicorn --bind 0.0.0.0:8080 app:app` imports the
-synced module. A later `rig deploy` with unchanged deps takes the code-only fast
-path and skips the reinstall.
+Rigbox stages app code and its virtual environment in a managed release directory.
+Unchanged dependency inputs reuse the existing installation. Activation briefly
+restarts the service; the workspace and its persistent volume remain in place.
 
 ## Deploy
 
@@ -63,4 +56,4 @@ No required env — `DATA_DIR` is set in `rig.yaml`.
 
 The manifest uses `workspace.deployment.strategy: incremental`. Deployment stages app files separately from your editable checkout, then briefly restarts affected services on their original ports. The workspace, SSH sessions, and unrelated files stay in place. App rollback restores a retained release, not database contents or external side effects.
 
-Persistent application data now uses `RIGBOX_APP_DATA_DIR`, managed separately from release files. Existing data at `/home/developer/data` requires an explicit migration; it is not automatically moved or overwritten.
+The explicit `DATA_DIR=/home/developer/data` uses the declared volume. Rigbox mounts a private app subdirectory there during installation and runtime. Existing legacy data at the volume root needs a reviewed migration into that subdirectory; deployment does not move or overwrite it.

@@ -66,9 +66,9 @@ rig app param set max_links=lots               # rejected: fails ^[0-9]+$
 
 ## Persistence
 
-The SQLite DB lives at `$DATA_DIR/db.sqlite3` (`DATA_DIR=/home/developer/data`),
-outside the synced app dir, so **created links survive redeploys**. `migrate`
-runs in `install:` to create the DB/schema.
+The SQLite DB lives at `$RIGBOX_APP_DATA_DIR/db.sqlite3`, outside the release
+directory, so **created links survive redeploys**. `start.sh` runs migrations
+before starting the service; app rollback does not undo database migrations.
 
 ## Notes
 

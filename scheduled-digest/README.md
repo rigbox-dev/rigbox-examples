@@ -11,7 +11,7 @@ serves an HTTP status page plus `/healthz` on `0.0.0.0:8080`.
 **A long-lived background worker whose `/healthz` stays green, configured by a
 validated number param.** Every `INTERVAL_MINUTES` the worker appends a digest entry
 (timestamp + a computed summary) to a log file at `$DATA_DIR/digest.log`. That log
-lives under `DATA_DIR=/home/developer/data`, so the digest history **survives
+lives under the managed `RIGBOX_APP_DATA_DIR`, so the digest history **survives
 redeploys** even though the synced app directory is wiped each time. The interval is
 set through a server-validated `number` param, live-editable without a code change.
 
