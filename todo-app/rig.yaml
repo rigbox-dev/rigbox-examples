@@ -37,6 +37,10 @@ apps:
     dependencyInputs:
       - package.json
       - package-lock.json
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: rigbox/deploy/ws-z8g6t50t
 
   todo-web:
     path: ./todo-web
@@ -50,3 +54,7 @@ apps:
     dependencyInputs:
       - package.json
       - package-lock.json
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: rigbox/deploy/ws-z8g6t50t
