@@ -3,12 +3,20 @@ port: 8080
 # Tiny TypeScript worker — 1GB is plenty.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+  # digest.log lives here. Apps run as a per-app system user, so a write path
+  # under the mount needs BOTH this declaration and the `volumes: [data]`
+  # opt-in below.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
 install: |
   npm install
 start: npx tsx worker.ts
 health:
   path: /healthz
   timeoutSeconds: 30
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data
 params:

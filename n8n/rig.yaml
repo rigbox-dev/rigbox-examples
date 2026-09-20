@@ -10,6 +10,14 @@ workspace:
     # Holds the frozen `npm install -g n8n` tree and sizes the builder VM
     # that produces it.
     diskSizeMb: 8192
+  # N8N_USER_FOLDER points here: the SQLite DB, encrypted credentials, and any
+  # community nodes installed from the UI. Apps run as a per-app system user,
+  # so that write path needs BOTH this declaration and the `volumes: [data]`
+  # opt-in below. 2GB leaves room for community nodes and execution history.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 2048
 # Freeze the heavy `npm install -g n8n` into an image: `rig deploy` runs
 # `install:` once in a builder VM, snapshots the rootfs, and later deploys with
 # unchanged inputs boot from the cached image and only rsync code.
@@ -22,6 +30,7 @@ start: n8n start
 health:
   path: /healthz
   timeoutSeconds: 120
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data
   N8N_USER_FOLDER: /home/developer/data

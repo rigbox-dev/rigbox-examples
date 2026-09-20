@@ -3,6 +3,13 @@ port: 2718
 # Marimo is lighter than Jupyter — pure Python + a small web bundle.
 workspace:
   resources: { ramMb: 512, vcpuCount: 1, diskSizeMb: 2048 }
+  # `marimo edit` treats this mount as its working directory and writes every
+  # notebook there. Apps run as a per-app system user, so that needs BOTH this
+  # declaration and the `volumes: [data]` opt-in below.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
 # Freeze `pip install marimo` into an image: `rig deploy` runs `install:` once
 # in a builder VM, snapshots the rootfs, and later deploys with unchanged
 # inputs boot from the cached image and only rsync code.
@@ -31,6 +38,7 @@ health:
   # Marimo's healthcheck endpoint.
   path: /health
   timeoutSeconds: 60
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data
 source:

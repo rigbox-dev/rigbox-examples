@@ -4,6 +4,14 @@ port: 8080
 # but the VM floors push to a usable minimum and leave headroom for uploads.
 workspace:
   resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
+  # --root and the filebrowser SQLite database both live under this mount.
+  # Apps run as a per-app system user, so those write paths need BOTH this
+  # declaration and the `volumes: [data]` opt-in below. 2GB because this app
+  # exists to hold uploaded files.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 2048
 # Freeze the pinned File Browser binary into an image: `rig deploy` runs
 # `install:` once in a builder VM and later deploys reuse the cached image
 # instead of re-downloading. Bump FB_VERSION here to upgrade.
@@ -35,5 +43,6 @@ start: >-
 health:
   path: /health
   timeoutSeconds: 30
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data

@@ -4,6 +4,14 @@ port: 8888
 # bit of headroom; 1GB / 1vCPU is comfortable for an interactive notebook.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 4096 }
+  # --notebook-dir points here, so every notebook, checkpoint, and data file a
+  # user creates is a write under this mount. Apps run as a per-app system
+  # user, so that needs BOTH this declaration and the `volumes: [data]` opt-in
+  # below. 2GB because notebooks carry embedded outputs and sample datasets.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 2048
 # Freeze the heavy `pip install jupyterlab` into an image: `rig deploy` runs
 # `install:` once in a builder VM, snapshots the rootfs, and later deploys with
 # unchanged inputs boot from the cached image and only rsync code.
@@ -38,5 +46,6 @@ health:
   # JupyterLab's built-in liveness endpoint.
   path: /api/status
   timeoutSeconds: 90
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data

@@ -3,6 +3,14 @@ port: 8501
 # Streamlit + pandas/altair pulled by typical apps want some headroom.
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+  # The README tells you to put CSV uploads, a SQLite DB or cached
+  # models here, so the path has to actually be writable.
+  # Apps run as a per-app system user, so a write path under the mount needs
+  # BOTH this declaration and the app-level `volumes: [data]` opt-in below.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
 # Freeze `pip install streamlit` into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged
 # inputs boot from the cached image and only rsync app.py.
@@ -32,5 +40,6 @@ health:
   # Streamlit's built-in liveness probe.
   path: /_stcore/health
   timeoutSeconds: 60
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data

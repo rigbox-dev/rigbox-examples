@@ -77,7 +77,9 @@ admin because `ENABLE_SIGNUP: False` flips off after the first user), and chat.
 ## Notes
 
 - **Persistence: yes.** `webui.db` (chat history + config) lives under
-  `DATA_DIR=/home/developer/.open-webui/data`, outside the rsync zone.
+  `DATA_DIR=/home/developer/data` on the `data` workspace volume the app opts
+  into with `volumes: [data]`, outside the rsync zone. The frozen venv stays at
+  `/home/developer/.open-webui` — read-only at runtime, nothing mutable there.
 - **`ENABLE_SIGNUP=False`** keeps this single-tenant. Drop it for multi-user.
 - **Health probe**: `GET /health` once the SvelteKit bundle is built; the
   `timeoutSeconds: 600` covers the first-boot DB migration on a cold start.

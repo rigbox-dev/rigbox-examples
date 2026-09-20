@@ -3,6 +3,14 @@ port: 8080
 # A browser IDE needs headroom for language servers, extensions, and terminals.
 workspace:
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 3072 }
+  # --user-data-dir, --extensions-dir, and the opened workspace folder all sit
+  # under this mount. Apps run as a per-app system user, so those write paths
+  # need BOTH this declaration and the `volumes: [data]` opt-in below. 2GB
+  # because installed VS Code extensions are the bulk of it.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 2048
 # Freeze the code-server install into an image: `rig deploy` runs `install:`
 # once in a builder VM, snapshots the rootfs, and later deploys with unchanged
 # inputs boot from the cached image instead of re-running the installer.
@@ -22,5 +30,6 @@ start: >-
 health:
   path: /healthz
   timeoutSeconds: 90
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data

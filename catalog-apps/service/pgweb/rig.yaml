@@ -3,6 +3,15 @@ port: 8081
 # pgweb is a tiny single Go binary. 256MB / 0.5GB disk is plenty.
 workspace:
   resources: { ramMb: 256, vcpuCount: 1, diskSizeMb: 1024 }
+  # pgweb itself is stateless, but DATA_DIR is exported for
+  # consistency, so it must mean the same thing here as everywhere else:
+  # writable and persistent.
+  # Apps run as a per-app system user, so a write path under the mount needs
+  # BOTH this declaration and the app-level `volumes: [data]` opt-in below.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
 # Freeze the pinned pgweb binary into an image: `rig deploy` runs `install:`
 # once in a builder VM and later deploys reuse the cached image instead of
 # re-downloading. Bump PGWEB_VERSION here to upgrade.
@@ -37,6 +46,7 @@ health:
   # that renders 200 even without a DB connection. Good enough for liveness.
   path: /
   timeoutSeconds: 30
+volumes: [data]
 env:
   DATA_DIR: /home/developer/data
 

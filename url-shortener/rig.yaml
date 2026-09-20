@@ -4,12 +4,20 @@ workspace:
     ramMb: 1536
     vcpuCount: 1
     diskSizeMb: 3072
+  # The SQLite DB and collectstatic output live here. Apps run as a per-app
+  # system user, so a write path under the mount needs BOTH this declaration
+  # and the app-level `volumes: [data]` opt-in below.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 1024
 
 apps:
   web:
     path: .
     port: 5100
     visibility: public
+    volumes: [data]
     env:
       DATA_DIR: /home/developer/data
       DJANGO_SETTINGS_MODULE: config.settings

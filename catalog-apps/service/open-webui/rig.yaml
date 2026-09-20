@@ -5,6 +5,14 @@ port: 8080
 # minimum.
 workspace:
   resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 8192 }
+  # DATA_DIR points here: webui.db (chats + config), uploaded documents, and
+  # the RAG embedding cache. Apps run as a per-app system user, so that write
+  # path needs BOTH this declaration and the `volumes: [data]` opt-in below.
+  # 4GB because the embedding model and uploaded documents land here too.
+  volumes:
+    - name: data
+      mountPath: /home/developer/data
+      sizeMb: 4096
 # Freeze the whole Python 3.12 venv (torch-cpu + open-webui) into an image:
 # `rig deploy` runs `install:` once in a builder VM, snapshots the rootfs, and
 # later deploys with unchanged inputs boot from the cached image instead of
@@ -26,7 +34,7 @@ install: |
   APP_VERSION=0.9.4
   TORCH_CPU_WHEEL_URL=https://download.pytorch.org/whl/cpu/torch-2.9.1%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl
 
-  mkdir -p "$APP_HOME/data" "$APP_HOME/tmp"
+  mkdir -p "$APP_HOME/tmp"
 
   # Keep uv's caches inside $APP_HOME so the cleanup below reclaims all of them
   # — the builder VM's disk is the tight resource here.
@@ -58,10 +66,13 @@ health:
 # workspace env layer when `managed: true`.
 ai:
   managed: true
+volumes: [data]
 env:
-  # Persistence: webui.db (chat history + config) lives under DATA_DIR, which
-  # is outside the rsync zone — chats survive redeploys.
-  DATA_DIR: /home/developer/.open-webui/data
+  # Persistence: webui.db (chat history + config) lives under DATA_DIR, on the
+  # `data` volume this app opts into above — outside the rsync zone, and the
+  # only place the per-app runtime user can write. The frozen venv stays at
+  # /home/developer/.open-webui; nothing mutable lives there.
+  DATA_DIR: /home/developer/data
   # Local-only auth: signups disabled, the workspace owner is the admin. Drop
   # ENABLE_SIGNUP if you want a multi-user instance.
   WEBUI_AUTH: "True"
