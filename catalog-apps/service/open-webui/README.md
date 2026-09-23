@@ -48,8 +48,8 @@ install: |
 
 No Dockerfile — `install:` is the same script a plain deploy would run on the
 VM (as `developer`, who owns `$APP_HOME`, so no `sudo` is needed here);
-`reproducible: true` is what makes `rig deploy` freeze its result. `start:`
-execs the binary straight out of the frozen venv — no wrapper, no PATH munging.
+`reproducible: true` is what makes `rig deploy` freeze its result. `start.sh`
+passes the generated admin credential to Open WebUI and runs the frozen binary.
 
 ## Reproducible deploy + the hybrid model
 
@@ -71,13 +71,17 @@ execs the binary straight out of the frozen venv — no wrapper, no PATH munging
 cd open-webui && rig deploy
 ```
 
-Then open the app's Rigbox subdomain, register the first account (it becomes
-admin because `ENABLE_SIGNUP: False` flips off after the first user), and chat.
+Open the app's private Rigbox subdomain and sign in with `admin@example.com`
+(or your `admin_email` parameter) and the generated `admin_password` credential
+shown by Rigbox. Open WebUI creates this administrator on first boot; public
+account registration is disabled.
 
 ## Notes
 
-- **Persistence: yes.** `webui.db` (chat history + config) lives under
-  `DATA_DIR=/home/developer/.open-webui/data`, outside the rsync zone.
+- **Persistence.** `webui.db` lives under
+  `DATA_DIR=/home/developer/.open-webui/data`. Local code-only redeploys preserve
+  it; GitHub image deployments replace the root filesystem. Back it up before
+  an image deployment if you need to retain chat history and configuration.
 - **`ENABLE_SIGNUP=False`** keeps this single-tenant. Drop it for multi-user.
 - **Health probe**: `GET /health` once the SvelteKit bundle is built; the
   `timeoutSeconds: 600` covers the first-boot DB migration on a cold start.
