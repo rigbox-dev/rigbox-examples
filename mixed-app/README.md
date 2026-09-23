@@ -4,7 +4,7 @@
 
 Deploy a Python HTTP service alongside the `workspace-info` command. Open the workspace terminal or SSH and run `workspace-info` after deployment.
 
-Use the deploy button to fork this repository and create a workspace, or select an existing workspace and confirm root-filesystem replacement. Persistent volumes are retained.
+Use the deploy button to fork this repository and create a workspace, or select an existing workspace. Incremental deployment preserves the workspace filesystem and stages the apps in managed release directories.
 
 For local CLI deployment, run `rig deploy` from this directory.
 

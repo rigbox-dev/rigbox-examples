@@ -216,7 +216,9 @@ params:
     envVar: PROXY_USERNAME
 secrets:
   - name: OPENAI_API_KEY
+    optional: true
   - name: PROXY_PASSWORD
+    optional: true
 credentials:
   # All three are generated on first deploy and shown once. They land in
   # /home/developer/.firecrawl/.env on every boot via start.sh.
