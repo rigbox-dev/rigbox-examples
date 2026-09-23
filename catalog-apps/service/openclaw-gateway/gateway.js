@@ -35,7 +35,10 @@ const env = {};
 const keyVar = keyVars[provider] || keyVars.anthropic;
 const apiKey = process.env[keyVar] || process.env[altKeyVars[provider]] || "";
 if (apiKey) env[keyVar] = apiKey;
-const proxy = (process.env.AI_PROXY_URL || process.env.RIGBOX_AI_PROXY_URL || "").replace(/\/+$/, "");
+const proxy = (
+  process.env.AI_PROXY_URL || process.env.RIGBOX_AI_PROXY_URL ||
+  (process.env.OPENAI_BASE_URL || "").replace(/\/v1\/?$/, "")
+).replace(/\/+$/, "");
 const proxyV1 = proxy ? `${proxy}/v1` : "";
 const managed = Boolean(proxy && !apiKey);
 if (managed) {
