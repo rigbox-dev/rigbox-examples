@@ -16,9 +16,9 @@ ai:
   managed: true
 ```
 
-That makes the workspace inject `OPENAI_API_BASE_URL` pointed at the Rigbox
-proxy and `OPENAI_API_KEY=managed-by-rigbox` into the VM env. Open WebUI reads
-both natively — it thinks it's talking to OpenAI. The proxy authenticates,
+That injects `OPENAI_BASE_URL` pointing at the Rigbox proxy and
+`OPENAI_API_KEY=managed-by-rigbox`. `start.sh` maps the URL to
+`OPENAI_API_BASE_URL`, which Open WebUI reads. The proxy authenticates,
 **meters credits against your workspace**, and forwards to whichever
 OpenRouter model the chat picked. No `.env`, no rate-limit guesswork, no key
 rotation.

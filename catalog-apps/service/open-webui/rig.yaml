@@ -53,8 +53,8 @@ health:
   timeoutSeconds: 600
 # Route every chat through the Rigbox managed AI proxy: no API key in the VM,
 # usage is metered against workspace credits. Open WebUI reads
-# OPENAI_API_BASE_URL/OPENAI_API_KEY directly — both are injected by the
-# workspace env layer when `managed: true`.
+# OPENAI_API_BASE_URL/OPENAI_API_KEY; start.sh maps the injected OPENAI_BASE_URL
+# to the URL variable Open WebUI expects.
 ai:
   managed: true
 env:
