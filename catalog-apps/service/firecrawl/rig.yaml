@@ -2,7 +2,7 @@ name: firecrawl
 port: 3002
 # Firecrawl runs api + playwright + postgres-17 + redis + rabbitmq + a
 # headless chromium in one VM. The dropped template hinted 4GB; we give it
-# 4.5GB + 8GB disk to leave headroom for crawls and the playwright cache.
+# 4.5GB + 12GB disk to leave headroom for crawls and the playwright cache.
 workspace:
   # diskSizeMb holds the frozen install (~6GB: two node_modules trees,
   # Chromium, the apt stack) and sizes the builder VM that produces it.

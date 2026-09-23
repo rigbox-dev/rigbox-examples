@@ -54,7 +54,7 @@ The deploy is **hybrid** — the image carries the whole stack, rsync carries
 
 > This install lands around **6GB** (node_modules for two apps + Chromium + the
 > apt stack). The builder takes its disk from `workspace.resources.diskSizeMb`,
-> which is `8192` here to leave headroom for it; see the repo README.
+> which is `12288` here to leave headroom for it; see the repo README.
 
 ## Credentials + first-boot database init
 
@@ -82,6 +82,9 @@ rsyncs in with the app and on every boot:
 Everything Postgres writes at runtime lives on the workspace disk at
 `/var/lib/postgresql/17/main`, so your scraped data survives redeploys — a
 cached-image redeploy boots the existing disk and only rsyncs code.
+
+`OPENAI_API_KEY` and `PROXY_PASSWORD` are optional. Set them only when enabling
+the corresponding AI or proxy features; the default deployment requires neither.
 
 ## Using it
 
