@@ -40,8 +40,9 @@ reproducible: true
 install: |
   set -euo pipefail
   export HERMES_HOME=/home/developer/.hermes
-  curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
-    | bash -s -- --skip-setup
+  HERMES_COMMIT=f6b17351a42839d24880a2e8f7f609cc2d1a0140
+  curl -fsSL "https://raw.githubusercontent.com/NousResearch/hermes-agent/${HERMES_COMMIT}/scripts/install.sh" \
+    | bash -s -- --skip-setup --commit "$HERMES_COMMIT" --force-commit
   …                                       # npm ci && npm run build → hermes_cli/web_dist/
   …                                       # trim install-only caches, ensure ~/.local/bin/hermes
 ```
@@ -87,9 +88,11 @@ SSH in once and run `hermes gateway enable telegram && systemctl --user enable
 - **Pinned upstream.** The installer and checkout use the `HERMES_COMMIT` in
   `rig.yaml`. Update that pin together with the dashboard startup contract.
 
-- **Persistence: yes.** Hermes' session state, encryption material, and the
-  `.env` live under `$HERMES_HOME=/home/developer/.hermes` (outside the rsync
-  zone), so redeploys preserve your config and chat history.
+- **Persistence.** Hermes' session state, encryption material, and `.env`
+  live under `$HERMES_HOME=/home/developer/.hermes`. Local code-only redeploys
+  preserve them, but GitHub image deployments replace the root filesystem.
+  Back up this directory before an image deployment if it contains data you
+  need to retain.
 - **Dashboard authentication.** `start.sh` hashes the generated password at
   startup and configures Hermes' supported username/password provider. The
   app remains private behind Rigbox authentication as well.

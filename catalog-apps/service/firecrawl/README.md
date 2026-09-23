@@ -79,9 +79,10 @@ rsyncs in with the app and on every boot:
    `ai_proxy_mode` / `proxy_*` params.
 4. Exec's the api harness: `node apps/api/dist/src/harness.js --start-built`.
 
-Everything Postgres writes at runtime lives on the workspace disk at
-`/var/lib/postgresql/17/main`, so your scraped data survives redeploys — a
-cached-image redeploy boots the existing disk and only rsyncs code.
+Postgres writes runtime data to `/var/lib/postgresql/17/main`. Local code-only
+redeploys preserve that directory, but GitHub image deployments replace the
+root filesystem. Back up the database before an image deployment if it contains
+data you need to retain.
 
 `OPENAI_API_KEY` and `PROXY_PASSWORD` are optional. Set them only when enabling
 the corresponding AI or proxy features; the default deployment requires neither.
