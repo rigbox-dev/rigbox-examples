@@ -1,6 +1,6 @@
 name: hermes-agent
-# Hermes' dashboard binds 0.0.0.0:9119 and refuses non-loopback without
-# `--insecure`. The trust boundary is the rigbox subdomain layer.
+# Hermes requires dashboard authentication when listening outside loopback.
+# Rigbox generates the login password and stable session-signing secret.
 port: 9119
 # Playwright plus uv-managed Python 3.11, Node 22, and a pre-built Vite SPA
 # bundle — the install footprint is heavier than the catalog minimum, so bump
@@ -65,8 +65,11 @@ install: |
 
   touch "$HERMES_HOME/.env"
   chmod 600 "$HERMES_HOME/.env"
-start: >-
-  /home/developer/.local/bin/hermes dashboard --host 0.0.0.0 --port 9119 --no-open --insecure
+start: bash start.sh
+visibility: private
+credentials:
+  dashboard_password: { generate: true }
+  dashboard_session_secret: { generate: true }
 health:
   # The only public (no-session-token) endpoint on the dashboard.
   path: /api/status
@@ -79,6 +82,11 @@ env:
   HERMES_HOME: /home/developer/.hermes
   PATH: /home/developer/.local/bin:/usr/local/bin:/usr/bin:/bin
 params:
+  - key: dashboard_username
+    type: string
+    label: Dashboard username
+    default: admin
+    envVar: DASHBOARD_USERNAME
   - key: ai_provider
     type: select
     label: Default provider
