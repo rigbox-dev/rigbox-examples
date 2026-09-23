@@ -84,6 +84,9 @@ SSH in once and run `hermes gateway enable telegram && systemctl --user enable
 
 ## Notes
 
+- **Pinned upstream.** The installer and checkout use the `HERMES_COMMIT` in
+  `rig.yaml`. Update that pin together with the dashboard startup contract.
+
 - **Persistence: yes.** Hermes' session state, encryption material, and the
   `.env` live under `$HERMES_HOME=/home/developer/.hermes` (outside the rsync
   zone), so redeploys preserve your config and chat history.

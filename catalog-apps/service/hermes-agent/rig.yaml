@@ -31,8 +31,9 @@ install: |
   # script runs as `developer`, which is what the upstream installer expects.
   export HERMES_HOME=/home/developer/.hermes
   mkdir -p "$HERMES_HOME"
-  curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
-    | bash -s -- --skip-setup
+  HERMES_COMMIT=f6b17351a42839d24880a2e8f7f609cc2d1a0140
+  curl -fsSL "https://raw.githubusercontent.com/NousResearch/hermes-agent/${HERMES_COMMIT}/scripts/install.sh" \
+    | bash -s -- --skip-setup --commit "$HERMES_COMMIT" --force-commit
 
   # Pre-build the dashboard SPA — `hermes dashboard` would otherwise run
   # `npm ci && npm run build` lazily on the first request, blowing the
