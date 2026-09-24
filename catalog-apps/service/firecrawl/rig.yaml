@@ -181,7 +181,8 @@ install: |
   # ---------------------------------------------------------------------------
   # 10. Prune build caches + the toolchains we installed (only used at build).
   # ---------------------------------------------------------------------------
-  rm -rf "$HOME/.cache/go-build" "$HOME/go" "$HOME/.npm/_cacache" "$HOME/.npm/_logs"
+  go clean -cache -modcache
+  rm -rf "$HOME/.npm/_cacache" "$HOME/.npm/_logs"
   pnpm store prune </dev/null || true
   sudo rm -rf /root/.npm /usr/local/cargo /usr/local/rustup /usr/local/go /usr/local/bin/go /usr/local/bin/gofmt
 # start.sh rsyncs in with the app: it ensures postgres is up, creates the
