@@ -2,7 +2,7 @@ name: firecrawl
 port: 3002
 # Firecrawl runs api + playwright + postgres-17 + redis + rabbitmq + a
 # headless chromium in one VM. The dropped template hinted 4GB; we give it
-# 4.5GB + 8GB disk to leave headroom for crawls and the playwright cache.
+# 4.5GB + 12GB disk to leave headroom for crawls and the playwright cache.
 workspace:
   # diskSizeMb holds the frozen install (~6GB: two node_modules trees,
   # Chromium, the apt stack) and sizes the builder VM that produces it.
@@ -13,8 +13,8 @@ workspace:
 # builder VM (apt services, firecrawl@v2.9.0 + node_modules, chromium under
 # /opt/pw-browsers, the playwright sidecar unit), snapshots the rootfs, and
 # later deploys with unchanged inputs boot from the cached image.
-# Footprint note: the builder VM boots with the platform default 3GB disk and
-# this install lands around 6GB — see the README.
+# The builder uses the workspace disk size above; this install lands around
+# 6GB before runtime data — see the README.
 reproducible: true
 install: |
   set -euo pipefail
@@ -41,6 +41,8 @@ install: |
   # Build-only env. sudo resets the environment, so DEBIAN_FRONTEND is also
   # passed inline on every apt line below.
   export DEBIAN_FRONTEND=noninteractive
+  export CI=true
+  export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
   export PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 
   # ---------------------------------------------------------------------------
@@ -120,19 +122,19 @@ install: |
   # 6. Build the Go html-to-markdown shared library.
   # ---------------------------------------------------------------------------
   (cd /home/developer/firecrawl/apps/api/sharedLibs/go-html-to-md \
-    && go build -buildmode=c-shared -o html-to-markdown.so html-to-markdown.go)
+    && go build -buildmode=c-shared -o libhtml-to-markdown.so html-to-markdown.go)
 
   # ---------------------------------------------------------------------------
   # 7. pnpm install + build api + playwright-service-ts (as developer).
   # --no-frozen-lockfile because v2.9.0's lockfile has an overrides mismatch.
   # ---------------------------------------------------------------------------
   (cd /home/developer/firecrawl/apps/api \
-    && pnpm install --no-frozen-lockfile \
-    && pnpm run build \
-    && { pnpm prune --prod --ignore-scripts || true; })
+    && pnpm install --no-frozen-lockfile </dev/null \
+    && pnpm run build </dev/null \
+    && pnpm prune --prod --ignore-scripts </dev/null)
   (cd /home/developer/firecrawl/apps/playwright-service-ts \
-    && pnpm install --no-frozen-lockfile \
-    && pnpm run build)
+    && pnpm install --no-frozen-lockfile </dev/null \
+    && pnpm run build </dev/null)
 
   # ---------------------------------------------------------------------------
   # 8. Playwright chromium under /opt/pw-browsers (world-readable so the dev
@@ -169,11 +171,19 @@ install: |
   EOF
   sudo systemctl enable firecrawl-playwright.service
 
+  test -s /home/developer/firecrawl/apps/api/dist/src/harness.js
+  test -s /home/developer/firecrawl/apps/api/sharedLibs/go-html-to-md/libhtml-to-markdown.so
+  test -s /home/developer/firecrawl/apps/playwright-service-ts/dist/api.js
+  test -s /etc/systemd/system/firecrawl-playwright.service
+  (cd /home/developer/firecrawl/apps/playwright-service-ts \
+    && test -x "$(node -e 'console.log(require("playwright").chromium.executablePath())')")
+
   # ---------------------------------------------------------------------------
   # 10. Prune build caches + the toolchains we installed (only used at build).
   # ---------------------------------------------------------------------------
-  rm -rf "$HOME/.cache/go-build" "$HOME/go" "$HOME/.npm/_cacache" "$HOME/.npm/_logs"
-  pnpm store prune || true
+  go clean -cache -modcache
+  rm -rf "$HOME/.npm/_cacache" "$HOME/.npm/_logs"
+  pnpm store prune </dev/null || true
   sudo rm -rf /root/.npm /usr/local/cargo /usr/local/rustup /usr/local/go /usr/local/bin/go /usr/local/bin/gofmt
 # start.sh rsyncs in with the app: it ensures postgres is up, creates the
 # firecrawl role + DB if missing, loads the nuq schema once, then exec's the
@@ -216,7 +226,9 @@ params:
     envVar: PROXY_USERNAME
 secrets:
   - name: OPENAI_API_KEY
+    optional: true
   - name: PROXY_PASSWORD
+    optional: true
 credentials:
   # All three are generated on first deploy and shown once. They land in
   # /home/developer/.firecrawl/.env on every boot via start.sh.

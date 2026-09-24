@@ -1,5 +1,6 @@
 name: open-webui
 port: 8080
+visibility: private
 # Open WebUI + a uv-managed Python 3.12 + the CPU torch wheel — the install
 # footprint is sizeable, so the workspace disk is bumped well past the catalog
 # minimum.
@@ -46,17 +47,14 @@ install: |
 
   rm -rf "$APP_HOME/.uv-cache" "$APP_HOME/tmp" "$HOME/.cache/uv"
   mkdir -p "$APP_HOME/tmp"
-# Exec the open-webui binary straight out of the frozen venv — no wrapper, no
-# shell rc files, no PATH munging at boot.
-start: >-
-  /home/developer/.open-webui/venv/bin/open-webui serve --host 0.0.0.0 --port 8080
+start: bash start.sh
 health:
   path: /health
   timeoutSeconds: 600
 # Route every chat through the Rigbox managed AI proxy: no API key in the VM,
 # usage is metered against workspace credits. Open WebUI reads
-# OPENAI_API_BASE_URL/OPENAI_API_KEY directly — both are injected by the
-# workspace env layer when `managed: true`.
+# OPENAI_API_BASE_URL/OPENAI_API_KEY; start.sh maps the injected OPENAI_BASE_URL
+# to the URL variable Open WebUI expects.
 ai:
   managed: true
 env:
@@ -67,6 +65,7 @@ env:
   # ENABLE_SIGNUP if you want a multi-user instance.
   WEBUI_AUTH: "True"
   ENABLE_SIGNUP: "False"
+  ENABLE_INITIAL_ADMIN_SIGNUP: "False"
   # Disable the Ollama integration entirely — we're proxy-only here.
   ENABLE_OPENAI_API: "True"
   ENABLE_OLLAMA_API: "False"
@@ -74,10 +73,13 @@ env:
   DEFAULT_MODELS: rigbox/free
   DEFAULT_PINNED_MODELS: rigbox/free,qwen/qwen3-coder:free,meta-llama/llama-3.3-70b-instruct:free
   DEFAULT_MODEL_PARAMS: '{"max_tokens":4096}'
+params:
+  - key: admin_email
+    type: string
+    label: Admin email
+    description: Email used for the initial administrator login.
+    default: admin@example.com
+    envVar: WEBUI_ADMIN_EMAIL
 credentials:
-  # First-boot admin login. `generate: true` mints a strong password once and
-  # exposes it as $CRED_ADMIN_PASSWORD in the workspace; Open WebUI maps that
-  # to WEBUI_ADMIN_PASSWORD via the catalog item — here you can map it the
-  # same way, or just read the credential from `rig app credentials get`.
   admin_password:
     generate: true

@@ -35,12 +35,13 @@ notebooks you put next to `rig.yaml`:
 - **Later `rig deploy`**: if the build inputs (`install:` script, base image)
   are unchanged, it **reuses the cached image** — no pip re-run, fast.
 
-## Persistence (survives redeploys)
+## Persistence
 
 The notebook root is pointed at `$DATA_DIR=/home/developer/data` via
 `--notebook-dir`. `$DATA_DIR` is **outside the rsync zone** — the synced app
-dir is wiped and re-rsynced on every deploy, but `$DATA_DIR` is not. So every
-`.ipynb` you create stays put across redeploys.
+directory is replaced during code-only redeploys, while notebooks remain.
+Re-imaging replaces the root filesystem, including `$DATA_DIR`.
+Back up your notebooks before an image deployment.
 
 ## Deploy
 
@@ -53,8 +54,8 @@ No required env — everything is set in `rig.yaml`.
 
 ## Notes
 
-- **Persistence: yes.** Notebooks live under `$DATA_DIR` (`--notebook-dir`),
-  outside the rsync zone — durable across redeploys.
+- **Persistence.** Notebooks live under `$DATA_DIR` (`--notebook-dir`).
+  Back them up before an image replacement.
 - **Health:** `GET /api/status` → 200 (JupyterLab's built-in liveness endpoint).
   The process binds `0.0.0.0:8888`.
 - **`--IdentityProvider.token=''` is intentional.** The app is private by

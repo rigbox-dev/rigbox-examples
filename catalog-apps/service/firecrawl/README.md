@@ -54,7 +54,7 @@ The deploy is **hybrid** — the image carries the whole stack, rsync carries
 
 > This install lands around **6GB** (node_modules for two apps + Chromium + the
 > apt stack). The builder takes its disk from `workspace.resources.diskSizeMb`,
-> which is `8192` here to leave headroom for it; see the repo README.
+> which is `12288` here to leave headroom for it; see the repo README.
 
 ## Credentials + first-boot database init
 
@@ -77,11 +77,15 @@ rsyncs in with the app and on every boot:
    the `nuq` schema if missing.
 3. Writes `/home/developer/.firecrawl/.env` from the credentials + the user's
    `ai_proxy_mode` / `proxy_*` params.
-4. Exec's the api harness: `node apps/api/dist/src/harness.js --start-built`.
+4. Starts the compiled services without rebuilding dependencies, using upstream’s production-image mode: `node apps/api/dist/src/harness.js --start-docker`.
 
-Everything Postgres writes at runtime lives on the workspace disk at
-`/var/lib/postgresql/17/main`, so your scraped data survives redeploys — a
-cached-image redeploy boots the existing disk and only rsyncs code.
+Postgres writes runtime data to `/var/lib/postgresql/17/main`. Code-only
+redeploys preserve that directory, but re-imaging replaces the
+root filesystem. Back up the database before an image deployment if it contains
+data you need to retain.
+
+`OPENAI_API_KEY` and `PROXY_PASSWORD` are optional. Set them only when enabling
+the corresponding AI or proxy features; the default deployment requires neither.
 
 ## Using it
 
@@ -108,3 +112,8 @@ Later deploys reuse the cached image and are fast.
 ## Deployment strategy
 
 This example explicitly uses `workspace.deployment.strategy: image` because its installer changes system packages, global executable paths, or shared tool configuration. The badge review shows image replacement and requires permission before replacing an existing workspace root filesystem. It is not an incremental app release. Use a dedicated workspace and back up root-filesystem development files; persistent volumes are retained. Migrating this installer to app-local releases remains separate work.
+
+The installer runs pnpm noninteractively with closed stdin, then verifies the API,
+Playwright service, Chromium executable, and systemd unit before publishing the
+image. This prevents a dependency-manager prompt from consuming the remaining
+installer commands and producing an incomplete image.

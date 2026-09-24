@@ -2,6 +2,7 @@ name: openclaw-gateway
 # OpenClaw's gateway listens on 18789 and speaks WebSocket. The rigbox
 # subdomain layer routes wss:// → 18789 inside the VM.
 port: 18789
+visibility: private
 workspace:
   resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
   deployment:
@@ -37,6 +38,7 @@ start: bash start.sh
 ai:
   managed: true
 env:
+  OPENCLAW_PUBLIC_ORIGIN: https://{SUBDOMAIN}.rigbox.dev
   NODE_OPTIONS: --max-old-space-size=2048
   NODE_COMPILE_CACHE: /home/developer/.cache/nodejs
   PATH: /home/developer/.npm-global/bin:/home/developer/.local/bin:/usr/local/bin:/usr/bin:/bin

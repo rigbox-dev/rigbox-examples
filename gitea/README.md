@@ -60,9 +60,9 @@ which would hang the health check forever. This example boots **headless**:
 So Gitea comes up clean, binds `0.0.0.0:8080`, and `GET /api/healthz` goes green
 without any human in the loop.
 
-## Persistence (survives redeploys)
+## Persistence
 
-The synced app dir is wiped and re-rsynced on every deploy, so all durable state
+The synced app dir is wiped and re-rsynced on every deploy, so runtime state
 lives under `DATA_DIR=/home/developer/data` (outside the rsync zone):
 
 - **SQLite DB** → `$DATA_DIR/gitea.db`
@@ -71,7 +71,8 @@ lives under `DATA_DIR=/home/developer/data` (outside the rsync zone):
   `INTERNAL_TOKEN`, LFS, sessions, logs) → `$DATA_DIR/gitea`
 
 `start.sh` `mkdir -p`s these on boot (a fresh workspace won't have them), then
-`exec gitea web`. Redeploy and your repos + accounts are still there.
+`exec gitea web`. Code-only redeploys preserve these paths. Re-imaging replaces the root filesystem, including accounts and repositories;
+back up these paths before an image deployment.
 
 ## Deploy
 
@@ -90,13 +91,13 @@ No required env — everything is set in `rig.yaml`.
   `gitea admin user create --admin …`; `GITEA_WORK_DIR` is already set in env.)
 - Create a repo, then clone it over the app subdomain — that's the persisted
   `$DATA_DIR/repositories` tree.
-- Redeploy (`rig deploy`) and confirm your repos + login **survive** — that's
-  `$DATA_DIR` outliving the rsync wipe.
+- Back up `$DATA_DIR` before an image replacement. Code-only
+  redeploys preserve it.
 
 ## Notes
 
-- **Persistence: yes.** SQLite + repos + work dir under `$DATA_DIR`, durable
-  across redeploys.
+- **Persistence.** SQLite, repositories, and the work directory live under
+  `$DATA_DIR`; image deployments require a backup.
 - Health: `GET /api/healthz` → 2xx; the process binds `0.0.0.0:8080`.
 - Wizard: bypassed via `INSTALL_LOCK = true` in the generated `app.ini`.
 - Stack: Gitea (single static Go binary), pinned + checksum-verified in the

@@ -33,12 +33,12 @@ VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 - **Later `rig deploy`**: if the build inputs (`install:` script, base image)
   are unchanged, it **reuses the cached image** — no pip re-run, fast.
 
-## Persistence (survives redeploys)
+## Persistence
 
 `marimo edit` is pointed at `$DATA_DIR=/home/developer/data` as its working
 directory. `$DATA_DIR` is **outside the rsync zone** — the synced app dir is
-wiped and re-rsynced on every deploy, but `$DATA_DIR` is not. So every notebook
-`.py` you save stays put across redeploys.
+replaced during code-only redeploys, while notebook files remain. Re-imaging replaces the root filesystem, including `$DATA_DIR`. Back up
+your notebooks before an image deployment.
 
 ## Deploy
 
@@ -51,8 +51,8 @@ No required env — everything is set in `rig.yaml`.
 
 ## Notes
 
-- **Persistence: yes.** Notebooks live under `$DATA_DIR` (Marimo's working
-  directory), outside the rsync zone — durable across redeploys.
+- **Persistence.** Notebooks live under `$DATA_DIR` (Marimo's working
+  directory). Back them up before an image replacement.
 - **Health:** `GET /health` → 200 (Marimo's built-in healthcheck). The process
   binds `0.0.0.0:2718`.
 - **`--no-token` is intentional.** The app is private by default and the

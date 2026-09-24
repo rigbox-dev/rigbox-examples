@@ -70,7 +70,6 @@ install: |
   import React from "react";
   import { createRoot } from "react-dom/client";
   import { Excalidraw } from "@excalidraw/excalidraw";
-  import "@excalidraw/excalidraw/index.css";
   const root = createRoot(document.getElementById("root"));
   root.render(<Excalidraw />);
   EOF
@@ -78,10 +77,10 @@ install: |
   # Install deps + build the static SPA. `serve` stays in node_modules so the
   # start command can find it at /opt/excalidraw/node_modules/.bin/serve.
   npm install --no-audit --no-fund \
-    react react-dom \
+    react@18.3.1 react-dom@18.3.1 \
     "@excalidraw/excalidraw@${EXCALIDRAW_VERSION}" \
-    vite @vitejs/plugin-react \
-    serve
+    vite@8.3.0 @vitejs/plugin-react@6.1.1 \
+    serve@14.2.6
   npx vite build
   npm cache clean --force
 # Serve the prebuilt SPA. --no-clipboard matches the catalog (the Rigbox proxy

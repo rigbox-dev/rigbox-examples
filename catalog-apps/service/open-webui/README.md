@@ -16,9 +16,9 @@ ai:
   managed: true
 ```
 
-That makes the workspace inject `OPENAI_API_BASE_URL` pointed at the Rigbox
-proxy and `OPENAI_API_KEY=managed-by-rigbox` into the VM env. Open WebUI reads
-both natively — it thinks it's talking to OpenAI. The proxy authenticates,
+That injects `OPENAI_BASE_URL` pointing at the Rigbox proxy and
+`OPENAI_API_KEY=managed-by-rigbox`. `start.sh` maps the URL to
+`OPENAI_API_BASE_URL`, which Open WebUI reads. The proxy authenticates,
 **meters credits against your workspace**, and forwards to whichever
 OpenRouter model the chat picked. No `.env`, no rate-limit guesswork, no key
 rotation.
@@ -48,8 +48,8 @@ install: |
 
 No Dockerfile — `install:` is the same script a plain deploy would run on the
 VM (as `developer`, who owns `$APP_HOME`, so no `sudo` is needed here);
-`reproducible: true` is what makes `rig deploy` freeze its result. `start:`
-execs the binary straight out of the frozen venv — no wrapper, no PATH munging.
+`reproducible: true` is what makes `rig deploy` freeze its result. `start.sh`
+passes the generated admin credential to Open WebUI and runs the frozen binary.
 
 ## Reproducible deploy + the hybrid model
 
@@ -71,13 +71,17 @@ execs the binary straight out of the frozen venv — no wrapper, no PATH munging
 cd open-webui && rig deploy
 ```
 
-Then open the app's Rigbox subdomain, register the first account (it becomes
-admin because `ENABLE_SIGNUP: False` flips off after the first user), and chat.
+Open the app's private Rigbox subdomain and sign in with `admin@example.com`
+(or your `admin_email` parameter) and the generated `admin_password` credential
+shown by Rigbox. Open WebUI creates this administrator on first boot; public
+account registration is disabled.
 
 ## Notes
 
-- **Persistence: yes.** `webui.db` (chat history + config) lives under
-  `DATA_DIR=/home/developer/.open-webui/data`, outside the rsync zone.
+- **Persistence.** `webui.db` lives under
+  `DATA_DIR=/home/developer/.open-webui/data`. Code-only redeploys preserve
+  it; re-imaging replaces the root filesystem. Back it up before
+  an image deployment if you need to retain chat history and configuration.
 - **`ENABLE_SIGNUP=False`** keeps this single-tenant. Drop it for multi-user.
 - **Health probe**: `GET /health` once the SvelteKit bundle is built; the
   `timeoutSeconds: 600` covers the first-boot DB migration on a cold start.

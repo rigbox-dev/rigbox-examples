@@ -73,8 +73,9 @@ via `OPENROUTER_API_KEY` if you want to bypass managed credits.
 
 ## Notes
 
-- **Persistence: yes.** T3 stores chats and per-agent state under
-  `~/.t3` (outside the rsync zone), so they survive redeploys.
+- **Persistence.** T3 stores chats and per-agent state under `~/.t3`. Local
+  code-only redeploys preserve it; re-imaging replaces the root
+  filesystem. Back up this directory before an image deployment.
 - **Why `--mode web`.** Hosted T3 stays in web mode even though we generate a
   desktop bootstrap token in the upstream catalog item — the in-browser UI is
   the front door here, not Electron.

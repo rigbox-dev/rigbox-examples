@@ -5,7 +5,7 @@
 [File Browser](https://filebrowser.org/) is a tiny self-hosted file manager —
 upload, download, preview, edit, and share the files in a directory through a
 clean web UI. It ships as a single static Go binary. This example runs it on
-Rigbox unchanged, pointed at the workspace's persistent data dir.
+Rigbox unchanged, pointed at the workspace's data directory.
 
 ## The single capability: run File Browser reproducibly on Rigbox
 
@@ -28,11 +28,13 @@ install: |
 No Dockerfile — `install:` is the same script a plain deploy would run on the
 VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
-## Persistence (survives redeploys)
+## Persistence
 
 File Browser serves `--root /home/developer/data` and keeps its SQLite database
 at `$DATA_DIR/filebrowser/filebrowser.db`. `$DATA_DIR` is **outside the rsync
-zone**, so uploads, edits, and the user/share database persist across redeploys.
+zone**, so code-only redeploys preserve uploads, edits, and the user/share
+database. Re-imaging replaces the root filesystem. Back up
+`$DATA_DIR` before an image deployment.
 
 ## Default login
 

@@ -40,8 +40,9 @@ reproducible: true
 install: |
   set -euo pipefail
   export HERMES_HOME=/home/developer/.hermes
-  curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
-    | bash -s -- --skip-setup
+  HERMES_COMMIT=f6b17351a42839d24880a2e8f7f609cc2d1a0140
+  curl -fsSL "https://raw.githubusercontent.com/NousResearch/hermes-agent/${HERMES_COMMIT}/scripts/install.sh" \
+    | bash -s -- --skip-setup --commit "$HERMES_COMMIT" --force-commit
   …                                       # npm ci && npm run build → hermes_cli/web_dist/
   …                                       # trim install-only caches, ensure ~/.local/bin/hermes
 ```
@@ -72,19 +73,29 @@ there, and the launcher shim is only rewritten when the installer truncated it.
 cd hermes-agent && rig deploy
 ```
 
-Then open the dashboard at the app's Rigbox subdomain. To bring up Telegram:
+Open the dashboard at the app's private Rigbox subdomain, then sign in with
+`admin` (or your `dashboard_username` parameter) and the generated
+`dashboard_password` credential shown by Rigbox. The generated
+`dashboard_session_secret` keeps login sessions stable across redeploys.
+
+To bring up Telegram:
 set the `telegram_bot_token` param (`rig app param set telegram_bot_token=…`),
 SSH in once and run `hermes gateway enable telegram && systemctl --user enable
 --now hermes-gateway.service`.
 
 ## Notes
 
-- **Persistence: yes.** Hermes' session state, encryption material, and the
-  `.env` live under `$HERMES_HOME=/home/developer/.hermes` (outside the rsync
-  zone), so redeploys preserve your config and chat history.
-- **Why `--insecure` in `start`.** Hermes' `web_server.start_server` refuses
-  non-loopback binds without it; the rigbox subdomain layer is the real trust
-  boundary. Don't drop it without auth-gating differently.
+- **Pinned upstream.** The installer and checkout use the `HERMES_COMMIT` in
+  `rig.yaml`. Update that pin together with the dashboard startup contract.
+
+- **Persistence.** Hermes' session state, encryption material, and `.env`
+  live under `$HERMES_HOME=/home/developer/.hermes`. Code-only redeploys
+  preserve them, but re-imaging replaces the root filesystem.
+  Back up this directory before an image deployment if it contains data you
+  need to retain.
+- **Dashboard authentication.** `start.sh` hashes the generated password at
+  startup and configures Hermes' supported username/password provider. The
+  app remains private behind Rigbox authentication as well.
 - **Health probe**: `GET /api/status` is the only endpoint that doesn't require
   a session token, so it's what the readiness probe hits.
 - **Browser automation.** `install:` trims `~/.cache/ms-playwright` along with

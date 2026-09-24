@@ -4,7 +4,7 @@
 
 Deploy two independent Python HTTP services on ports 8080 and 8081 in one workspace.
 
-Use the deploy button to fork this repository and create a workspace, or select an existing workspace and confirm root-filesystem replacement. Persistent volumes are retained.
+Use the deploy button to fork this repository and create a workspace, or select an existing workspace. Incremental deployment preserves the workspace filesystem and stages the apps in managed release directories.
 
 For local CLI deployment, run `rig deploy` from this directory.
 

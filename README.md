@@ -21,6 +21,8 @@ cd <example> && rig deploy
 | [`scheduled-digest/`](./scheduled-digest/) | TypeScript | a background worker loop + `/healthz` + a `number` param for the schedule |
 | [`url-shortener/`](./url-shortener/) | Python · Django | the **full validated param set** (url/string/number/boolean/select/email/secret/textarea) + SQLite migrations |
 | [`markdown-notes/`](./markdown-notes/) | Python · Flask | **persistent app data** + Markdown rendering |
+| [`multi-app/`](./multi-app/) | Python | two independent HTTP services in one workspace |
+| [`mixed-app/`](./mixed-app/) | Python | an HTTP service and an executable CLI in one workspace |
 
 Every example deploys with `rig deploy`. The manifest's explicit `workspace.deployment.strategy` selects **incremental app releases** or the advanced **image replacement** path. Incremental releases preserve the workspace and SSH sessions; only affected services restart.
 
