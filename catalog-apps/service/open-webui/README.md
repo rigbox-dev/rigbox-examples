@@ -79,8 +79,8 @@ account registration is disabled.
 ## Notes
 
 - **Persistence.** `webui.db` lives under
-  `DATA_DIR=/home/developer/.open-webui/data`. Local code-only redeploys preserve
-  it; GitHub image deployments replace the root filesystem. Back it up before
+  `DATA_DIR=/home/developer/.open-webui/data`. Code-only redeploys preserve
+  it; re-imaging replaces the root filesystem. Back it up before
   an image deployment if you need to retain chat history and configuration.
 - **`ENABLE_SIGNUP=False`** keeps this single-tenant. Drop it for multi-user.
 - **Health probe**: `GET /health` once the SvelteKit bundle is built; the

@@ -39,8 +39,8 @@ notebooks you put next to `rig.yaml`:
 
 The notebook root is pointed at `$DATA_DIR=/home/developer/data` via
 `--notebook-dir`. `$DATA_DIR` is **outside the rsync zone** — the synced app
-directory is replaced during local code-only redeploys, while notebooks remain.
-GitHub image deployments replace the root filesystem, including `$DATA_DIR`.
+directory is replaced during code-only redeploys, while notebooks remain.
+Re-imaging replaces the root filesystem, including `$DATA_DIR`.
 Back up your notebooks before an image deployment.
 
 ## Deploy
@@ -55,7 +55,7 @@ No required env — everything is set in `rig.yaml`.
 ## Notes
 
 - **Persistence.** Notebooks live under `$DATA_DIR` (`--notebook-dir`).
-  Back them up before a GitHub image deployment.
+  Back them up before an image replacement.
 - **Health:** `GET /api/status` → 200 (JupyterLab's built-in liveness endpoint).
   The process binds `0.0.0.0:8888`.
 - **`--IdentityProvider.token=''` is intentional.** The app is private by

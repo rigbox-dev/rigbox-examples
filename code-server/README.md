@@ -49,13 +49,13 @@ No required env — `DATA_DIR` is set in `rig.yaml`.
 - The **VS Code UI** in the browser — open a file, use the integrated terminal,
   install an extension.
 - The editor opens on `$DATA_DIR` (`/home/developer/data`) as its workspace
-  folder. Back up those files before GitHub image deployments.
+  folder. Back up those files before image replacement.
 
 ## Notes
 
 - **Persistence.** User data, settings, extensions, and edited files live under
-  `$DATA_DIR=/home/developer/data`. Local code-only redeploys preserve them;
-  GitHub image deployments replace the root filesystem. Back up this directory
+  `$DATA_DIR=/home/developer/data`. Code-only redeploys preserve them;
+  re-imaging replaces the root filesystem. Back up this directory
   before an image deployment.
 - **`--auth none` is intentional.** The app is private by default and the Rigbox
   gateway auth-gates anonymous traffic, so code-server's own password gate is

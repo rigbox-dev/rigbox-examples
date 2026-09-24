@@ -39,8 +39,7 @@ VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 There's no built-in app state in this example (Streamlit reruns from `app.py`
 on every interaction). `$DATA_DIR=/home/developer/data` is exported anyway
 for runtime files such as CSV uploads, SQLite databases, and cached models.
-Local code-only redeploys preserve this directory. GitHub image deployments
-replace the root filesystem; back up runtime files before an image deployment.
+Code-only redeploys preserve this directory. Re-imaging replaces the root filesystem; back up runtime files before an image deployment.
 
 ## Deploy
 

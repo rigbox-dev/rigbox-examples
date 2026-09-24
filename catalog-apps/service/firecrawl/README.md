@@ -79,8 +79,8 @@ rsyncs in with the app and on every boot:
    `ai_proxy_mode` / `proxy_*` params.
 4. Exec's the api harness: `node apps/api/dist/src/harness.js --start-built`.
 
-Postgres writes runtime data to `/var/lib/postgresql/17/main`. Local code-only
-redeploys preserve that directory, but GitHub image deployments replace the
+Postgres writes runtime data to `/var/lib/postgresql/17/main`. Code-only
+redeploys preserve that directory, but re-imaging replaces the
 root filesystem. Back up the database before an image deployment if it contains
 data you need to retain.
 

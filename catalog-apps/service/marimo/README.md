@@ -37,8 +37,7 @@ VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
 `marimo edit` is pointed at `$DATA_DIR=/home/developer/data` as its working
 directory. `$DATA_DIR` is **outside the rsync zone** — the synced app dir is
-replaced during local code-only redeploys, while notebook files remain. GitHub
-image deployments replace the root filesystem, including `$DATA_DIR`. Back up
+replaced during code-only redeploys, while notebook files remain. Re-imaging replaces the root filesystem, including `$DATA_DIR`. Back up
 your notebooks before an image deployment.
 
 ## Deploy
@@ -53,7 +52,7 @@ No required env — everything is set in `rig.yaml`.
 ## Notes
 
 - **Persistence.** Notebooks live under `$DATA_DIR` (Marimo's working
-  directory). Back them up before a GitHub image deployment.
+  directory). Back them up before an image replacement.
 - **Health:** `GET /health` → 200 (Marimo's built-in healthcheck). The process
   binds `0.0.0.0:2718`.
 - **`--no-token` is intentional.** The app is private by default and the

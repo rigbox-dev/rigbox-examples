@@ -89,8 +89,8 @@ SSH in once and run `hermes gateway enable telegram && systemctl --user enable
   `rig.yaml`. Update that pin together with the dashboard startup contract.
 
 - **Persistence.** Hermes' session state, encryption material, and `.env`
-  live under `$HERMES_HOME=/home/developer/.hermes`. Local code-only redeploys
-  preserve them, but GitHub image deployments replace the root filesystem.
+  live under `$HERMES_HOME=/home/developer/.hermes`. Code-only redeploys
+  preserve them, but re-imaging replaces the root filesystem.
   Back up this directory before an image deployment if it contains data you
   need to retain.
 - **Dashboard authentication.** `start.sh` hashes the generated password at

@@ -71,8 +71,7 @@ lives under `DATA_DIR=/home/developer/data` (outside the rsync zone):
   `INTERNAL_TOKEN`, LFS, sessions, logs) → `$DATA_DIR/gitea`
 
 `start.sh` `mkdir -p`s these on boot (a fresh workspace won't have them), then
-`exec gitea web`. Local code-only redeploys preserve these paths. GitHub image
-deployments replace the root filesystem, including accounts and repositories;
+`exec gitea web`. Code-only redeploys preserve these paths. Re-imaging replaces the root filesystem, including accounts and repositories;
 back up these paths before an image deployment.
 
 ## Deploy
@@ -92,7 +91,7 @@ No required env — everything is set in `rig.yaml`.
   `gitea admin user create --admin …`; `GITEA_WORK_DIR` is already set in env.)
 - Create a repo, then clone it over the app subdomain — that's the persisted
   `$DATA_DIR/repositories` tree.
-- Back up `$DATA_DIR` before a GitHub image deployment. Local code-only
+- Back up `$DATA_DIR` before an image replacement. Code-only
   redeploys preserve it.
 
 ## Notes

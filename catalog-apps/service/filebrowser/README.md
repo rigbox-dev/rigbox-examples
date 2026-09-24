@@ -32,8 +32,8 @@ VM; `reproducible: true` is what makes `rig deploy` freeze its result.
 
 File Browser serves `--root /home/developer/data` and keeps its SQLite database
 at `$DATA_DIR/filebrowser/filebrowser.db`. `$DATA_DIR` is **outside the rsync
-zone**, so local code-only redeploys preserve uploads, edits, and the user/share
-database. GitHub image deployments replace the root filesystem. Back up
+zone**, so code-only redeploys preserve uploads, edits, and the user/share
+database. Re-imaging replaces the root filesystem. Back up
 `$DATA_DIR` before an image deployment.
 
 ## Default login
