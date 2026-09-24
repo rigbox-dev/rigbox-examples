@@ -49,14 +49,14 @@ No required env — `DATA_DIR` is set in `rig.yaml`.
 - The **VS Code UI** in the browser — open a file, use the integrated terminal,
   install an extension.
 - The editor opens on `$DATA_DIR` (`/home/developer/data`) as its workspace
-  folder, so the files you create there persist.
+  folder. Back up those files before GitHub image deployments.
 
 ## Notes
 
-- **Persistence: yes.** code-server's user data, settings, and extensions live
-  under `$DATA_DIR=/home/developer/data` (`--user-data-dir` / `--extensions-dir`),
-  which is **outside the rsync zone** — they survive redeploys. The editor also
-  opens on `$DATA_DIR`, so files you edit there stay put.
+- **Persistence.** User data, settings, extensions, and edited files live under
+  `$DATA_DIR=/home/developer/data`. Local code-only redeploys preserve them;
+  GitHub image deployments replace the root filesystem. Back up this directory
+  before an image deployment.
 - **`--auth none` is intentional.** The app is private by default and the Rigbox
   gateway auth-gates anonymous traffic, so code-server's own password gate is
   redundant — the gateway is the front door. Don't set this app `public` without
