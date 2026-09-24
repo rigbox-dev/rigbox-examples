@@ -19,16 +19,16 @@ ENV_FILE="$ENV_DIR/.env"
 # Ensure system services are up. `install:` installed but didn't enable them
 # across reboots; do it idempotently here.
 # ---------------------------------------------------------------------------
-systemctl enable --now postgresql@17-main
-systemctl enable --now redis-server
-systemctl enable --now rabbitmq-server
-systemctl enable --now firecrawl-playwright.service
+sudo systemctl enable --now postgresql@17-main
+sudo systemctl enable --now redis-server
+sudo systemctl enable --now rabbitmq-server
+sudo systemctl enable --now firecrawl-playwright.service
 
 # ---------------------------------------------------------------------------
 # Wait for postgres to accept connections on the firecrawl port.
 # ---------------------------------------------------------------------------
 for _ in $(seq 1 30); do
-    if su - postgres -c "pg_isready -q -p ${PG_PORT}" 2>/dev/null; then
+    if sudo -u postgres bash -c "pg_isready -q -p ${PG_PORT}" 2>/dev/null; then
         break
     fi
     sleep 1
@@ -42,11 +42,11 @@ done
 : "${CRED_BULL_AUTH_KEY:?CRED_BULL_AUTH_KEY must be set}"
 : "${CRED_API_KEY:?CRED_API_KEY must be set}"
 
-ROLE_EXISTS=$(su - postgres -c "psql -p ${PG_PORT} -tAc \"SELECT 1 FROM pg_roles WHERE rolname='firecrawl'\"" 2>/dev/null || true)
+ROLE_EXISTS=$(sudo -u postgres bash -c "psql -p ${PG_PORT} -tAc \"SELECT 1 FROM pg_roles WHERE rolname='firecrawl'\"" 2>/dev/null || true)
 if [ "$ROLE_EXISTS" = "1" ]; then
-    su - postgres -c "psql -p ${PG_PORT} -c \"ALTER ROLE firecrawl WITH PASSWORD '${CRED_POSTGRES_PASSWORD}';\""
+    sudo -u postgres bash -c "psql -p ${PG_PORT} -c \"ALTER ROLE firecrawl WITH PASSWORD '${CRED_POSTGRES_PASSWORD}';\""
 else
-    su - postgres -c "psql -p ${PG_PORT} -v ON_ERROR_STOP=0" <<SQL
+    sudo -u postgres bash -c "psql -p ${PG_PORT} -v ON_ERROR_STOP=0" <<SQL
 DO \$\$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'firecrawl') THEN
@@ -64,7 +64,7 @@ fi
 
 # Load nuq schema once, idempotent — the firecrawl repo ships it at one of a
 # few paths depending on the build, so probe.
-NUQ_LOADED=$(su - postgres -c "psql -p ${PG_PORT} -d firecrawl -tAc \"SELECT 1 FROM information_schema.schemata WHERE schema_name='nuq'\"" 2>/dev/null || true)
+NUQ_LOADED=$(sudo -u postgres bash -c "psql -p ${PG_PORT} -d firecrawl -tAc \"SELECT 1 FROM information_schema.schemata WHERE schema_name='nuq'\"" 2>/dev/null || true)
 if [ "$NUQ_LOADED" != "1" ]; then
     for cand in \
         "$FIRECRAWL_DIR/apps/nuq-postgres/nuq.sql" \
@@ -72,8 +72,8 @@ if [ "$NUQ_LOADED" != "1" ]; then
         "$FIRECRAWL_DIR/apps/api/nuq-schema.sql" \
         "$FIRECRAWL_DIR/apps/api/dist/schema.sql"; do
         if [ -f "$cand" ]; then
-            su - postgres -c "psql -p ${PG_PORT} -d firecrawl -f '$cand'" 2>&1 | tail -5 || true
-            su - postgres -c "psql -p ${PG_PORT} -d firecrawl -c 'GRANT ALL ON SCHEMA nuq TO firecrawl; GRANT ALL ON ALL TABLES IN SCHEMA nuq TO firecrawl; GRANT ALL ON ALL SEQUENCES IN SCHEMA nuq TO firecrawl; ALTER DEFAULT PRIVILEGES IN SCHEMA nuq GRANT ALL ON TABLES TO firecrawl;'" 2>&1 || true
+            sudo -u postgres bash -c "psql -p ${PG_PORT} -d firecrawl -f '$cand'" 2>&1 | tail -5 || true
+            sudo -u postgres bash -c "psql -p ${PG_PORT} -d firecrawl -c 'GRANT ALL ON SCHEMA nuq TO firecrawl; GRANT ALL ON ALL TABLES IN SCHEMA nuq TO firecrawl; GRANT ALL ON ALL SEQUENCES IN SCHEMA nuq TO firecrawl; ALTER DEFAULT PRIVILEGES IN SCHEMA nuq GRANT ALL ON TABLES TO firecrawl;'" 2>&1 || true
             break
         fi
     done
@@ -84,7 +84,7 @@ fi
 # so rotated credentials and patched params take effect.
 # ---------------------------------------------------------------------------
 mkdir -p "$ENV_DIR"
-chown developer:developer "$ENV_DIR"
+sudo chown developer:developer "$ENV_DIR"
 chmod 700 "$ENV_DIR"
 
 cat > "$ENV_FILE" <<EOF
@@ -121,7 +121,7 @@ if [ -n "${PROXY_PASSWORD:-}" ]; then
     echo "PROXY_PASSWORD=${PROXY_PASSWORD}" >> "$ENV_FILE"
 fi
 
-chown developer:developer "$ENV_FILE"
+sudo chown developer:developer "$ENV_FILE"
 chmod 600 "$ENV_FILE"
 
 # ---------------------------------------------------------------------------

@@ -13,8 +13,8 @@ workspace:
 # builder VM (apt services, firecrawl@v2.9.0 + node_modules, chromium under
 # /opt/pw-browsers, the playwright sidecar unit), snapshots the rootfs, and
 # later deploys with unchanged inputs boot from the cached image.
-# Footprint note: the builder VM boots with the platform default 3GB disk and
-# this install lands around 6GB — see the README.
+# The builder uses the workspace disk size above; this install lands around
+# 6GB before runtime data — see the README.
 reproducible: true
 install: |
   set -euo pipefail
