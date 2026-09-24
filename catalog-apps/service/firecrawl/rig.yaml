@@ -41,6 +41,8 @@ install: |
   # Build-only env. sudo resets the environment, so DEBIAN_FRONTEND is also
   # passed inline on every apt line below.
   export DEBIAN_FRONTEND=noninteractive
+  export CI=true
+  export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
   export PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 
   # ---------------------------------------------------------------------------
@@ -127,12 +129,12 @@ install: |
   # --no-frozen-lockfile because v2.9.0's lockfile has an overrides mismatch.
   # ---------------------------------------------------------------------------
   (cd /home/developer/firecrawl/apps/api \
-    && pnpm install --no-frozen-lockfile \
-    && pnpm run build \
-    && { pnpm prune --prod --ignore-scripts || true; })
+    && pnpm install --no-frozen-lockfile </dev/null \
+    && pnpm run build </dev/null \
+    && pnpm prune --prod --ignore-scripts </dev/null)
   (cd /home/developer/firecrawl/apps/playwright-service-ts \
-    && pnpm install --no-frozen-lockfile \
-    && pnpm run build)
+    && pnpm install --no-frozen-lockfile </dev/null \
+    && pnpm run build </dev/null)
 
   # ---------------------------------------------------------------------------
   # 8. Playwright chromium under /opt/pw-browsers (world-readable so the dev
@@ -169,11 +171,18 @@ install: |
   EOF
   sudo systemctl enable firecrawl-playwright.service
 
+  test -s /home/developer/firecrawl/apps/api/dist/src/harness.js
+  test -s /home/developer/firecrawl/apps/api/sharedLibs/go-html-to-md/html-to-markdown.so
+  test -s /home/developer/firecrawl/apps/playwright-service-ts/dist/api.js
+  test -s /etc/systemd/system/firecrawl-playwright.service
+  (cd /home/developer/firecrawl/apps/playwright-service-ts \
+    && test -x "$(node -e 'console.log(require("playwright").chromium.executablePath())')")
+
   # ---------------------------------------------------------------------------
   # 10. Prune build caches + the toolchains we installed (only used at build).
   # ---------------------------------------------------------------------------
   rm -rf "$HOME/.cache/go-build" "$HOME/go" "$HOME/.npm/_cacache" "$HOME/.npm/_logs"
-  pnpm store prune || true
+  pnpm store prune </dev/null || true
   sudo rm -rf /root/.npm /usr/local/cargo /usr/local/rustup /usr/local/go /usr/local/bin/go /usr/local/bin/gofmt
 # start.sh rsyncs in with the app: it ensures postgres is up, creates the
 # firecrawl role + DB if missing, loads the nuq schema once, then exec's the
