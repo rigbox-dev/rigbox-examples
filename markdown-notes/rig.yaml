@@ -1,23 +1,29 @@
-name: markdown-notes
-port: 8080
-# Light Flask + SQLite app — 1GB is plenty.
+apps:
+  markdown-notes:
+    port: 8080
+    install: |
+      python3 -m venv --copies .venv
+      .venv/bin/python -m pip install -r requirements.txt
+    start: .venv/bin/gunicorn --bind 0.0.0.0:8080 app:app
+    health:
+      path: /healthz
+      timeoutSeconds: 30
+    volumes: [ data ]
+    env:
+      DATA_DIR: /home/developer/data
+    dependencyInputs:
+      - requirements.txt
+    path: .
+    source:
+      kind: git
+      repo: https://github.com/rigbox-dev/rigbox-examples.git
+      branch: rigbox/deploy/ws-9idek9qt
 workspace:
-  resources: { ramMb: 1024, vcpuCount: 1, diskSizeMb: 3072 }
+  resources: { ramMb: 2048, vcpuCount: 2, diskSizeMb: 10240 }
   volumes:
     - name: data
       mountPath: /home/developer/data
       sizeMb: 1024
   deployment:
     strategy: incremental
-install: |
-  python3 -m venv --copies .venv
-  .venv/bin/python -m pip install -r requirements.txt
-start: .venv/bin/gunicorn --bind 0.0.0.0:8080 app:app
-health:
-  path: /healthz
-  timeoutSeconds: 30
-volumes: [ data ]
-env:
-  DATA_DIR: /home/developer/data
-dependencyInputs:
-  - requirements.txt
+  image: base
