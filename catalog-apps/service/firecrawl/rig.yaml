@@ -122,7 +122,7 @@ install: |
   # 6. Build the Go html-to-markdown shared library.
   # ---------------------------------------------------------------------------
   (cd /home/developer/firecrawl/apps/api/sharedLibs/go-html-to-md \
-    && go build -buildmode=c-shared -o html-to-markdown.so html-to-markdown.go)
+    && go build -buildmode=c-shared -o libhtml-to-markdown.so html-to-markdown.go)
 
   # ---------------------------------------------------------------------------
   # 7. pnpm install + build api + playwright-service-ts (as developer).
@@ -172,7 +172,7 @@ install: |
   sudo systemctl enable firecrawl-playwright.service
 
   test -s /home/developer/firecrawl/apps/api/dist/src/harness.js
-  test -s /home/developer/firecrawl/apps/api/sharedLibs/go-html-to-md/html-to-markdown.so
+  test -s /home/developer/firecrawl/apps/api/sharedLibs/go-html-to-md/libhtml-to-markdown.so
   test -s /home/developer/firecrawl/apps/playwright-service-ts/dist/api.js
   test -s /etc/systemd/system/firecrawl-playwright.service
   (cd /home/developer/firecrawl/apps/playwright-service-ts \

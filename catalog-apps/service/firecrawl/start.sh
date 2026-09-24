@@ -134,4 +134,4 @@ set -a
 set +a
 
 cd "$FIRECRAWL_DIR/apps/api"
-exec /usr/local/bin/node "$FIRECRAWL_DIR/apps/api/dist/src/harness.js" --start-built
+exec /usr/local/bin/node "$FIRECRAWL_DIR/apps/api/dist/src/harness.js" --start-docker

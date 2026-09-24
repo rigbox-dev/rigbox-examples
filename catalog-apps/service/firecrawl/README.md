@@ -77,7 +77,7 @@ rsyncs in with the app and on every boot:
    the `nuq` schema if missing.
 3. Writes `/home/developer/.firecrawl/.env` from the credentials + the user's
    `ai_proxy_mode` / `proxy_*` params.
-4. Exec's the api harness: `node apps/api/dist/src/harness.js --start-built`.
+4. Starts the compiled services without rebuilding dependencies, using upstream’s production-image mode: `node apps/api/dist/src/harness.js --start-docker`.
 
 Postgres writes runtime data to `/var/lib/postgresql/17/main`. Code-only
 redeploys preserve that directory, but re-imaging replaces the
