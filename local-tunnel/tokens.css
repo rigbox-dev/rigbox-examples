@@ -1,0 +1,147 @@
+/* Rigbox examples — shared design language.
+ * One identity across every example, whatever the stack. Copy/serve this file
+ * verbatim and use the rb-* classes; do NOT fork the tokens. See STYLE.md.
+ * Light by default, dark-aware via prefers-color-scheme. */
+
+:root {
+  --rb-bg: #fbfcfd;
+  --rb-surface: #ffffff;
+  --rb-surface-2: #f6f7f9;
+  --rb-border: #e6e8eb;
+  --rb-ink: #1a1d24;
+  --rb-muted: #6b7280;
+  --rb-accent: #5b5bd6;
+  --rb-accent-ink: #ffffff;
+  --rb-accent-soft: #eeeefb;
+  --rb-ok: #2fb344;
+  --rb-warn: #e8a33d;
+  --rb-danger: #e5484d;
+
+  --rb-radius: 12px;
+  --rb-radius-sm: 8px;
+  --rb-shadow: 0 1px 2px rgba(16, 18, 24, .05), 0 8px 24px rgba(16, 18, 24, .05);
+  --rb-shadow-sm: 0 1px 2px rgba(16, 18, 24, .06);
+
+  --rb-s1: 4px; --rb-s2: 8px; --rb-s3: 12px; --rb-s4: 16px;
+  --rb-s5: 24px; --rb-s6: 32px; --rb-s7: 48px;
+
+  --rb-font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --rb-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+
+  --rb-w-content: 760px;
+  --rb-w-wide: 960px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --rb-bg: #0b0c10;
+    --rb-surface: #16181c;
+    --rb-surface-2: #1d2026;
+    --rb-border: #272a31;
+    --rb-ink: #eceef2;
+    --rb-muted: #9aa1ad;
+    --rb-accent: #7c7cf0;
+    --rb-accent-soft: #20203a;
+    --rb-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--rb-bg);
+  color: var(--rb-ink);
+  font-family: var(--rb-font);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--rb-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 { line-height: 1.25; margin: 0 0 var(--rb-s3); letter-spacing: -.01em; }
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.15rem; }
+p { margin: 0 0 var(--rb-s3); }
+
+.rb-container { max-width: var(--rb-w-content); margin: 0 auto; padding: var(--rb-s5) var(--rb-s4) var(--rb-s7); }
+.rb-container.rb-wide { max-width: var(--rb-w-wide); }
+
+.rb-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--rb-s3);
+  max-width: var(--rb-w-wide); margin: 0 auto; padding: var(--rb-s4);
+  border-bottom: 1px solid var(--rb-border);
+}
+.rb-header h1, .rb-header .rb-title { font-size: 1.05rem; margin: 0; font-weight: 600; }
+
+/* "Rigbox" badge — appears in every app's header. */
+.rb-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .8rem; color: var(--rb-muted);
+  border: 1px solid var(--rb-border); border-radius: 999px;
+  padding: 4px 10px; background: var(--rb-surface);
+}
+.rb-badge::before {
+  content: ""; width: 8px; height: 8px; border-radius: 3px;
+  background: var(--rb-accent);
+}
+
+.rb-footer {
+  max-width: var(--rb-w-wide); margin: var(--rb-s6) auto 0; padding: var(--rb-s4);
+  border-top: 1px solid var(--rb-border);
+  color: var(--rb-muted); font-size: .85rem;
+}
+
+.rb-card {
+  background: var(--rb-surface); border: 1px solid var(--rb-border);
+  border-radius: var(--rb-radius); box-shadow: var(--rb-shadow);
+  padding: var(--rb-s5);
+}
+.rb-card + .rb-card { margin-top: var(--rb-s4); }
+
+.rb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font: inherit; font-weight: 550; cursor: pointer;
+  background: var(--rb-accent); color: var(--rb-accent-ink);
+  border: 1px solid transparent; border-radius: var(--rb-radius-sm);
+  padding: 9px 16px; transition: filter .12s ease, background .12s ease;
+}
+.rb-btn:hover { filter: brightness(1.07); text-decoration: none; }
+.rb-btn:active { filter: brightness(.95); }
+.rb-btn-ghost { background: var(--rb-surface); color: var(--rb-ink); border-color: var(--rb-border); }
+.rb-btn-ghost:hover { background: var(--rb-surface-2); filter: none; }
+
+.rb-input, .rb-textarea, .rb-select {
+  width: 100%; font: inherit; color: var(--rb-ink);
+  background: var(--rb-surface); border: 1px solid var(--rb-border);
+  border-radius: var(--rb-radius-sm); padding: 9px 12px;
+}
+.rb-input:focus, .rb-textarea:focus, .rb-select:focus {
+  outline: none; border-color: var(--rb-accent);
+  box-shadow: 0 0 0 3px var(--rb-accent-soft);
+}
+.rb-textarea { min-height: 96px; resize: vertical; }
+
+.rb-field { margin-bottom: var(--rb-s4); }
+.rb-label { display: block; font-weight: 550; font-size: .9rem; margin-bottom: var(--rb-s1); }
+.rb-hint { color: var(--rb-muted); font-size: .82rem; margin-top: var(--rb-s1); }
+
+.rb-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .78rem; font-weight: 550;
+  border-radius: 999px; padding: 3px 10px;
+  background: var(--rb-surface-2); color: var(--rb-muted);
+  border: 1px solid var(--rb-border);
+}
+.rb-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.rb-pill-ok { color: var(--rb-ok); }
+.rb-pill-warn { color: var(--rb-warn); }
+.rb-pill-danger { color: var(--rb-danger); }
+
+.rb-muted { color: var(--rb-muted); }
+.rb-mono { font-family: var(--rb-mono); font-size: .9em; }
+.rb-stack > * + * { margin-top: var(--rb-s3); }
+.rb-row { display: flex; gap: var(--rb-s3); align-items: center; flex-wrap: wrap; }
