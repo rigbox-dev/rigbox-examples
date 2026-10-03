@@ -43,6 +43,18 @@ Public sharing requires a separate confirmation for the current session:
 rig tunnel share --tunnel TUNNEL_ID --public
 ```
 
+Browsers complete Rigbox's cookie-isolation check before this app receives a
+request. For native HTTP against a Public tunnel, set the printed URL explicitly:
+
+```bash
+curl -H 'X-Rigbox-Tunnel-Client: native' "$TUNNEL_URL/healthz"
+```
+
+The intent header is removed before reaching the demo and does not authenticate
+the caller. Do not send Origin or Fetch Metadata headers in this native mode.
+Webhook providers unable to set the intent header and native WebSockets are
+unsupported. Private and privileged tunnels require browser entry and sign-in.
+
 Unattended use requires `--acknowledge-exposure`; public use additionally requires
 `--acknowledge-public`. Those flags accept the risks explained below.
 
