@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local tunnel · Rigbox example</title>
+  <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+  <header class="rb-header">
+    <span class="rb-title">Local tunnel</span>
+    <span class="rb-badge">Rigbox example</span>
+  </header>
+  <main class="rb-container">
+    <div class="rb-card rb-stack">
+      <span class="rb-pill rb-pill-ok">Running on your laptop</span>
+      <h1>A local service with a Rigbox URL.</h1>
+      <p>This page comes from the Python process you started locally. Keep your tunnel command running while you use its HTTPS URL.</p>
+      <p><a href="/healthz">Check the local service</a></p>
+    </div>
+    <div class="rb-card rb-stack">
+      <h2>A small service you can inspect</h2>
+      <p>The demo serves this page, its stylesheet, a health check, and a bounded <code>POST /echo</code> response. It does not provide file browsing or execute commands.</p>
+      <p class="rb-muted">Private access is the default. Changing tunnel access changes who can reach the whole local service.</p>
+    </div>
+  </main>
+  <footer class="rb-footer">
+    A Rigbox example · built with Python ·
+    <a href="https://rigbox.dev">rigbox.dev</a>
+  </footer>
+</body>
+</html>

@@ -36,6 +36,16 @@ n8n uses release-local dependencies. Code-server and Gitea retain explicit image
 | [`gitea/`](./gitea/) | **Gitea** (Git hosting) | a headless single-binary service (install wizard locked) with SQLite + repos under `$DATA_DIR` |
 | [`n8n/`](./n8n/) | **n8n** (workflow automation) | install pinned dependencies into app releases; workflows persist under `$RIGBOX_APP_DATA_DIR` |
 
+## Run a local service
+
+[`local-tunnel/`](./local-tunnel/) demonstrates `rig tunnel --port 3000` with a
+small Python service bound to loopback. The tunnel service is currently disabled
+in production pending browser-domain isolation, and the planned signed CLI
+0.13.1 release is not yet published. You can run the example locally now; its tunnel
+commands document the planned service and require an enabled service and matching
+CLI. Start with private access and review the exposure warning when available.
+The example has no deployment manifest.
+
 ## Catalog apps
 
 Standalone reproductions of every app in the [Rigbox catalog](https://docs.rigbox.dev/), kept in [`catalog-apps/`](./catalog-apps/) so they don't crowd the curated example suite. Each is a regular `rig deploy`-able example you can fork, modify, and run on its own — see [`catalog-apps/README.md`](./catalog-apps/README.md) for the full index.
