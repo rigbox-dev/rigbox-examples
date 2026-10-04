@@ -5,7 +5,7 @@ It uses Python's standard library,
 binds only `127.0.0.1`, and has no deployment manifest or dependencies to install.
 
 **Tunnels are not available to customers yet.** The tunnel service is disabled in
-production pending browser-domain isolation, and the planned signed CLI 0.13.0
+production pending browser-domain isolation, and the planned signed CLI 0.13.1
 release is not yet published. Running this Python demo on loopback works today; the
 tunnel commands below describe planned behavior and require both the matching
 CLI and an enabled Rigbox tunnel service. Publishing this example does not enable
