@@ -1,12 +1,15 @@
 # Local tunnel
 
-Expose a small HTTP service running on your laptop through a Rigbox HTTPS URL.
-This example demonstrates a foreground tunnel: it uses Python's standard library,
+This example prepares a small local HTTP service for a future Rigbox HTTPS tunnel.
+It uses Python's standard library,
 binds only `127.0.0.1`, and has no deployment manifest or dependencies to install.
 
-This example accompanies the privately developed tunnel feature. It requires the
-matching CLI and an enabled Rigbox tunnel service; customer availability waits
-for the release security and reliability checks.
+**Tunnels are not available to customers yet.** The tunnel service is disabled in
+production pending browser-domain isolation, and the planned signed CLI 0.13.0
+release is not yet published. Running this Python demo on loopback works today; the
+tunnel commands below describe planned behavior and require both the matching
+CLI and an enabled Rigbox tunnel service. Publishing this example does not enable
+tunnels or expose your laptop.
 
 In one terminal:
 
@@ -15,7 +18,8 @@ cd local-tunnel
 python3 server.py --port 3000
 ```
 
-In another terminal, sign in and start the private tunnel:
+After the tunnel service and matching CLI become available, sign in and start
+the private tunnel in another terminal:
 
 ```bash
 rig login
@@ -34,10 +38,13 @@ rig tunnel share --tunnel TUNNEL_ID --emails colleague@example.com
 rig tunnel share --tunnel TUNNEL_ID --private
 ```
 
-Invited viewers sign in and accept with a verified email. Acceptance binds their
-Rigbox user ID; an email address alone does not grant access.
+Private access admits only the owner. Privileged access admits the owner and
+invited viewers who sign in and accept with a verified email. Acceptance binds
+their Rigbox user ID; an email address alone does not grant access. Both modes
+give admitted viewers access to the whole app, rather than a read-only view.
 
-Public sharing requires a separate confirmation for the current session:
+Public sharing admits anyone on the internet, including anonymous native HTTP
+callers. It requires a separate confirmation for the current session:
 
 ```bash
 rig tunnel share --tunnel TUNNEL_ID --public

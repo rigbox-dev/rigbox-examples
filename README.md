@@ -39,9 +39,12 @@ n8n uses release-local dependencies. Code-server and Gitea retain explicit image
 ## Run a local service
 
 [`local-tunnel/`](./local-tunnel/) demonstrates `rig tunnel --port 3000` with a
-small Python service bound to loopback. Keep it running on your laptop and use
-the printed HTTPS URL; start with private access and review its exposure warning.
-This example uses a tunnel instead of a deployment manifest.
+small Python service bound to loopback. The tunnel service is currently disabled
+in production pending browser-domain isolation, and the planned signed CLI
+0.13.0 release is not yet published. You can run the example locally now; its tunnel
+commands document the planned service and require an enabled service and matching
+CLI. Start with private access and review the exposure warning when available.
+The example has no deployment manifest.
 
 ## Catalog apps
 
