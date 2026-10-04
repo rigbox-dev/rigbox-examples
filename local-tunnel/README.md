@@ -1,15 +1,12 @@
 # Local tunnel
 
-This example prepares a small local HTTP service for a future Rigbox HTTPS tunnel.
+This example runs a small local HTTP service through a Rigbox HTTPS tunnel.
 It uses Python's standard library,
 binds only `127.0.0.1`, and has no deployment manifest or dependencies to install.
 
-**Tunnels are not available to customers yet.** The tunnel service is disabled in
-production pending browser-domain isolation, and the planned signed CLI 0.13.1
-release is not yet published. Running this Python demo on loopback works today; the
-tunnel commands below describe planned behavior and require both the matching
-CLI and an enabled Rigbox tunnel service. Publishing this example does not enable
-tunnels or expose your laptop.
+Use the signed CLI 0.13.1 or later. The tunnel URL uses HTTPS under `rigbox.link`.
+Running the Python demo alone stays on loopback; starting the tunnel exposes
+the service to the visitors you admit.
 
 In one terminal:
 
@@ -18,8 +15,7 @@ cd local-tunnel
 python3 server.py --port 3000
 ```
 
-After the tunnel service and matching CLI become available, sign in and start
-the private tunnel in another terminal:
+Sign in and start the private tunnel in another terminal:
 
 ```bash
 rig login
@@ -50,8 +46,12 @@ callers. It requires a separate confirmation for the current session:
 rig tunnel share --tunnel TUNNEL_ID --public
 ```
 
-Browsers complete Rigbox's cookie-isolation check before this app receives a
-request. For native HTTP against a Public tunnel, set the printed URL explicitly:
+Browser visitors review the shared-cookie warning and click Continue before
+entry. Rigbox then checks support for its protected access cookies and Fetch
+Metadata headers before the app receives a request. This does not isolate the
+app's cookies from other tunnels.
+
+For native HTTP against a Public tunnel, set the printed URL explicitly:
 
 ```bash
 curl -H 'X-Rigbox-Tunnel-Client: native' "$TUNNEL_URL/healthz"
@@ -69,6 +69,14 @@ Viewers can invoke every feature of a tunneled app, including file access, debug
 tools, and commands that the app exposes. Rigbox does not sandbox your app or
 laptop. This demo deliberately has only explicit static routes, `/healthz`, and
 a 4 KiB `/echo` endpoint; it never serves arbitrary paths or logs requests.
+
+All `*.rigbox.link` tunnels share a browser site. Another tunnel can set
+parent-domain cookies that interfere with your app's cookies. Accept that
+limitation before sharing an app. Keep the app's own authentication,
+authorization, CSRF protection, and exact-origin checks enabled. Use host-only
+session cookies, preferably with the `__Host-` prefix; these precautions do not
+give each tunnel a separate browser site. Private and privileged access do not
+replace the app's security checks.
 
 For a separate static-file experiment, use a dedicated directory containing only
 files you intend to share:
